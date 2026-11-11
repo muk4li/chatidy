@@ -63,6 +63,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(200,(ROOT/file).read_bytes(),kind)
         query=parse_qs(urlsplit(self.path).query)
         try:
+            if path=="/api/import/jobs":
+                return self.send(200, jobs.listing())
             if path.startswith("/api/import/jobs/"):
                 return self.send(200, jobs.public_status(path.removeprefix("/api/import/jobs/")))
             with connect() as db:
@@ -109,6 +111,10 @@ class Handler(BaseHTTPRequestHandler):
                                      self.headers.get("X-Filename", "export.zip"))
                 jobs.start(job_id)
                 return self.send(202, jobs.public_status(job_id))
+            if path.startswith("/api/import/jobs/") and path.endswith("/delete"):
+                value = self.get_json()
+                job_id = path.removeprefix("/api/import/jobs/").removesuffix("/delete")
+                return self.send(200, jobs.delete(job_id, confirmed=value.get("confirm", False)))
             if path.startswith("/api/import/jobs/") and path.endswith("/resume"):
                 self.get_json()
                 job_id = path.removeprefix("/api/import/jobs/").removesuffix("/resume")

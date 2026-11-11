@@ -82,11 +82,66 @@ hochgeladen werden. Ein Prozessabbruch während des SQLite-Commits wird durch di
 Transaktion abgesichert; ein erneutes Übernehmen bleibt idempotent.
 
 Quellen und Checkpoints liegen lokal in `import-jobs/` neben der durch `CHATIDY_DB`
-ausgewählten Datenbank, standardmäßig unter `data/import-jobs/`. Sie enthalten
-private Daten und bleiben bis zur manuellen lokalen Bereinigung erhalten.
-Eigene Datenbankpfade sollten außerhalb des öffentlichen Checkouts liegen.
-Ein einzelner Chat muss weiterhin in den Arbeitsspeicher passen; dies ist kein
-unbegrenzter Import und kein Wiederaufnehmen ab der letzten Upload-Byteposition.
+ausgewählten Datenbank, standardmäßig unter `data/import-jobs/`. Ein einzelner
+Chat muss weiterhin in den Arbeitsspeicher passen; dies ist kein unbegrenzter
+Import und kein Wiederaufnehmen ab der letzten Upload-Byteposition.
+
+### Importjob-Verwaltung und Datenschutz
+
+Öffne **Lokale Importjobs verwalten** unter dem Importbereich. Die Übersicht zeigt
+Anzahl gespeicherter Jobs, erfasste Dateigröße, Erstellung, Status und geprüfte
+Gespräche. **Jobs aktualisieren** lädt den aktuellen Stand auch nach einem
+Serverneustart. Sie umfasst alle Jobs, nicht nur den zuletzt im Browser geöffneten.
+
+| Status | Verhalten |
+| --- | --- |
+| Hochgeladen | Lokal gespeichert; kann gestartet bzw. fortgesetzt werden. |
+| In Prüfung / Wird übernommen | Prozessübergreifend gesperrt; Löschen und doppelter Start sind ausgeschlossen. |
+| Erfolgreich | Chats übernommen; lokale Jobkopien können bestätigt gelöscht werden. |
+| Fehlgeschlagen | Fehler anzeigen; bei vollständiger Quelle ist ein erneuter Versuch möglich. |
+| Unterbrochen | Keine aktive Sperre nach Prozessabbruch; vollständige Uploads sind wiederaufnehmbar. |
+| Bereinigung unterbrochen | Teilweise entfernt; nur bestätigtes Abschließen der Bereinigung möglich. |
+| Jobdaten gesperrt | Unsichere Dateien/Verzeichnisse; keine automatische Bereinigung, lokal prüfen. |
+
+**Jobdaten löschen** fragt bei jedem Job ausdrücklich nach. Bei fehlgeschlagenen
+oder unterbrochenen Jobs weist der Dialog darauf hin, dass die Wiederaufnahme
+danach nicht mehr möglich ist. Abbrechen behält sämtliche Jobdaten. Aktive Jobs
+sind auch serverseitig gegen Löschen gesperrt. Die Bestätigung entfernt nur die
+lokalen Uploadkopien, Status- und Stagingdateien. Die Chatidy-Datenbank samt Suche
+und die ursprüngliche Exportdatei außerhalb des Jobverzeichnisses bleiben erhalten.
+Es gibt keine automatische Löschung oder Aufbewahrungsfrist.
+
+Die Bereinigung validiert UUIDs, Verzeichnisse und eine feste Dateiliste. Sie
+folgt keinen Symlinks, lehnt Hardlinks/fremde Einträge ab und löscht niemals
+rekursiv beliebige Pfade. Eine atomare Umbenennung markiert die bestätigte
+Löschung; nach einem Abbruch bleibt sie als erneut bestätigbare Bereinigung
+sichtbar. Die leere `management.lock` bleibt zur Prozesskoordination im Stamm;
+sie zählt nicht als gespeicherter Job. Dateigrößen sind logische Größen zum
+Abfragezeitpunkt; gesperrte oder fremde Einträge sind darin nicht enthalten.
+
+Benutzerdefinierte Datenbankpfade sollten außerhalb des öffentlichen Checkouts
+liegen. `.gitignore` schützt nun `import-jobs/` auf jeder Verzeichnisebene sowie
+die üblichen SQLite-Dateiendungen und Sidecars. Ein beliebig benannter eigener
+Datenbankpfad ohne solche Endung muss zusätzlich lokal ausgeschlossen werden;
+`.gitignore` schützt weiterhin nicht vor `git add -f` oder bereits verfolgten Daten.
+
+Die gehärtete Jobverwaltung benötigt derzeit POSIX-`flock`, descriptorrelative
+Dateioperationen und für SQLite-Staging Linux-`/proc/self/fd`. Ohne diese
+Voraussetzungen wird der Vorgang sicher abgelehnt; der synchrone `/api/import`
+bleibt verfügbar. Symlinks in den Jobpfaden sowie für andere schreibbare
+Verzeichnisse werden abgelehnt (System-Tempverzeichnisse mit Sticky-Bit sind
+zulässig). Sperren koordinieren Chatidy-Prozesse auf lokalen Dateisystemen;
+sie ersetzen keine Betriebssystem-Zugriffskontrolle gegen denselben Benutzer.
+Keine zusätzliche Datenbankmigration und keine Cloud-Verbindung sind erforderlich.
+
+Zusätzliche lokale HTTP-Endpunkte (Host-/Origin-Prüfung bleibt aktiv):
+
+- `GET /api/import/jobs`: Übersicht mit Anzahl und erfasster Größe.
+- `GET /api/import/jobs/<id>`: bisheriger Status, ergänzt um Erstellung, Größe,
+  Aktivität sowie `can_resume` und `can_delete`.
+- `POST /api/import/jobs/<id>/resume` mit `{}`: bisherigen Job fortsetzen.
+- `POST /api/import/jobs/<id>/delete` mit `{"confirm": true}`: explizit bestätigte
+  Bereinigung. Fehlende oder nicht-boolsche Bestätigung wird abgelehnt.
 
 ## Ordner und Regeln
 

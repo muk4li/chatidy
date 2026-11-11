@@ -19,6 +19,11 @@ class GitIgnorePrivacyTests(unittest.TestCase):
         for path in (
             "data/chatidy.sqlite3",
             "import-jobs/synthetic/source.json",
+            "custom/library/import-jobs/synthetic/source.json",
+            "custom/library/import-jobs/synthetic/status.json",
+            "custom/library/import-jobs/.deleting-synthetic/deletion.json",
+            "custom/library/import-jobs/management.lock",
+            "custom/library/library.sqlite3-wal",
             "data/chatidy.sqlite3-wal",
             "instance/private.db",
             "backups/archive.json",

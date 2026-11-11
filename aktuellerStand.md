@@ -1,5 +1,66 @@
 # Aktueller Stand von Chatidy
 
+## Neuester Durchlauf – sichere Importjob-Verwaltung
+
+Tatsächlich geprüfter main-Ausgangspunkt: `0ecabfb44ea4d68e5cd5251f65c2cffefbb43444`.
+Feature-Branch: `feature/import-job-lifecycle`.
+Die vorherigen vier Folgephasen sind inzwischen über PR #3 in main integriert.
+
+### Ergebnis
+
+- Prozessübergreifende Job-Sperren, synchron vor dem Workerstart erworben. Aktive
+  Jobs sind nicht löschbar und können nicht doppelt gestartet werden. Nach einem
+  Prozessabbruch werden alte Prüf-/Commitzustände als unterbrochen angezeigt.
+- Alle gespeicherten Jobs sind über Übersicht/API erreichbar: Status, Erstellung,
+  geprüfte Gespräche, logische Dateigröße, Fortsetzen und bestätigtes Löschen.
+- Bestätigte Bereinigung über feste Dateiliste und descriptorrelative Operationen;
+  keine Pfadrekursion, keine Symlinkverfolgung, keine Hardlinks oder fremden Dateien.
+  Datenbank-/Sidecar-Inodes sind ausdrücklich geschützt. Elternpfade werden auf
+  Symlinks und unsichere Schreibrechte geprüft.
+- Unterbrochene Löschung bleibt in einem markierten Jobverzeichnis sichtbar;
+  erneute Bestätigung schließt sie ab. Keine unbemerkte Entfernung wiederaufnehmbarer
+  Jobs. Auch beschädigte Statusdaten können nach Dateiprüfung bestätigt bereinigt
+  werden; unsichere Dateistrukturen bleiben gesperrt.
+- Unvollständige Uploads bleiben als fehlgeschlagen und nicht wiederaufnehmbar
+  sichtbar, statt unbeobachtete Quellenreste zu hinterlassen. Kein automatischer
+  Löschlauf und keine automatische Entfernung der Bibliothek oder Originalexporte.
+- `import-jobs/` wird auch unter benutzerdefinierten Datenbankpfaden auf beliebiger
+  Verzeichnisebene ignoriert. Eigene beliebige Datenbanknamen müssen zusätzlich
+  lokal ausgeschlossen oder außerhalb des Checkouts gespeichert werden.
+
+### Validierung und Sicherheitsprüfung
+
+72 Python-Tests erfolgreich, einschließlich realer Prozessabbrüche während der
+Prüfung und nach dem Hauptdatenbank-Commit, Wiederaufnahme, paralleler Jobs,
+aktiver Löschsperren, HTTP-Bestätigung, manipulierter IDs/Verzeichnisse, Symlinks,
+Hardlinks, unterbrochener Bereinigung sowie unveränderter SQLite-/FTS5-Daten.
+Echter Chromium-Browsertest erfolgreich: Übersicht, Größen, abgebrochene und
+bestätigte Löschdialoge, aktive Sperre, Prozessabbruch/Fortsetzen und mobile Ansicht;
+bestehende Import-/Organisationsfunktionen bleiben Bestandteil dieses Tests.
+Alle Testdaten sind synthetisch. Keine neue Schema-Migration. JavaScript-Syntax
+und Python-3.10-Grammatik werden vor dem Commit geprüft; kein Python-3.10-Lauf
+wird behauptet. Änderungen werden vor dem Commit auf private Daten geprüft.
+
+### Grenzen und nächster sinnvoller Schritt
+
+Die sichere Verwaltung setzt derzeit lokale POSIX-Sperren/dir_fd sowie Linux-
+/proc/self/fd für Staging voraus. Auf nicht unterstützten Plattformen wird
+abgelehnt, statt unsicher zurückzufallen; der synchrone Import bleibt nutzbar.
+Statusabfragen zeigen logische Dateigrößen, keine Dateisystem-Quoten. Unbekannte
+oder gesperrte Einträge sind nicht in der erfassten Größe enthalten. Keine
+Aufbewahrungsfrist, kein automatischer Hintergrund-Löschlauf. Sperren sind keine
+Zugriffskontrolle gegen Programme mit denselben Betriebssystemrechten.
+
+Nächster sinnvoller Entwicklungsschritt: konfigurierbare Speicherbudgets und
+Speicherhinweise für Importjobs, weiterhin ohne automatische destruktive Löschung.
+PR-/CI- und Merge-Status werden im Abschlussbericht anhand des tatsächlichen
+GitHub-Zugriffs dokumentiert; ein erfolgreicher lokaler Test ersetzt keine CI.
+
+---
+
+## Historie der vorherigen Entwicklungsphasen
+
+
 Ausgangsbasis dieses Durchlaufs: main `46c9c936998bce9110d04f0e06ad99d15b44ac98`.
 Alle Daten in Tests sind synthetisch. Änderungen liegen auf
 `feature/import-foundation-and-organisation`; der Nutzer übernimmt den Merge.

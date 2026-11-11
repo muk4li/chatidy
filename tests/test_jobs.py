@@ -91,8 +91,12 @@ class JobTests(unittest.TestCase):
     def test_incomplete_upload_does_not_leave_resumable_source(self):
         with self.assertRaisesRegex(ValueError, 'unvollständig'):
             jobs.create(io.BytesIO(b'['), 50, 'synthetic.json')
-        root = self.db_path.parent / 'import-jobs'
-        self.assertEqual(list(root.iterdir()), [])
+        listing = jobs.listing()
+        self.assertEqual(listing['count'], 1)
+        self.assertEqual(listing['jobs'][0]['state'], 'error')
+        self.assertFalse(listing['jobs'][0]['can_resume'])
+        jobs.delete(listing['jobs'][0]['id'], confirmed=True)
+        self.assertEqual(jobs.listing()['count'], 0)
 
     def test_streamed_json_chunk_boundaries_bom_and_envelope(self):
         decoder = json.JSONDecoder(object_pairs_hook=unique_object, parse_constant=invalid_constant)

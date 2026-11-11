@@ -18,7 +18,8 @@ dist/
 
 # Local application state and SQLite sidecar files
 /data/
-/import-jobs/
+# Runtime jobs beside custom database paths at any depth
+import-jobs/
 /instance/
 /local/
 /backups/

@@ -247,22 +247,67 @@ function exportChats(ids=null){
 }
 async function refresh(){await Promise.all([loadFolders(),loadStats(),loadOrganisation()]);await loadChats()}
 let importJob=localStorage.getItem('chatidy-import-job'), importPoll=null;
+let jobListEpoch=0;
+const jobLabels={uploading:'Wird hochgeladen',uploaded:'Hochgeladen',validating:'In Prüfung',committing:'Wird übernommen',done:'Erfolgreich',error:'Fehlgeschlagen',interrupted:'Unterbrochen',cleanup_pending:'Bereinigung unterbrochen',blocked:'Jobdaten gesperrt'};
+function jobSize(bytes){return new Intl.NumberFormat('de-DE',{maximumFractionDigits:1}).format(Number(bytes||0)/1048576)+' MB'}
+async function loadJobs(){
+  const epoch=++jobListEpoch;
+  try{
+    const result=await api('/api/import/jobs');
+    if(epoch!==jobListEpoch)return;
+    const unknown=result.jobs.some(job=>job.state==='blocked');
+    $('job-summary').textContent=result.count+' gespeicherte Jobs · '+jobSize(result.storage_bytes)+' erfasste Dateigröße'+(unknown?' · Größe gesperrter Jobs unbekannt':'')+(result.ignored_entries?' · Fremde Einträge werden nicht verwaltet':'');
+    const list=$('job-list');list.replaceChildren();
+    if(!result.jobs.length)list.append(element('p','muted','Keine gespeicherten Importjobs.'));
+    for(const job of result.jobs){
+      const row=element('section','job-row');row.dataset.jobId=job.id;
+      row.append(element('strong','job-state',jobLabels[job.state]||job.state));
+      const created=job.created?new Date(job.created*1000).toLocaleString('de-DE'):'unbekannt';
+      row.append(element('p','muted',job.id.slice(0,8)+' · Erstellt: '+created+' · '+(job.validated||0)+' Gespräche geprüft · '+jobSize(job.storage_bytes)));
+      if(job.error)row.append(element('p','muted',job.error));
+      if(job.state==='interrupted')row.append(element('p','muted',job.can_resume?'Nach Prozessunterbrechung wiederaufnehmbar.':'Upload unvollständig; bitte erneut hochladen.'));
+      if(job.state==='cleanup_pending')row.append(element('p','muted','Ein Teil der Jobdaten wurde bereits entfernt. Zum Abschließen Löschung erneut bestätigen.'));
+      const actions=element('div','job-actions');
+      if(job.can_resume)actions.append(button('Fortsetzen',async()=>{
+        try{await post('/api/import/jobs/'+job.id+'/resume',{});importJob=job.id;localStorage.setItem('chatidy-import-job',job.id);clearTimeout(importPoll);pollImport();await loadJobs()}
+        catch(e){message(e.message,true)}
+      }));
+      const remove=button('Jobdaten löschen',async()=>{
+        const detail=job.state==='done'?'Dieser Import ist erfolgreich abgeschlossen.':job.state==='cleanup_pending'?'Die unterbrochene Bereinigung wird abgeschlossen.':'Dieser Import ist nicht erfolgreich abgeschlossen. Seine Wiederaufnahme ist danach nicht mehr möglich.';
+        if(!confirm(detail+' Lokale Jobdaten ('+jobSize(job.storage_bytes)+') wirklich löschen? Importierte Chats und die ursprüngliche Exportdatei bleiben erhalten.'))return;
+        try{
+          await post('/api/import/jobs/'+job.id+'/delete',{confirm:true});
+          if(importJob===job.id){importJob=null;clearTimeout(importPoll);localStorage.removeItem('chatidy-import-job');$('import-status').hidden=true}
+          await loadJobs();message('Lokale Jobdaten gelöscht. Importierte Chats bleiben erhalten.');
+        }catch(e){message(e.message,true);await loadJobs()}
+      });
+      remove.disabled=!job.can_delete;
+      if(job.active)remove.title='Aktive Importjobs können nicht gelöscht werden.';
+      actions.append(remove);row.append(actions);list.append(row);
+    }
+  }catch(e){if(epoch!==jobListEpoch)return;$('job-summary').textContent='Jobverwaltung nicht verfügbar: '+e.message;$('job-list').replaceChildren()}
+}
+$('refresh-jobs').onclick=loadJobs;
+$('job-management').ontoggle=()=>{if($('job-management').open)loadJobs()};
+loadJobs();
 async function pollImport(){
   if(!importJob)return;
   $('import-status').hidden=false;
   try{
     const result=await api('/api/import/jobs/'+importJob);
-    const labels={uploaded:'Upload gespeichert',validating:'Export wird geprüft',committing:'Daten werden atomar übernommen',done:'Import abgeschlossen',error:'Import unterbrochen oder abgelehnt'};
+    const labels=jobLabels;
     $('import-status-text').textContent=(labels[result.state]||result.state)+' · '+(result.validated||0)+' Chats geprüft'+(result.error?' · '+result.error:'');
-    $('resume-import').hidden=result.state==='done';
+    $('resume-import').hidden=!result.can_resume;
     if(result.state==='done'){
       clearTimeout(importPoll);localStorage.removeItem('chatidy-import-job');importJob=null;
-      $('pick-file').disabled=false;await refresh();return;
+      $('pick-file').disabled=false;await Promise.all([refresh(),loadJobs()]);return;
     }
-    if(result.state!=='error')importPoll=setTimeout(pollImport,1500);
+    if($('job-management').open)await loadJobs();
+    if(result.active||result.state==='uploaded')importPoll=setTimeout(pollImport,1500);
   }catch(e){
     $('import-status-text').textContent='Importstatus nicht erreichbar: '+e.message;
-    $('resume-import').hidden=false;
+    $('resume-import').hidden=true;
+    await loadJobs();
   }
 }
 $('resume-import').onclick=async()=>{
