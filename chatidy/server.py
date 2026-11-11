@@ -9,6 +9,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 from .db import (connect, list_chats, list_folders, chat_detail, upsert, stats,
                  create_folder, change_folder, assign, create_rule, validate_folder)
 from .importer import parse_export, MAX_UPLOAD
+from .topics import topics
 
 ROOT=Path(__file__).resolve().parent.parent
 MAX_BODY=MAX_UPLOAD
@@ -44,7 +45,17 @@ class Handler(BaseHTTPRequestHandler):
             raise ValueError("JSON-Objekt erwartet.")
         return value
 
+    def same_origin(self):
+        # Reject cross-site writes and DNS rebinding against the loopback service.
+        host=self.headers.get("Host","")
+        allowed_hosts={"127.0.0.1:"+str(os.getenv("CHATIDY_PORT","8877")),
+                       "localhost:"+str(os.getenv("CHATIDY_PORT","8877"))}
+        origin=self.headers.get("Origin")
+        return host in allowed_hosts and (not origin or origin in {"http://"+h for h in allowed_hosts})
+
     def do_GET(self):
+        if not self.same_origin():
+            return self.send(403,{"error":"Ungültiger Host oder Origin."})
         path=unquote(urlsplit(self.path).path)
         if path in STATIC:
             file,kind=STATIC[path]
@@ -65,6 +76,8 @@ class Handler(BaseHTTPRequestHandler):
                 if path.startswith("/api/chat/"):
                     item=chat_detail(db,path.removeprefix("/api/chat/"))
                     return self.send(200,item) if item else self.send(404,{"error":"Chat nicht gefunden"})
+                if path=="/api/topics":
+                    return self.send(200,topics(db))
                 if path=="/api/rules":
                     return self.send(200,[dict(x) for x in db.execute(
                         "SELECT * FROM rules ORDER BY id DESC")])
@@ -78,6 +91,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(400,{"error":str(exc)})
 
     def do_POST(self):
+        if not self.same_origin():
+            return self.send(403,{"error":"Ungültiger Host oder Origin."})
         path=urlsplit(self.path).path
         try:
             if path=="/api/import":
@@ -102,6 +117,20 @@ class Handler(BaseHTTPRequestHandler):
                     with db:
                         db.execute("DELETE FROM folders WHERE id=?",(fid,))
                     return self.send(200,{"ok":True})
+                if path=="/api/bulk/assign":
+                    ids=value.get("conversation_ids",[])
+                    fid=int(value["folder_id"])
+                    if not isinstance(ids,list) or not ids or len(ids)>500:
+                        raise ValueError("Bitte 1 bis 500 Chats auswählen.")
+                    validate_folder(db,fid)
+                    with db:
+                        done=0
+                        for cid in set(str(x) for x in ids):
+                            if db.execute("SELECT 1 FROM conversations WHERE id=?",(cid,)).fetchone():
+                                db.execute("""INSERT OR IGNORE INTO memberships
+                                  (conversation_id,folder_id,origin) VALUES(?,?,'bulk')""",(cid,fid))
+                                done+=1
+                    return self.send(200,{"assigned":done})
                 if path=="/api/assign":
                     assign(db,str(value["conversation_id"]),value["folder_ids"])
                     return self.send(200,{"ok":True})
