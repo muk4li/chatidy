@@ -6,3 +6,5 @@
 
 .sidebar{min-width:0}.sidebar nav{min-width:0;max-width:100%}@media(max-width:650px){.folderbtn{flex:0 0 auto;width:auto;max-width:14rem}.smart-row{flex:0 0 auto}.bulkbar select{width:100%}}
 @media(max-width:650px){.navitem{flex:0 0 auto}}
+
+.job-management{margin:18px 0;padding:16px;border:1px solid #44394f;border-radius:12px;background:#17151e}.job-management>summary{font-weight:700}.job-row{padding:16px 0;border-top:1px solid #44394f;overflow-wrap:anywhere}.job-actions{display:flex;gap:10px;flex-wrap:wrap}.job-state{font-size:14px}#job-summary{line-height:1.6}#job-management .sectionbar{padding:10px 0;flex-wrap:wrap}

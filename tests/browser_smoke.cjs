@@ -13,9 +13,9 @@ const {spawn}=require('node:child_process');
   const reservation=net.createServer();await new Promise(r=>reservation.listen(0,'127.0.0.1',r));
   const port=reservation.address().port;await new Promise(r=>reservation.close(r));
   const root=path.resolve(__dirname,'..'),base=`http://127.0.0.1:${port}`;
-  const server=spawn(process.env.PYTHON||'python',['-m','chatidy'],{cwd:root,
-    env:{...process.env,CHATIDY_PORT:String(port),CHATIDY_DB:path.join(directory,'synthetic.sqlite3')},stdio:'ignore'});
-  let browser;
+  const appEnv={...process.env,CHATIDY_PORT:String(port),CHATIDY_DB:path.join(directory,'synthetic.sqlite3')};
+  const server=spawn(process.env.PYTHON||'python',['-m','chatidy'],{cwd:root,env:appEnv,stdio:'ignore'});
+  let browser,jobWorker;
   try{
     for(let i=0;i<100;i++){
       try{const response=await fetch(base+'/api/stats');if(response.ok)break}catch{}
@@ -27,7 +27,8 @@ const {spawn}=require('node:child_process');
     page.setDefaultTimeout(10000);
     const errors=[],remote=[];page.on('pageerror',e=>errors.push(e.message));
     page.on('request',r=>{if(!r.url().startsWith(base))remote.push(r.url())});
-    page.on('dialog',d=>d.accept());
+    let acceptDialogs=true;const dialogs=[];
+    page.on('dialog',d=>{dialogs.push(d.message());return acceptDialogs?d.accept():d.dismiss()});
     console.log('Browser checkpoint: page loaded');await page.goto(base);await page.locator('#stat-folders').filter({hasText:'19'}).waitFor();
     const chats=[{id:'synthetic-one',title:'Synthetic One',messages:[{role:'user',content:'Synthetic SQLite question',files:[{url:'https://example.invalid/private.png'}]}]},
       {id:'synthetic-two',title:'Synthetic Two',messages:[{role:'assistant',content:'Synthetic second answer'}]}];
@@ -64,15 +65,48 @@ const {spawn}=require('node:child_process');
     await page.locator('#detail summary').filter({hasText:'Quellen, Anhänge und Metadaten'}).click();
     assert.match(await page.locator('#detail').textContent(),/example.invalid/);
     assert.deepEqual(remote,[],'Imported references must not load remote assets');
+    await page.getByText('Lokale Importjobs verwalten',{exact:true}).click();
+    await page.locator('#job-list .job-row').waitFor();
+    const stored=await (await fetch(base+'/api/import/jobs')).json();
+    assert.equal(stored.count,1);assert(stored.storage_bytes>0);
+    const successful=page.locator('.job-row[data-job-id="'+stored.jobs[0].id+'"]');
+    assert.match(await successful.textContent(),/Erfolgreich.*Erstellt:/s);
+    acceptDialogs=false;await successful.getByRole('button',{name:'Jobdaten löschen',exact:true}).click();
+    assert.equal((await (await fetch(base+'/api/import/jobs')).json()).count,1);
+    acceptDialogs=true;await successful.getByRole('button',{name:'Jobdaten löschen',exact:true}).click();
+    await page.waitForFunction(()=>document.querySelectorAll('#job-list .job-row').length===0);
+    assert.equal((await (await fetch(base+'/api/stats')).json()).chats,3);
+    const failedResponse=await fetch(base+'/api/import/jobs',{method:'POST',headers:{'X-Filename':'synthetic.json'},body:'not json'});
+    const failed=(await failedResponse.json()).id;
+    await page.waitForFunction(async({base,id})=>(await (await fetch(base+'/api/import/jobs/'+id)).json()).state==='error',{base,id:failed});
+    jobWorker=spawn(process.env.PYTHON||'python',['-u','-c',
+      "import sys,time\nfrom chatidy import jobs\noriginal=jobs.iter_export\ndef paused(*args):\n print('VALIDATING',flush=True)\n time.sleep(60)\n yield from original(*args)\njobs.iter_export=paused\njobs.run(sys.argv[1])",failed],{cwd:root,env:appEnv,stdio:['ignore','pipe','ignore']});
+    await new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(new Error('Worker startup timeout')),5000);jobWorker.stdout.on('data',data=>{if(String(data).includes('VALIDATING')){clearTimeout(timeout);resolve()}})});
+    await page.locator('#refresh-jobs').click();
+    const failedRow=page.locator('.job-row[data-job-id="'+failed+'"]');
+    await failedRow.locator('.job-state').filter({hasText:'In Prüfung'}).waitFor();
+    assert(await failedRow.getByRole('button',{name:'Jobdaten löschen',exact:true}).isDisabled());
+    jobWorker.kill('SIGKILL');await new Promise(resolve=>jobWorker.once('exit',resolve));jobWorker=null;
+    await page.locator('#refresh-jobs').click();
+    await failedRow.locator('.job-state').filter({hasText:'Unterbrochen'}).waitFor();
+    await failedRow.getByRole('button',{name:'Fortsetzen',exact:true}).click();
+    await failedRow.locator('.job-state').filter({hasText:'Fehlgeschlagen'}).waitFor();
+    acceptDialogs=false;await failedRow.getByRole('button',{name:'Jobdaten löschen',exact:true}).click();
+    assert(dialogs.at(-1).includes('Wiederaufnahme ist danach nicht mehr möglich'));
+    assert.equal((await (await fetch(base+'/api/import/jobs')).json()).count,1);
+    acceptDialogs=true;await failedRow.getByRole('button',{name:'Jobdaten löschen',exact:true}).click();
+    await page.waitForFunction(()=>document.querySelectorAll('#job-list .job-row').length===0);
+    assert.equal((await (await fetch(base+'/api/chats?q=SQLite')).json()).length,1);
     await page.setViewportSize({width:390,height:844});
     assert(await page.evaluate(()=>{const buttons=[...document.querySelectorAll('#views button')];return buttons.slice(1).every((b,i)=>b.getBoundingClientRect().left>=buttons[i].getBoundingClientRect().right)}),'Mobile navigation buttons must not overlap');
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Mobile layout must fit viewport without horizontal overflow');
     await page.screenshot({path:path.join(directory,'mobile.png'),fullPage:true});
     assert(await page.locator('#bulk-tags').isVisible());
     assert.deepEqual(errors,[],'Browser must not raise JavaScript errors');
-    console.log('PASS: streamed upload/progress, bulk selection, confirmed assignment, tags, drag-and-drop, dynamic smart folders, metadata safety, mobile layout');
+    console.log('PASS: import/organisation baseline, job inventory, confirmed/cancelled cleanup, active-job protection, process termination/resume, FTS preservation and mobile layout');
     console.log('Synthetic screenshot: '+path.join(directory,'mobile.png'));
   }finally{
+    if(jobWorker){jobWorker.kill('SIGKILL');await new Promise(resolve=>jobWorker.exitCode!==null||jobWorker.signalCode!==null?resolve():jobWorker.once('exit',resolve))}
     if(browser)await browser.close();
     server.kill('SIGTERM');await new Promise(resolve=>server.exitCode!==null?resolve():server.once('exit',resolve));
     // Kept only when requested for inspecting synthetic screenshots.

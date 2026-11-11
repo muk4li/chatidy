@@ -39,6 +39,12 @@
     </section>
     <div class="notice" id="import-status" role="status" hidden><span id="import-status-text"></span> <button id="resume-import" class="soft" hidden>Import fortsetzen</button></div>
     <div class="notice" id="notice" role="status" hidden></div>
+    <details class="job-management" id="job-management">
+      <summary>Lokale Importjobs verwalten</summary>
+      <p class="muted">Hier liegen Kopien deiner Exportdateien und lokale Prüfdaten. Löschen entfernt ausschließlich diese Jobdaten; deine importierten Chats und die ursprüngliche Exportdatei bleiben erhalten.</p>
+      <div class="sectionbar"><span id="job-summary" role="status">Jobdaten werden geladen …</span><button id="refresh-jobs" class="soft">Jobs aktualisieren</button></div>
+      <div id="job-list"></div>
+    </details>
     <section class="metrics">
       <div class="metric"><span>GESPRÄCHE</span><strong id="stat-chats">0</strong><small>Importierte Chats</small></div>
       <div class="metric"><span>NACHRICHTEN</span><strong id="stat-messages">0</strong><small>Volltextsuche verfügbar</small></div>
