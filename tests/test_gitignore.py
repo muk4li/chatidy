@@ -18,6 +18,7 @@ class GitIgnorePrivacyTests(unittest.TestCase):
     def test_private_runtime_data_are_ignored(self):
         for path in (
             "data/chatidy.sqlite3",
+            "import-jobs/synthetic/source.json",
             "data/chatidy.sqlite3-wal",
             "instance/private.db",
             "backups/archive.json",

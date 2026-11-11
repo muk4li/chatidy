@@ -2,6 +2,7 @@
 const $=id=>document.getElementById(id);
 let view='all',folder=null,folders=[],chats=[],selected=null,offset=0,loading=false,searchTimer=null,details=null;
 const PAGE=100;
+let chosen=new Set(),smartFolders=[],smart=null,loadEpoch=0;
 async function api(path,options={}){
   const res=await fetch(path,options);const body=await res.json();
   if(!res.ok)throw new Error(body.error||'Anfrage fehlgeschlagen');return body;
@@ -23,11 +24,48 @@ function modal(title,contents,onSave,saveLabel='Speichern'){
   };
   dialog.showModal();
 }
-function currentName(){if(folder!==null)return folders.find(f=>f.id===folder)?.name||'Ordner';return ({all:'Alle Gespräche',inbox:'Posteingang',archived:'Archivierte Gespräche',unfiled:'Ohne Gruppe',topics:'Themencluster'})[view]}
-function setView(v,id=null){view=v;folder=id;offset=0;selected=null;details=null;renderSidebar();renderDetail();loadChats()}
-async function loadFolders(){folders=await api('/api/folders');$('stat-folders').textContent=folders.length;renderSidebar()}
+function currentName(){if(smart!==null)return smartFolders.find(f=>f.id===smart)?.name||'Intelligenter Ordner';if(folder!==null)return folders.find(f=>f.id===folder)?.name||'Ordner';return ({all:'Alle Gespräche',inbox:'Posteingang',archived:'Archivierte Gespräche',unfiled:'Ohne Gruppe',topics:'Themencluster'})[view]}
+function setView(v,id=null){smart=null;$('search').disabled=false;$('tag-filter').disabled=false;chosen.clear();renderSelection();view=v;folder=id;offset=0;selected=null;details=null;renderSidebar();renderDetail();loadChats()}
+async function loadFolders(){
+  folders=await api('/api/folders');$('stat-folders').textContent=folders.length;
+  const target=$('bulk-folder'),current=target.value;target.replaceChildren(new Option('Zielordner wählen',''));
+  for(const f of folders)target.add(new Option(f.name,String(f.id)));target.value=current;renderSidebar();
+}
+async function loadOrganisation(){
+  const [tags,smartResult]=await Promise.all([api('/api/tags'),api('/api/smart-folders')]);smartFolders=smartResult;
+  const target=$('tag-filter'),current=target.value;target.replaceChildren(new Option('Alle Tags',''));
+  for(const tag of tags)target.add(new Option(tag.name+' ('+tag.count+')',tag.name));target.value=current;
+  renderSidebar();
+}
+function setSmart(id){
+  const item=smartFolders.find(f=>f.id===id);if(!item)return;
+  smart=id;folder=null;view='all';offset=0;chosen.clear();selected=null;details=null;
+  $('search').value=item.query.q||'';$('search').disabled=true;$('tag-filter').value=item.query.tag||'';$('tag-filter').disabled=true;
+  renderSelection();renderSidebar();renderDetail();loadChats();
+}
+function renderSelection(){
+  $('selected-count').textContent=chosen.size+' ausgewählt';
+  $('bulk-assign').disabled=$('bulk-tags').disabled=!chosen.size;
+  $('select-loaded').checked=chats.length>0&&chats.slice(0,500).every(c=>chosen.has(c.id));
+}
+async function assignChats(ids,target){
+  if(!target){message('Bitte einen Zielordner wählen.',true);return}
+  if(!confirm(ids.length+' Chats zusätzlich diesem Ordner zuordnen?'))return;
+  try{await post('/api/bulk/assign',{conversation_ids:ids,folder_id:Number(target)});chosen.clear();await refresh();renderSelection();message('Chats zugeordnet.')}
+  catch(e){message(e.message,true)}
+}
+function editTags(ids,replace=false){
+  const existing=replace?(details?.tags||[]):[];const tags=field('Tags, durch Komma getrennt',existing.join(', '));
+  modal(replace?'Tags bearbeiten':'Tags zur Auswahl hinzufügen',[tags.wrapper],async()=>{
+    const names=tags.input.value.split(',').map(t=>t.trim()).filter(Boolean);
+    if(replace)await post('/api/tags/set',{conversation_id:ids[0],tags:names});
+    else await post('/api/bulk/tags',{conversation_ids:ids,tags:names});
+    if(selected)await showChat(selected);
+    await loadOrganisation();
+  },'Tags übernehmen');
+}
 function renderSidebar(){
-  document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',folder===null&&view===b.dataset.view));
+  document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',smart===null&&folder===null&&view===b.dataset.view));
   const nav=$('folders');nav.replaceChildren();
   function walk(parent,depth,seen){
     if(depth>15)return;
@@ -36,28 +74,42 @@ function renderSidebar(){
       const b=button('',()=>setView('all',f.id),'folderbtn'+(folder===f.id?' active':''));
       b.style.paddingLeft=(12+depth*13)+'px';const name=element('span','','▤ '+f.name);
       const count=element('small','',String(f.item_count));b.append(name,count);b.title='Ordner öffnen: '+f.name;
+      b.ondragover=e=>{if(e.dataTransfer.types.includes('application/x-chatidy-ids')){e.preventDefault();b.classList.add('drop-target')}};
+      b.ondragleave=()=>b.classList.remove('drop-target');
+      b.ondrop=e=>{e.preventDefault();b.classList.remove('drop-target');try{const ids=JSON.parse(e.dataTransfer.getData('application/x-chatidy-ids'));if(Array.isArray(ids)&&ids.length&&ids.length<=500)assignChats(ids,f.id)}catch(error){message('Ungültige Drag-and-drop-Auswahl.',true)}};
       nav.append(b);walk(f.id,depth+1,new Set([...seen,f.id]));
     }
   }walk(null,0,new Set());
+  const smartNav=$('smart-folders');smartNav.replaceChildren();
+  for(const f of smartFolders){
+    const row=element('div','smart-row');
+    row.append(button('◇ '+f.name,()=>setSmart(f.id),'folderbtn'+(smart===f.id?' active':'')),
+      button('×',async()=>{if(!confirm('Intelligenten Ordner löschen? Chats bleiben erhalten.'))return;try{await post('/api/smart-folders/delete',{id:f.id});if(smart===f.id)setView('all');await loadOrganisation()}catch(e){message(e.message,true)}},'textbtn'));
+    smartNav.append(row);
+  }
 }
 async function loadStats(){const stats=await api('/api/stats');for(const key of ['chats','messages','folders','inbox'])$('stat-'+key).textContent=Number(stats[key]||0).toLocaleString('de-DE');$('count-all').textContent=stats.chats;$('count-inbox').textContent=stats.inbox}
 function date(value){if(!value)return 'Ohne Datum';const number=Number(value);const d=new Date(number<1e11?number*1000:number);return isNaN(d)?'Ohne Datum':d.toLocaleDateString('de-DE')}
 async function loadChats(append=false){
-  if(view==='topics'&&folder===null){return showTopics()}
-  if(loading)return;loading=true;
+  if(append&&loading)return;
+  const epoch=++loadEpoch;
+  if(view==='topics'&&folder===null){loading=false;return showTopics(epoch)}
+  loading=true;
   try{
-    const params=new URLSearchParams();if($('search').value.trim())params.set('q',$('search').value.trim());
+    const params=new URLSearchParams();if(smart!==null)params.set('smart',smart);if($('search').value.trim())params.set('q',$('search').value.trim());
     if(folder!==null)params.set('folder',folder);else params.set('mode',view);
+    if($('tag-filter').value)params.set('tag',$('tag-filter').value);
     params.set('limit',PAGE);params.set('offset',append?offset:0);
     const result=await api('/api/chats?'+params);
+    if(epoch!==loadEpoch)return;
     if(append){chats.push(...result);offset+=result.length}else{chats=result;offset=result.length}
     $('view-title').textContent=currentName();$('results-label').textContent=chats.length+' Ergebnisse geladen';
-    $('more').hidden=result.length<PAGE;renderChats();
-  }catch(e){message('Suche fehlgeschlagen: '+e.message,true)}finally{loading=false}
+    $('more').hidden=result.length<PAGE;renderChats();renderSelection();
+  }catch(e){message('Suche fehlgeschlagen: '+e.message,true)}finally{if(epoch===loadEpoch)loading=false}
 }
-async function showTopics(){
+async function showTopics(epoch){
   try{
-    const topics=await api('/api/topics');const q=$('search').value.trim().toLowerCase();
+    const topics=await api('/api/topics');if(epoch!==loadEpoch)return;const q=$('search').value.trim().toLowerCase();
     const visible=topics.filter(t=>!q||t.label.toLowerCase().includes(q)||t.examples.some(x=>x.toLowerCase().includes(q)));
     $('view-title').textContent='Themencluster';$('results-label').textContent=visible.length+' Themen gefunden';
     $('more').hidden=true;const list=$('chat-list');list.replaceChildren();
@@ -93,19 +145,24 @@ function renderChats(){
   const list=$('chat-list');list.replaceChildren();
   if(!chats.length){list.append(element('div','empty','Noch keine Chats in dieser Ansicht. Importiere einen Export oder passe die Filter an.'));return}
   for(const chat of chats){
-    const b=button('',()=>showChat(chat.id),'chat-card'+(chat.id===selected?' selected':''));
+    const row=element('div','chat-card chat-row'+(chat.id===selected?' selected':''));row.draggable=true;
+    row.ondragstart=e=>{const ids=chosen.has(chat.id)?[...chosen]:[chat.id];e.dataTransfer.setData('application/x-chatidy-ids',JSON.stringify(ids));e.dataTransfer.effectAllowed='copy'};
+    const check=element('input');check.type='checkbox';check.checked=chosen.has(chat.id);check.setAttribute('aria-label','Chat auswählen: '+chat.title);
+    check.onchange=()=>{if(check.checked&&chosen.size>=500){check.checked=false;message('Maximal 500 Chats auswählen.',true);return}check.checked?chosen.add(chat.id):chosen.delete(chat.id);renderSelection()};
+    const b=button('',()=>showChat(chat.id),'chat-open');row.append(check,b);
     b.append(element('div','chat-title',chat.title||'Ohne Titel'));
     const meta=element('div','chat-meta');meta.append(element('span','',date(chat.updated||chat.created)));
     meta.append(element('span','',chat.message_count+' Nachrichten'));
     if(chat.groups_count)meta.append(element('span','pill',chat.groups_count+' Gruppen'));
     if(!chat.reviewed)meta.append(element('span','pill','Neu'));
-    b.append(meta);list.append(b);
+    b.append(meta);list.append(row);
   }
 }
 function renderDetail(){
   const detail=$('detail');detail.replaceChildren();
   if(!details){const blank=element('div','empty detail-empty');blank.append(element('div','empty-icon','✦'),element('strong','','Dein Wissen ist hier.'),element('p','','Wähle einen Chat, um den Verlauf und seine Gruppen zu sehen.'));detail.append(blank);return}
   const c=details.chat;detail.append(element('h2','',c.title),element('div','muted',(c.project?'Projekt: '+c.project+' · ':'')+details.messages.length+' Nachrichten · '+date(c.updated||c.created)));
+  if(c.metadata&&Object.keys(c.metadata).length){const extra=element('details');extra.append(element('summary','','Gesprächsmetadaten'),element('pre','metadata-json',JSON.stringify(c.metadata,null,2)));detail.append(extra)}
   const chips=element('div','chipbox');for(const id of details.folders){const f=folders.find(x=>x.id===id);if(f)chips.append(element('span','chip',f.name))}detail.append(chips);
   const actions=element('div','detail-actions');
   actions.append(button('▤ Gruppen bearbeiten',()=>editGroups(c.id)));
@@ -114,15 +171,22 @@ function renderDetail(){
     try{await post('/api/review',{conversation_id:c.id,reviewed:!c.reviewed});await refresh();await showChat(c.id)}catch(e){message(e.message,true)}
   }));
   actions.append(button('↓ Chat exportieren',()=>exportChats([c.id])));
+  actions.append(button('Tags bearbeiten',()=>editTags([c.id],true)));
   detail.append(actions);
+  const tagChips=element('div','chipbox');for(const name of details.tags||[])tagChips.append(element('span','chip','# '+name));detail.append(tagChips);
   if(details.suggestions.length){
     const info=element('div','notice','KI-Vorschläge: '+details.suggestions.map(x=>folders.find(f=>f.id===x.folder_id)?.name||x.folder_id).join(', ')+' – bitte in Gruppen bearbeiten bestätigen.');
     detail.append(info);
   }
   for(const m of details.messages){
     const box=element('div','bubble '+(m.role==='user'?'user':'assistant'));
-    box.append(element('div','role',m.role==='user'?'DU':m.role==='assistant'?'ASSISTENT':'TOOL'));
-    box.append(document.createTextNode(m.content));detail.append(box);
+    box.append(element('div','role',m.role==='user'?'DU':m.role==='assistant'?'ASSISTENT':String(m.role||'Unbekannt').toUpperCase()));
+    box.append(document.createTextNode(m.content));
+    if(m.metadata&&Object.keys(m.metadata).length){
+      const extra=element('details');extra.append(element('summary','','Quellen, Anhänge und Metadaten'));
+      extra.append(element('pre','metadata-json',JSON.stringify(m.metadata,null,2)));box.append(extra);
+    }
+    detail.append(box);
   }
 }
 async function showChat(id){selected=id;try{details=await api('/api/chat/'+encodeURIComponent(id));renderChats();renderDetail();$('detail').scrollTop=0}catch(e){message(e.message,true)}}
@@ -181,17 +245,54 @@ function exportChats(ids=null){
     message(data.exported.length+' Chats als JSON exportiert.');
   }).catch(e=>message(e.message,true));
 }
-async function refresh(){await Promise.all([loadFolders(),loadStats()]);await loadChats()}
+async function refresh(){await Promise.all([loadFolders(),loadStats(),loadOrganisation()]);await loadChats()}
+let importJob=localStorage.getItem('chatidy-import-job'), importPoll=null;
+async function pollImport(){
+  if(!importJob)return;
+  $('import-status').hidden=false;
+  try{
+    const result=await api('/api/import/jobs/'+importJob);
+    const labels={uploaded:'Upload gespeichert',validating:'Export wird geprüft',committing:'Daten werden atomar übernommen',done:'Import abgeschlossen',error:'Import unterbrochen oder abgelehnt'};
+    $('import-status-text').textContent=(labels[result.state]||result.state)+' · '+(result.validated||0)+' Chats geprüft'+(result.error?' · '+result.error:'');
+    $('resume-import').hidden=result.state==='done';
+    if(result.state==='done'){
+      clearTimeout(importPoll);localStorage.removeItem('chatidy-import-job');importJob=null;
+      $('pick-file').disabled=false;await refresh();return;
+    }
+    if(result.state!=='error')importPoll=setTimeout(pollImport,1500);
+  }catch(e){
+    $('import-status-text').textContent='Importstatus nicht erreichbar: '+e.message;
+    $('resume-import').hidden=false;
+  }
+}
+$('resume-import').onclick=async()=>{
+  if(!importJob)return;
+  try{await post('/api/import/jobs/'+importJob+'/resume',{});clearTimeout(importPoll);pollImport()}
+  catch(e){message(e.message,true)}
+};
 async function importFile(file){
   if(!file)return;
   if(!/\.(json|zip)$/i.test(file.name)){message('Bitte eine ZIP- oder JSON-Datei auswählen.',true);return}
   if(file.size>200*1024*1024){message('Datei zu groß (maximal 200 MB).',true);return}
-  message('Import läuft lokal …');$('pick-file').disabled=true;
-  try{const result=await api('/api/import',{method:'POST',headers:{'Content-Type':'application/octet-stream','X-Filename':file.name.replace(/[^a-zA-Z0-9_.-]/g,'_')},body:file});
-    setView('all');await refresh();message(result.imported+' Chat(s) importiert. Bereits vorhandene Gruppenzuordnungen bleiben erhalten.');
+  $('pick-file').disabled=true;message('Upload läuft lokal …');
+  try{
+    const result=await api('/api/import/jobs',{method:'POST',headers:{'Content-Type':'application/octet-stream','X-Filename':file.name.replace(/[^a-zA-Z0-9_.-]/g,'_')},body:file});
+    importJob=result.id;localStorage.setItem('chatidy-import-job',importJob);clearTimeout(importPoll);pollImport();
   }catch(e){message('Import fehlgeschlagen: '+e.message,true)}finally{$('pick-file').disabled=false}
 }
+if(importJob)pollImport();
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
+$('select-loaded').onchange=()=>{chosen=$('select-loaded').checked?new Set(chats.slice(0,500).map(c=>c.id)):new Set();renderChats();renderSelection()};
+$('bulk-assign').onclick=()=>assignChats([...chosen],$('bulk-folder').value);
+$('bulk-tags').onclick=()=>editTags([...chosen]);
+$('tag-filter').onchange=()=>setView('all');
+$('save-smart').onclick=()=>{
+  const name=field('Name des intelligenten Ordners');
+  modal('Aktuelle Suche speichern',[name.wrapper],async()=>{
+    const query=smart!==null?smartFolders.find(f=>f.id===smart).query:{q:$('search').value,tag:$('tag-filter').value,mode:['all','inbox','archived','unfiled'].includes(view)?view:'all'};
+    await post('/api/smart-folders',{name:name.input.value,query});await loadOrganisation();
+  },'Suche speichern');
+};
 $('new-folder').onclick=createFolder;$('new-rule').onclick=rulesModal;$('export').onclick=()=>exportChats();
 $('refresh').onclick=refresh;$('more').onclick=()=>loadChats(true);$('clear').onclick=()=>{$('search').value='';loadChats()};
 $('search').oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{offset=0;loadChats()},250)};

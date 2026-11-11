@@ -55,11 +55,65 @@ Identische sowie vollständige neuere Exporte bleiben importierbar. Bestehende
 Gruppenzuordnungen und der Review-Status bleiben erhalten. Das Datenbankschema
 wird durch diesen Schutz nicht verändert.
 
+## Sichere Gesprächszweigauswahl
+
+Ein gültiger `current_node` bestimmt ausschließlich seine Elternkette. Zeitstempel
+ändern deren Reihenfolge nicht. Fehlt der aktive Knoten oder verweist er ins
+Leere, wird nur ein einzelner vollständig eindeutiger Verlauf rekonstruiert.
+Mehrere mögliche Zweige, Zyklen, fehlende Eltern und widersprüchliche optionale
+`children`-Listen führen zu einem kontrollierten Importfehler. Auch beschädigte
+inaktive Knoten werden abgelehnt. Nachrichten ohne eigene ID erhalten eine stabile
+ID aus Chat- und Knotenschlüssel; ältere positional erzeugte Fallback-IDs können
+daher vom konservativen Reimport-Schutz abgelehnt werden.
+
+## Große Exporte und wiederaufnehmbare Importjobs
+
+Die Weboberfläche lädt die Datei in einen lokalen Importjob (weiterhin maximal
+200 MB Upload / 350 MB entpacktes JSON). JSON-Arrays werden pro Konversation
+verarbeitet; Einzelkonversationen und `{"conversations": [...]}`-Hüllen benötigen
+weiterhin Speicher für das ganze Objekt. Nach vollständiger Prüfung wird atomar
+in SQLite übernommen. Der bisherige synchrone `/api/import` bleibt kompatibel.
+
+Der Status zeigt die Prüfphase und die Zahl geprüfter Chats. Nach Browser- oder
+Serverneustart kann der letzte Job mit **Import fortsetzen** weiterlaufen. Die
+Quelle wird dabei ab Byte null erneut geprüft; bereits gespeicherte Checkpoints
+werden verifiziert und wiederverwendet. Ein unvollständiger Upload muss erneut
+hochgeladen werden. Ein Prozessabbruch während des SQLite-Commits wird durch die
+Transaktion abgesichert; ein erneutes Übernehmen bleibt idempotent.
+
+Quellen und Checkpoints liegen lokal in `import-jobs/` neben der durch `CHATIDY_DB`
+ausgewählten Datenbank, standardmäßig unter `data/import-jobs/`. Sie enthalten
+private Daten und bleiben bis zur manuellen lokalen Bereinigung erhalten.
+Eigene Datenbankpfade sollten außerhalb des öffentlichen Checkouts liegen.
+Ein einzelner Chat muss weiterhin in den Arbeitsspeicher passen; dies ist kein
+unbegrenzter Import und kein Wiederaufnehmen ab der letzten Upload-Byteposition.
+
 ## Ordner und Regeln
 
 Links in der Navigation auf **+** klicken, um einen Ordner anzulegen. Ordner können Unterordner besitzen. Zum Umbenennen oder Löschen zunächst den betreffenden Ordner öffnen und anschließend erneut **+** wählen. Im Chat auf **Gruppen bearbeiten** klicken, beliebig viele Gruppen auswählen und bestätigen.
 
 Unter **Regeln** legst du Zuordnungen an: Wenn Titel, Chatinhalt oder Projekt einen Begriff enthält, wird der Chat dem ausgewählten Ordner hinzugefügt. Regeln gelten beim Import und werden beim Erstellen auch auf existierende Chats angewendet. Beim Entfernen einer Regel bleiben bereits erfolgte Zuordnungen erhalten.
+
+## Mehrfachauswahl, Tags und intelligente Ordner
+
+- Checkboxen wählen bis zu 500 geladene Chats aus. **Zuordnen** fügt sie nach
+  Bestätigung einem Zielordner hinzu; bestehende Gruppen bleiben erhalten.
+- Ziehe einen Chat oder eine bestehende Auswahl auf einen Ordner. Auch diese
+  zusätzliche Zuordnung verlangt eine Bestätigung. Auf Touch-Geräten dient die
+  Auswahlleiste als Alternative zum nativen Browser-Drag-and-drop.
+- **Tags bearbeiten** im Chat ersetzt dessen Tags nach Bestätigung im Dialog;
+  **Tags hinzufügen** ergänzt Tags für die Auswahl. Tags werden normalisiert und
+  können über das Auswahlfeld gefiltert werden (maximal 20 je Aktion, 60 Zeichen
+  je Name). Gruppenzuordnungen, Tags und Review bleiben bei Reimports erhalten.
+- **Suche speichern** legt einen intelligenten Ordner aus Textsuche, Tag und
+  Bibliotheksansicht an. Er wird bei jedem Öffnen neu ausgewertet und enthält
+  dadurch auch passende später importierte Chats. Die API unterstützt außerdem
+  exakte Projektfilter. Das Löschen eines intelligenten Ordners löscht keine Chats.
+
+Tags und gespeicherte Abfragen werden additiv in Schema 2 eingeführt; Schema 3
+bewahrt die Nachrichtenreihenfolge ausdrücklich statt nach Datum neu zu sortieren.
+Intelligente Ordner sind gespeicherte Suchabfragen, keine automatische KI-Zuordnung.
+Die Auswahl umfasst geladene Ergebnisse, keine unsichtbare Gesamtauswahl.
 
 ## Optionale KI mit Ollama
 
@@ -71,6 +125,25 @@ ollama serve
 ```
 
 KI-Vorschläge werden erst nach einer gesonderten Bestätigung erzeugt. Pro Aufruf werden Titel und höchstens 6000 Zeichen Nachrichten an **127.0.0.1:11434** gesendet. Die KI entscheidet nicht autonom und bearbeitet keine ChatGPT-Inhalte.
+
+## Optionale Extractor-Integration und erhaltene Metadaten
+
+Der unabhängige JSON-Adapter importiert Einzeldateien, JSON-Arrays und ZIPs aus
+`chatgpt-conversation-extractor`. Das externe Werkzeug wird nicht zur Pflicht:
+Offizielle ChatGPT-Exporte funktionieren weiterhin direkt. Zusätzliche
+Gesprächsfelder (z. B. Modelle und Projektinformationen) sowie Nachrichtenfelder
+(Zitate, Quellen, Dateireferenzen und Multimodalitätsdaten) werden lokal als JSON
+aufbewahrt und über Chatansicht und JSON-Export zugänglich. Fehlende Zusatzfelder
+löschen bereits gespeicherte Zusatzfelder beim Reimport nicht; vorhandene Felder
+werden auf oberster Ebene aktualisiert. Codeblöcke bleiben unverändert als Text.
+
+Bild-/Anhangdaten bleiben Referenzen und Metadaten: Es werden keine Binärdateien
+aus Archiven extrahiert, keine entfernten Bilder geladen und keine importierten
+Inhalte ausgeführt. Dies ist noch kein vollständiger Medienbetrachter und kein
+Rundlaufexport im Originalformat. Importformate können unterschiedliche IDs nutzen.
+Die additive Schema-Migration auf Version 1 erhält bestehende Datensätze und
+bricht bei unbekannten neueren Datenbankversionen ab. Vor einem Upgrade empfiehlt
+sich eine lokale Sicherung der geschlossenen Datenbank außerhalb des Repositories.
 
 ## Datenschutz
 
@@ -96,11 +169,24 @@ python -m unittest discover -s tests -v
 ```
 
 GitHub Actions führt die Unit-Tests unter Python 3.11 und 3.13 aus.
+Optionaler echter Browsertest mit installiertem Node, Playwright und Chromium:
+
+```bash
+node tests/browser_smoke.cjs
+```
+
+`CHROMIUM_PATH` kann den Browserpfad überschreiben (Standard `/usr/bin/chromium`).
+Der Test startet selbst einen lokalen Server mit temporärer synthetischer
+Datenbank. Für Screenshots `KEEP_TEST_ARTIFACTS=1` setzen; sonst werden die
+synthetischen Testartefakte nach dem Lauf entfernt.
+
+Den iterativen Entwicklungsstand und die Ergebnisse aller vier Folgephasen
+beschreibt [aktuellerStand.md](aktuellerStand.md).
 
 ## Bekannte Grenzen / Roadmap
 
 - Noch nicht mit einem großen echten ChatGPT-Export end-to-end getestet.
 - Der integrierte Parser importiert überwiegend Text aus dem aktiven Gesprächszweig; Multimodalität, Anhänge und Revisionen werden nicht vollständig übernommen.
-- Semantische Vektorsuche, Drag-and-drop zwischen Ordnern, frei auswählbare Bulk-Aktionen und direkte Python-API-Anbindung an den Extractor stehen aus. Die derzeitigen Themencluster sind deterministisch und dienen der Sichtung.
+- Semantische Vektorsuche, umfassende Bulk-Bearbeitung und direkte Python-API-Anbindung an den Extractor stehen aus. Drag-and-drop ordnet zusätzlich zu, statt Mitgliedschaften zu verschieben. Themencluster sind deterministisch und dienen der Sichtung.
 - Es gibt keine automatische Live-Synchronisierung oder direkte Änderung von Chats auf chatgpt.com.
 - Chatidy ist ein persönlicher, lokal gebundener Dienst und darf nicht öffentlich ins Internet gestellt werden.
