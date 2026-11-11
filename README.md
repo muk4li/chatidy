@@ -54,7 +54,10 @@ KI-Vorschläge werden erst nach einer gesonderten Bestätigung erzeugt. Pro Aufr
 - Optionaler Datenbankpfad: Umgebungsvariable `CHATIDY_DB`.
 - Kein automatisches Senden an OpenAI, keine Zugangsdaten und keine Cloud-API.
 - Die `.gitignore` blendet private Exporte und Datenbanken aus. Dennoch vor jedem Git-Commit Inhalte sorgfältig prüfen.
-- **Achtung: Dieses Repository wurde beim Start als öffentlich erkannt. Bitte auf Private stellen, wenn du später persönlichen Code oder vertrauliche Informationen speichern möchtest.**
+- **Dieses Repository ist und bleibt öffentlich.** Persönliche Exporte, lokale Datenbanken, Anhänge und Zugangsdaten gehören niemals in Git-Commits. Die Anwendung arbeitet auf diesen Daten ausschließlich lokal.
+- Die `.gitignore` deckt die üblichen lokalen Speicherorte, SQLite-WAL/SHM-Dateien, Exportarchive, `.env`-Konfigurationen, Schlüsseldateien und Logs ab. Für eigene Importpfade außerhalb dieser Muster empfiehlt sich `data/` oder `imports/`.
+- **Wichtig:** `.gitignore` schützt nicht vor `git add -f`, bereits versionierten Dateien oder Geheimnissen in ungewöhnlich benannten Dateien. Vor jedem Push `git status --short` und `git diff --cached --name-only` kontrollieren; bei versehentlicher Veröffentlichung müssen sensible Daten zusätzlich aus dem Git-Verlauf entfernt und Zugangsdaten erneuert werden.
+- Für lokale Konfigurationen kannst du `.env` verwenden; dokumentierte, **geheimnisfreie** Vorlagen dürfen als `.env.example` versioniert werden.
 
 ## Bestehende Bausteine / Erweiterungsplan
 
