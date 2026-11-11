@@ -19,10 +19,12 @@ Im Browser **http://127.0.0.1:8877** öffnen und dein offizielles ChatGPT-Export
 ## Funktionen
 
 - ChatGPT-ZIP/JSON importieren; aktive Gesprächszweige aus der Export-Graphstruktur rekonstruieren.
+- JSON-Ausgaben des vorhandenen `chatgpt-conversation-extractor` (einzeln oder als ZIP mit mehreren JSON-Dateien) importieren, inklusive dessen Textrepräsentation.
 - Volltextsuche in Nachrichten und Titeln mit SQLite FTS5.
 - Virtuelle verschachtelte Ordner und mehrere Gruppen pro Chat.
 - Zuordnungen, Ordner und Review-Status bleiben bei erneutem Exportimport erhalten.
 - Intelligenter Posteingang für noch nicht geprüfte Gespräche.
+- Lokale Themencluster aus gemeinsamen Titelbegriffen, Hashtags und vorhandenen Gruppen; bis zu 500 Chats pro Cluster nach Bestätigung gesammelt zuweisen.
 - Regelbasierte Zuordnung anhand von Titel, Nachrichteninhalt und Projektmetadaten.
 - Ollama-Kategorisierung als manuell zu bestätigender Vorschlag.
 - Chatansicht mit Rollen, Nachrichten und Projektmetadaten.
@@ -56,7 +58,7 @@ KI-Vorschläge werden erst nach einer gesonderten Bestätigung erzeugt. Pro Aufr
 
 ## Bestehende Bausteine / Erweiterungsplan
 
-- [chatgpt-conversation-extractor](https://github.com/muk4li/chatgpt-conversation-extractor): bewährte High-Fidelity-Konvertierung. Chatidy verwendet aktuell einen eigenen fokussierten JSON-Importer. Ein Adapter zum vollständigen Extractor ist **noch nicht implementiert** und für komplexe Exportvarianten geplant.
+- [chatgpt-conversation-extractor](https://github.com/muk4li/chatgpt-conversation-extractor): bewährte High-Fidelity-Konvertierung. Chatidy enthält jetzt einen **Adapter für die vom Extractor erzeugten strukturierten JSON-Dateien**. Die vollständige direkte Nutzung seiner Python-API und der erweiterten Metadaten bleibt ein späterer Schritt.
 - [instakram](https://github.com/muk4li/instakram): Vorbild für lokale Ordner, Regeln und Review-Prozesse. Künftige Integration über APIs statt gemeinsamer SQLite-Datei.
 - [chat-organizer-extension](https://github.com/muk4li/chat-organizer-extension): separater Organizer für den Browser. Kein direkter Live-ChatGPT-Zugriff in Chatidy.
 
@@ -72,6 +74,6 @@ GitHub Actions führt die Unit-Tests unter Python 3.11 und 3.13 aus.
 
 - Noch nicht mit einem großen echten ChatGPT-Export end-to-end getestet.
 - Der integrierte Parser importiert überwiegend Text aus dem aktiven Gesprächszweig; Multimodalität, Anhänge und Revisionen werden nicht vollständig übernommen.
-- Semantische Suche, Themencluster, Massenzuordnung, Umzug in Ordner per Drag-and-drop und eine vollständige Extractor-Adapter-Anbindung stehen aus.
+- Semantische Vektorsuche, Drag-and-drop zwischen Ordnern, frei auswählbare Bulk-Aktionen und direkte Python-API-Anbindung an den Extractor stehen aus. Die derzeitigen Themencluster sind deterministisch und dienen der Sichtung.
 - Es gibt keine automatische Live-Synchronisierung oder direkte Änderung von Chats auf chatgpt.com.
 - Chatidy ist ein persönlicher, lokal gebundener Dienst und darf nicht öffentlich ins Internet gestellt werden.
