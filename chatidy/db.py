@@ -133,7 +133,15 @@ def upsert(db, chats):
             db.execute("DELETE FROM messages WHERE conversation_id=?", (cid,))
             messages = [(m["id"],cid,m["role"],m["content"],m.get("timestamp"))
                         for m in chat["messages"]]
-            db.executemany("""INSERT OR REPLACE INTO messages
+            # Message IDs are globally unique in the existing schema. REPLACE
+            # would silently delete another conversation's message on collision.
+            ids = [message[0] for message in messages]
+            if len(ids) != len(set(ids)):
+                raise ValueError("Doppelte Nachrichten-ID innerhalb eines Chats. Import abgebrochen.")
+            if any(db.execute("SELECT 1 FROM messages WHERE id=?", (mid,)).fetchone()
+                   for mid in ids):
+                raise ValueError("Nachrichten-ID bereits in einem anderen Chat vorhanden. Import abgebrochen.")
+            db.executemany("""INSERT INTO messages
                            (id,conversation_id,role,content,timestamp)
                            VALUES(?,?,?,?,?)""",messages)
             db.execute("DELETE FROM search_index WHERE conversation_id=?", (cid,))

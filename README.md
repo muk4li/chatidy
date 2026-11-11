@@ -23,6 +23,9 @@ Im Browser **http://127.0.0.1:8877** öffnen und dein offizielles ChatGPT-Export
 - Volltextsuche in Nachrichten und Titeln mit SQLite FTS5.
 - Virtuelle verschachtelte Ordner und mehrere Gruppen pro Chat.
 - Zuordnungen, Ordner und Review-Status bleiben bei erneutem Exportimport erhalten.
+- Nachrichten-IDs müssen innerhalb und zwischen Chats eindeutig sein. Bei einer
+  Kollision wird der gesamte Import zurückgerollt, statt Nachrichten eines anderen
+  Chats zu überschreiben. Eine Wiederholung desselben Chats bleibt möglich.
 - Intelligenter Posteingang für noch nicht geprüfte Gespräche.
 - Lokale Themencluster aus gemeinsamen Titelbegriffen, Hashtags und vorhandenen Gruppen; bis zu 500 Chats pro Cluster nach Bestätigung gesammelt zuweisen.
 - Regelbasierte Zuordnung anhand von Titel, Nachrichteninhalt und Projektmetadaten.
