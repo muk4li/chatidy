@@ -25,7 +25,7 @@ Syntaxprüfung mit dessen Grammatik geprüft; kein Python-3.10-Lauf behauptet.
 
 1. **ZIP-Import und Fehlerbehandlung härten** – abgeschlossen (erste sichere Version).
    Defektes JSON, ZIP-Bombs, Verschlüsselung und unvollständige Exporte erkennen.
-2. **Große Exporte effizient importieren** – ausstehend.
+2. **Große Exporte effizient importieren** – abgeschlossen (begrenzter Streaming-/Jobpfad).
    Speicherverbrauch reduzieren, Fortschritt anzeigen und unterbrochene Importe
    sicher wiederaufnehmen.
 3. **Extractor-Integration vervollständigen** – ausstehend.
@@ -44,11 +44,26 @@ conversations.json hat weiterhin Vorrang vor beiliegenden Kontometadaten.
 38 Tests erfolgreich, einschließlich kleiner synthetischer ZIP-Bomb und manipulierten
 Verschlüsselungsflags. Kein Test verwendet echte Nutzerdaten.
 
+## Ergebnis Folgephase 2 – große Exporte
+
+Upload in lokalen Dateien statt Bytes-Kopie im Server; JSON-Arrays werden
+konversationsweise mit begrenztem Dekompressionsbudget gelesen. Persistentes
+SQLite-Staging mit SHA-256-Quellenprüfung, Fortschrittsstatus und Fortsetzen nach
+Neustart. Erst die vollständige Prüfung erlaubt einen atomaren Hauptdatenbank-
+Commit. Bestehender synchroner Endpunkt bleibt kompatibel. Die Weboberfläche
+speichert die letzte Job-ID lokal und zeigt Prüfphase und geprüfte Chatanzahl.
+46 Tests erfolgreich, einschließlich HTTP-Jobpfad, simulierter Unterbrechung,
+Commitfehler, nachträglichem JSON-Fehler, Quellenänderung und Speicherregression:
+3.000 synthetische Chats (~12 MB) mit weniger als 2 MB zusätzlich gemessenem
+Python-Speicher beim Streaming.
+Grenzen: ein Chat/Objekt-Envelope passt in RAM; 200/350-MB-Limits bleiben. Bei Resume
+wird die Quelle von vorn gelesen, Checkpoints werden verifiziert. Upload-Abbrüche
+brauchen erneuten Upload. Jobdaten bleiben privat lokal bis zur manuellen Bereinigung.
+
 ## Nächster interner Arbeitsauftrag
 
-Implementiere einen lokalen, speicherschonenden Importpfad für große JSON-Arrays
-und ZIP-Dateien. Speichere Uploads lokal, trenne überprüfbares Staging vom atomaren
-Übernehmen, zeige Fortschritt und ermögliche das Wiederaufnehmen eines Jobs nach
-Prozessunterbrechung. Behalte den bisherigen HTTP-Import kompatibel. Kein partieller
-Datenbestand darf nach einem Fehler sichtbar werden. Teste Abbruch/Wiederaufnahme
-und dokumentiere Grenzen sowie den Folgeauftrag für die Extractor-Integration.
+Erweitere den optionalen Extractor-JSON-Adapter ohne dessen Parsing neu zu bauen.
+Erhalte zusätzliche Metadaten, Zitate, Dateien, Bild-/Anhangreferenzen und Code
+verlustärmer. Nutze nachvollziehbare additive Migrationen und Tests für bestehende
+Datenbanken. Keine automatischen Downloads und keine Ausführung importierter
+Inhalte. Aktualisiere Status und Folgeauftrag für UI/Organisation.

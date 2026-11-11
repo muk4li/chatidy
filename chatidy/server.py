@@ -10,6 +10,7 @@ from .db import (connect, list_chats, list_folders, chat_detail, upsert, stats,
                  create_folder, change_folder, assign, create_rule, validate_folder)
 from .importer import parse_export, MAX_UPLOAD
 from .topics import topics
+from . import jobs
 
 ROOT=Path(__file__).resolve().parent.parent
 MAX_BODY=MAX_UPLOAD
@@ -62,6 +63,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(200,(ROOT/file).read_bytes(),kind)
         query=parse_qs(urlsplit(self.path).query)
         try:
+            if path.startswith("/api/import/jobs/"):
+                return self.send(200, jobs.public_status(path.removeprefix("/api/import/jobs/")))
             with connect() as db:
                 if path=="/api/stats":
                     return self.send(200,stats(db))
@@ -95,6 +98,16 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(403,{"error":"Ungültiger Host oder Origin."})
         path=urlsplit(self.path).path
         try:
+            if path=="/api/import/jobs":
+                job_id = jobs.create(self.rfile, int(self.headers.get("Content-Length", "0")),
+                                     self.headers.get("X-Filename", "export.zip"))
+                jobs.start(job_id)
+                return self.send(202, jobs.public_status(job_id))
+            if path.startswith("/api/import/jobs/") and path.endswith("/resume"):
+                self.get_json()
+                job_id = path.removeprefix("/api/import/jobs/").removesuffix("/resume")
+                jobs.start(job_id)
+                return self.send(202, jobs.public_status(job_id))
             if path=="/api/import":
                 raw=self.read_body()
                 name=self.headers.get("X-Filename","export.zip")

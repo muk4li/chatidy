@@ -182,15 +182,41 @@ function exportChats(ids=null){
   }).catch(e=>message(e.message,true));
 }
 async function refresh(){await Promise.all([loadFolders(),loadStats()]);await loadChats()}
+let importJob=localStorage.getItem('chatidy-import-job'), importPoll=null;
+async function pollImport(){
+  if(!importJob)return;
+  $('import-status').hidden=false;
+  try{
+    const result=await api('/api/import/jobs/'+importJob);
+    const labels={uploaded:'Upload gespeichert',validating:'Export wird geprüft',committing:'Daten werden atomar übernommen',done:'Import abgeschlossen',error:'Import unterbrochen oder abgelehnt'};
+    $('import-status-text').textContent=(labels[result.state]||result.state)+' · '+(result.validated||0)+' Chats geprüft'+(result.error?' · '+result.error:'');
+    $('resume-import').hidden=result.state==='done';
+    if(result.state==='done'){
+      clearTimeout(importPoll);localStorage.removeItem('chatidy-import-job');importJob=null;
+      $('pick-file').disabled=false;await refresh();return;
+    }
+    importPoll=setTimeout(pollImport,1500);
+  }catch(e){
+    $('import-status-text').textContent='Importstatus nicht erreichbar: '+e.message;
+    $('resume-import').hidden=false;
+  }
+}
+$('resume-import').onclick=async()=>{
+  if(!importJob)return;
+  try{await post('/api/import/jobs/'+importJob+'/resume',{});clearTimeout(importPoll);pollImport()}
+  catch(e){message(e.message,true)}
+};
 async function importFile(file){
   if(!file)return;
   if(!/\.(json|zip)$/i.test(file.name)){message('Bitte eine ZIP- oder JSON-Datei auswählen.',true);return}
   if(file.size>200*1024*1024){message('Datei zu groß (maximal 200 MB).',true);return}
-  message('Import läuft lokal …');$('pick-file').disabled=true;
-  try{const result=await api('/api/import',{method:'POST',headers:{'Content-Type':'application/octet-stream','X-Filename':file.name.replace(/[^a-zA-Z0-9_.-]/g,'_')},body:file});
-    setView('all');await refresh();message(result.imported+' Chat(s) importiert. Bereits vorhandene Gruppenzuordnungen bleiben erhalten.');
+  $('pick-file').disabled=true;message('Upload läuft lokal …');
+  try{
+    const result=await api('/api/import/jobs',{method:'POST',headers:{'Content-Type':'application/octet-stream','X-Filename':file.name.replace(/[^a-zA-Z0-9_.-]/g,'_')},body:file});
+    importJob=result.id;localStorage.setItem('chatidy-import-job',importJob);clearTimeout(importPoll);pollImport();
   }catch(e){message('Import fehlgeschlagen: '+e.message,true)}finally{$('pick-file').disabled=false}
 }
+if(importJob)pollImport();
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
 $('new-folder').onclick=createFolder;$('new-rule').onclick=rulesModal;$('export').onclick=()=>exportChats();
 $('refresh').onclick=refresh;$('more').onclick=()=>loadChats(true);$('clear').onclick=()=>{$('search').value='';loadChats()};

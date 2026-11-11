@@ -55,6 +55,28 @@ Identische sowie vollständige neuere Exporte bleiben importierbar. Bestehende
 Gruppenzuordnungen und der Review-Status bleiben erhalten. Das Datenbankschema
 wird durch diesen Schutz nicht verändert.
 
+## Große Exporte und wiederaufnehmbare Importjobs
+
+Die Weboberfläche lädt die Datei in einen lokalen Importjob (weiterhin maximal
+200 MB Upload / 350 MB entpacktes JSON). JSON-Arrays werden pro Konversation
+verarbeitet; Einzelkonversationen und `{"conversations": [...]}`-Hüllen benötigen
+weiterhin Speicher für das ganze Objekt. Nach vollständiger Prüfung wird atomar
+in SQLite übernommen. Der bisherige synchrone `/api/import` bleibt kompatibel.
+
+Der Status zeigt die Prüfphase und die Zahl geprüfter Chats. Nach Browser- oder
+Serverneustart kann der letzte Job mit **Import fortsetzen** weiterlaufen. Die
+Quelle wird dabei ab Byte null erneut geprüft; bereits gespeicherte Checkpoints
+werden verifiziert und wiederverwendet. Ein unvollständiger Upload muss erneut
+hochgeladen werden. Ein Prozessabbruch während des SQLite-Commits wird durch die
+Transaktion abgesichert; ein erneutes Übernehmen bleibt idempotent.
+
+Quellen und Checkpoints liegen lokal in `import-jobs/` neben der durch `CHATIDY_DB`
+ausgewählten Datenbank, standardmäßig unter `data/import-jobs/`. Sie enthalten
+private Daten und bleiben bis zur manuellen lokalen Bereinigung erhalten.
+Eigene Datenbankpfade sollten außerhalb des öffentlichen Checkouts liegen.
+Ein einzelner Chat muss weiterhin in den Arbeitsspeicher passen; dies ist kein
+unbegrenzter Import und kein Wiederaufnehmen ab der letzten Upload-Byteposition.
+
 ## Ordner und Regeln
 
 Links in der Navigation auf **+** klicken, um einen Ordner anzulegen. Ordner können Unterordner besitzen. Zum Umbenennen oder Löschen zunächst den betreffenden Ordner öffnen und anschließend erneut **+** wählen. Im Chat auf **Gruppen bearbeiten** klicken, beliebig viele Gruppen auswählen und bestätigen.

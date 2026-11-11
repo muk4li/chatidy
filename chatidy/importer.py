@@ -6,6 +6,7 @@ import zlib
 from pathlib import PurePosixPath
 from datetime import datetime
 from .graph import selected_branch
+from .streaming import json_values
 
 MAX_UPLOAD = 200 * 1024 * 1024
 MAX_UNCOMPRESSED = 350 * 1024 * 1024
@@ -127,50 +128,65 @@ def decode_json(data):
         raise ValueError("Ungültiges oder unvollständiges JSON im Export.") from exc
 
 
-def parse_export(data, name):
-    if len(data)>MAX_UPLOAD:
+def archive_entries(archive):
+    all_entries = archive.infolist()
+    entries = [x for x in all_entries if not x.is_dir()
+               and PurePosixPath(x.filename).suffix.lower() == ".json"]
+    if len(all_entries) > MAX_ENTRIES or sum(x.file_size for x in entries) > MAX_UNCOMPRESSED:
+        raise ValueError("ZIP enthält zu viele bzw. zu große JSON-Dateien.")
+    if any(x.flag_bits & 1 for x in all_entries):
+        raise ValueError("Verschlüsselte ZIP-Archive werden nicht unterstützt.")
+    if len({x.filename for x in entries}) != len(entries):
+        raise ValueError("Doppelte JSON-Dateinamen im ZIP-Archiv.")
+    named = [x for x in entries if PurePosixPath(x.filename).name == "conversations.json"]
+    if len(named) > 1:
+        raise ValueError("Mehrere conversations.json im ZIP-Archiv: Auswahl mehrdeutig.")
+    entries = named if named else entries
+    if not entries:
+        raise ValueError("Keine ChatGPT-JSON-Dateien gefunden.")
+    for item in entries:
+        if (item.file_size and not item.compress_size) or (item.compress_size and item.file_size/item.compress_size > 500):
+            raise ValueError("Verdächtige ZIP-Kompressionsrate.")
+    return entries
+
+
+def iter_export(source, name):
+    """Yield normalized chats from a seekable binary stream without array buffering.
+
+    Consumers must stage or transact the entire iterator: a late error invalidates
+    the whole export. JSON metadata envelopes still require one object in memory.
+    """
+    source.seek(0, 2)
+    if source.tell() > MAX_UPLOAD:
         raise ValueError("Datei größer als 200 MB.")
-    roots=[]
+    source.seek(0)
+    budget = [MAX_UNCOMPRESSED]
+    decoder = json.JSONDecoder(object_pairs_hook=unique_object, parse_constant=invalid_constant)
+    seen = set()
+
+    def chats(member):
+        for root in json_values(member, budget, decoder):
+            for chat in parse_root(root):
+                if chat["id"] in seen:
+                    raise ValueError("Doppelte Konversations-ID im Export. Import abgebrochen.")
+                seen.add(chat["id"])
+                yield chat
+
     if name.lower().endswith(".zip"):
         try:
-            with zipfile.ZipFile(io.BytesIO(data)) as archive:
-                entries=[x for x in archive.infolist()
-                         if not x.is_dir() and PurePosixPath(x.filename).suffix.lower()==".json"]
-                if len(archive.infolist())>MAX_ENTRIES or sum(x.file_size for x in entries)>MAX_UNCOMPRESSED:
-                    raise ValueError("ZIP enthält zu viele bzw. zu große JSON-Dateien.")
-                if any(x.flag_bits & 1 for x in archive.infolist()):
-                    raise ValueError("Verschlüsselte ZIP-Archive werden nicht unterstützt.")
-                if len({x.filename for x in entries}) != len(entries):
-                    raise ValueError("Doppelte JSON-Dateinamen im ZIP-Archiv.")
-                named=[x for x in entries if PurePosixPath(x.filename).name=="conversations.json"]
-                if len(named)>1:
-                    raise ValueError("Mehrere conversations.json im ZIP-Archiv: Auswahl mehrdeutig.")
-                entries=named if named else entries
-                if not entries:
-                    raise ValueError("Keine ChatGPT-JSON-Dateien gefunden.")
-                for item in entries:
-                    if (item.file_size and not item.compress_size) or (item.compress_size and item.file_size/item.compress_size>500):
-                        raise ValueError("Verdächtige ZIP-Kompressionsrate.")
-                    try:
-                        with archive.open(item) as member:
-                            payload = member.read(MAX_UNCOMPRESSED + 1)
-                        if len(payload) > MAX_UNCOMPRESSED:
-                            raise ValueError("Entpacktes JSON überschreitet das Größenlimit.")
-                        roots.append(decode_json(payload))
-                    except (ValueError,UnicodeError) as exc:
-                        raise ValueError("JSON im Archiv ungültig oder unvollständig.") from exc
+            with zipfile.ZipFile(source) as archive:
+                for item in archive_entries(archive):
+                    with archive.open(item) as member:
+                        yield from chats(member)
         except (zipfile.BadZipFile, zlib.error, RuntimeError, NotImplementedError, EOFError) as exc:
             raise ValueError("Ungültiges ZIP-Archiv.") from exc
     elif name.lower().endswith(".json"):
-        roots=[decode_json(data)]
+        yield from chats(source)
     else:
         raise ValueError("Bitte eine .zip- oder .json-Datei wählen.")
-    merged={}
-    for root in roots:
-        for chat in parse_root(root):
-            if chat["id"] in merged:
-                raise ValueError("Doppelte Konversations-ID im Export. Import abgebrochen.")
-            merged[chat["id"]]=chat
-    if not merged:
+    if not seen:
         raise ValueError("Keine erkennbaren ChatGPT-Konversationen gefunden.")
-    return list(merged.values())
+
+
+def parse_export(data, name):
+    return list(iter_export(io.BytesIO(data), name))
