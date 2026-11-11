@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+data/
+*.sqlite*
+*.db
+*.zip
+conversations.json
+exports/
+output/
+.DS_Store
+.pytest_cache/
