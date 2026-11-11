@@ -1,6 +1,8 @@
 """SQLite persistence, multi-folder assignments, rules, reviews and full-text indexing."""
 import os
 import math
+import json
+from .migrations import check_version, migrate
 import sqlite3
 from pathlib import Path
 
@@ -14,6 +16,11 @@ def connect(path=None):
     path.parent.mkdir(parents=True, exist_ok=True)
     db = sqlite3.connect(path, timeout=20)
     db.row_factory = sqlite3.Row
+    try:
+        check_version(db)
+    except Exception:
+        db.close()
+        raise
     db.execute("PRAGMA foreign_keys=ON")
     db.execute("PRAGMA busy_timeout=20000")
     db.execute("PRAGMA journal_mode=WAL")
@@ -53,6 +60,11 @@ def connect(path=None):
         conversation_id UNINDEXED, title, body, tokenize='unicode61'
       );
     """)
+    try:
+        migrate(db)
+    except Exception:
+        db.close()
+        raise
     for name in ("ChatGPT", "Projekte", "Wissen", "Privat", "Favoriten"):
         db.execute("INSERT OR IGNORE INTO folders(name,parent_id) VALUES(?,NULL)", (name,))
     group = db.execute("SELECT id FROM folders WHERE name='Wissen' AND parent_id IS NULL").fetchone()[0]
@@ -146,26 +158,33 @@ def upsert(db, chats):
             if len(ids) != len(messages):
                 raise ValueError("Doppelte Nachrichten-ID innerhalb eines Chats. Import abgebrochen.")
             updated = _import_timestamp(chat.get("updated"))
-            existing = db.execute("SELECT updated FROM conversations WHERE id=?", (cid,)).fetchone()
+            existing = db.execute("SELECT updated,metadata FROM conversations WHERE id=?", (cid,)).fetchone()
+            old_messages = {row["id"]: row["metadata"] for row in db.execute(
+                "SELECT id,metadata FROM messages WHERE conversation_id=?", (cid,))}
+            for index, message in enumerate(chat["messages"]):
+                metadata = json.loads(old_messages.get(message["id"], '{}'))
+                metadata.update(message.get("metadata", {}))
+                messages[index] = messages[index] + (json.dumps(metadata, ensure_ascii=False),)
+            metadata = json.loads(existing["metadata"]) if existing else {}
+            metadata.update(chat.get("metadata", {}))
             if existing:
                 previous = _import_timestamp(existing["updated"])
                 if previous is not None and (updated is None or updated < previous):
                     raise ValueError("Reimport ist älter oder hat keinen Änderungszeitpunkt. "
                                      "Bitte einen aktuellen vollständigen Export verwenden. Import abgebrochen.")
-                stored_ids = {row[0] for row in db.execute(
-                    "SELECT id FROM messages WHERE conversation_id=?", (cid,))}
+                stored_ids = set(old_messages)
                 if not stored_ids.issubset(ids):
                     raise ValueError("Reimport enthält nicht alle gespeicherten Nachrichten. "
                                      "Bitte einen vollständigen Export desselben Gesprächszweigs verwenden. "
                                      "Import abgebrochen.")
             db.execute("""
-              INSERT INTO conversations(id,title,created,updated,project,archived)
-              VALUES(?,?,?,?,?,?)
+              INSERT INTO conversations(id,title,created,updated,project,archived,metadata)
+              VALUES(?,?,?,?,?,?,?)
               ON CONFLICT(id) DO UPDATE SET title=excluded.title,
               created=excluded.created,updated=excluded.updated,
-              project=excluded.project,archived=excluded.archived
+              project=excluded.project,archived=excluded.archived,metadata=excluded.metadata
             """, (cid, chat["title"],chat.get("created"),updated,
-                  chat.get("project") or "",int(chat.get("archived",False))))
+                  chat.get("project") or "",int(chat.get("archived",False)),json.dumps(metadata, ensure_ascii=False)))
             db.execute("DELETE FROM messages WHERE conversation_id=?", (cid,))
             # Message IDs are globally unique in the existing schema. REPLACE
             # would silently delete another conversation's message on collision.
@@ -173,8 +192,8 @@ def upsert(db, chats):
                    for mid in ids):
                 raise ValueError("Nachrichten-ID bereits in einem anderen Chat vorhanden. Import abgebrochen.")
             db.executemany("""INSERT INTO messages
-                           (id,conversation_id,role,content,timestamp)
-                           VALUES(?,?,?,?,?)""",messages)
+                           (id,conversation_id,role,content,timestamp,metadata)
+                           VALUES(?,?,?,?,?,?)""",messages)
             db.execute("DELETE FROM search_index WHERE conversation_id=?", (cid,))
             db.execute("INSERT INTO search_index(conversation_id,title,body) VALUES(?,?,?)",
                        (cid,chat["title"],"\n".join(m["content"] for m in chat["messages"])))
@@ -209,9 +228,15 @@ def chat_detail(db, chat_id):
     row = db.execute("SELECT * FROM conversations WHERE id=?", (chat_id,)).fetchone()
     if row is None:
         return None
-    return {"chat":dict(row),
-            "messages":[dict(m) for m in db.execute(
-                "SELECT role,content,timestamp FROM messages WHERE conversation_id=? ORDER BY COALESCE(timestamp,0),rowid",(chat_id,))],
+    chat = dict(row)
+    chat["metadata"] = json.loads(chat["metadata"])
+    messages = []
+    for message in db.execute("SELECT role,content,timestamp,metadata FROM messages WHERE conversation_id=? ORDER BY COALESCE(timestamp,0),rowid", (chat_id,)):
+        item = dict(message)
+        item["metadata"] = json.loads(item["metadata"])
+        messages.append(item)
+    return {"chat":chat,
+            "messages":messages,
             "folders":[x[0] for x in db.execute(
                 "SELECT folder_id FROM memberships WHERE conversation_id=?",(chat_id,))],
             "suggestions":[dict(x) for x in db.execute(

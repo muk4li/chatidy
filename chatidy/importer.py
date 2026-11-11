@@ -44,18 +44,26 @@ def parse_chat(raw):
     for node_id, message in chain:
         author = message.get("author") or {}
         role = author.get("role", "unknown") if isinstance(author, dict) else "unknown"
-        if role not in ("user", "assistant", "tool"):
+        if role not in ("user", "assistant", "tool", "system", "developer"):
             continue
         body = content_text(message)
+        if not body.strip() and isinstance(message.get("metadata"), dict) and message["metadata"].get("attachments"):
+            body = "[Anhang ohne Text]"
+        if not body.strip() and isinstance(message.get("content"), dict):
+            content = message["content"]
+            if content.get("content_type") not in (None, "text"):
+                body = "[Nicht-textueller Inhalt]"
         if not body.strip():
             continue
         messages.append({"id": str(message.get("id") or f"{raw['id']}:node:{node_id}"),
                          "role": role, "content": body,
-                         "timestamp": message.get("create_time")})
+                         "timestamp": message.get("create_time"),
+                         "metadata": {"source": "chatgpt", "node_id": node_id, **message}})
     return {"id": str(raw["id"]), "title": str(raw.get("title") or "Ohne Titel"),
             "created": raw.get("create_time"), "updated": raw.get("update_time"),
             "project": str(raw.get("conversation_template_id") or ""),
             "archived": bool(raw.get("is_archived", False)),
+            "metadata": {"source": "chatgpt", **{k:v for k,v in raw.items() if k != "mapping"}},
             "messages": messages}
 
 def unix_time(value):
@@ -75,19 +83,26 @@ def parse_extractor_chat(raw):
     cid=str(raw["id"])
     messages=[]
     for index,item in enumerate(raw["messages"]):
-        if not isinstance(item,dict) or not isinstance(item.get("content"),str):
+        if not isinstance(item,dict):
+            raise ValueError("Ungültige Extractor-Nachricht.")
+        body = item.get("content", "")
+        if not isinstance(body, str):
+            body = content_text(item)
+        if not body.strip() and any(item.get(k) for k in ("files", "images", "attachments", "citations")):
+            body = "[Anhang oder Quelle ohne Text]"
+        if not body.strip():
             continue
-        if not item["content"].strip():
-            continue
-        messages.append({"id":f"{cid}:extractor:{index}",
+        messages.append({"id":str(item.get("id") or f"{cid}:extractor:{index}"),
                          "role":str(item.get("role") or "unknown"),
-                         "content":item["content"],
-                         "timestamp":unix_time(item.get("timestamp"))})
+                         "content":body,
+                         "timestamp":unix_time(item.get("timestamp")),
+                         "metadata":{"source":"extractor", **item}})
     return {"id":cid,"title":str(raw.get("title") or "Ohne Titel"),
             "created":unix_time(raw.get("created")),
             "updated":unix_time(raw.get("updated")),
             "project":str(raw.get("project_id") or ""),
             "archived":bool(raw.get("archived",False)),
+            "metadata":{"source":"extractor", **{k:v for k,v in raw.items() if k != "messages"}},
             "messages":messages}
 
 def parse_root(root):

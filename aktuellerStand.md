@@ -28,7 +28,7 @@ Syntaxprüfung mit dessen Grammatik geprüft; kein Python-3.10-Lauf behauptet.
 2. **Große Exporte effizient importieren** – abgeschlossen (begrenzter Streaming-/Jobpfad).
    Speicherverbrauch reduzieren, Fortschritt anzeigen und unterbrochene Importe
    sicher wiederaufnehmen.
-3. **Extractor-Integration vervollständigen** – ausstehend.
+3. **Extractor-Integration vervollständigen** – abgeschlossen (verlustärmerer JSON-Adapter).
    Metadaten, Bilder-/Anhangreferenzen, Code und weitere Inhalte verlustärmer
    erhalten, ohne Cloud-Aufrufe oder erzwungene externe Abhängigkeit.
 4. **UI und Organisation ausbauen** – ausstehend.
@@ -60,10 +60,24 @@ Grenzen: ein Chat/Objekt-Envelope passt in RAM; 200/350-MB-Limits bleiben. Bei R
 wird die Quelle von vorn gelesen, Checkpoints werden verifiziert. Upload-Abbrüche
 brauchen erneuten Upload. Jobdaten bleiben privat lokal bis zur manuellen Bereinigung.
 
+## Ergebnis Folgephase 3 – optionale Extractor-Integration
+
+Gesprächs-/Nachrichten-Zusatzdaten, Modellfelder, Zitate, Quellen und Datei-/Bild-
+referenzen werden als lokale JSON-Metadaten gespeichert und im Detail/Export
+sichtbar. Code bleibt unveränderter Text. Nichttextuelle Inhalte mit Referenzen
+werden nicht mehr allein wegen fehlenden Textes verworfen. Fehlende Zusatzfelder
+erhalten vorhandene Werte auf oberster Ebene. Keine Binärdateiextraktion, keine
+Downloads und keine neue Pflichtabhängigkeit. Additive transaktionale Migration
+auf Schema 1, inklusive Zukunftsversionsschutz. 51 Tests erfolgreich; Migration
+bestehender Daten, Wiederöffnung, Migrations-Rollback und Metadaten-Rundlauf geprüft.
+Grenzen: Binäranhänge und alle alternativen Zweige bleiben außerhalb des Adapters;
+die Originalformat-Serialisierung wird nicht nachgebildet.
+
 ## Nächster interner Arbeitsauftrag
 
-Erweitere den optionalen Extractor-JSON-Adapter ohne dessen Parsing neu zu bauen.
-Erhalte zusätzliche Metadaten, Zitate, Dateien, Bild-/Anhangreferenzen und Code
-verlustärmer. Nutze nachvollziehbare additive Migrationen und Tests für bestehende
-Datenbanken. Keine automatischen Downloads und keine Ausführung importierter
-Inhalte. Aktualisiere Status und Folgeauftrag für UI/Organisation.
+Baue eine kleine vollständige Organisationsversion: Mehrfachauswahl geladener
+Chats mit bestätigter Bulk-Zuordnung, Drag-and-drop zum zusätzlichen Zuordnen,
+lokale Tags und gespeicherte dynamische Suchansichten als intelligente Ordner.
+Nutze additive Migrationen, Eingabevalidierung, sichere DOM-Darstellung und Tests
+für die API sowie einen echten Browsertest. Aktualisiere diesen Status mit den
+Ergebnissen und konkreten verbleibenden Grenzen; keine weiteren Phasen erfinden.

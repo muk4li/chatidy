@@ -106,6 +106,7 @@ function renderDetail(){
   const detail=$('detail');detail.replaceChildren();
   if(!details){const blank=element('div','empty detail-empty');blank.append(element('div','empty-icon','✦'),element('strong','','Dein Wissen ist hier.'),element('p','','Wähle einen Chat, um den Verlauf und seine Gruppen zu sehen.'));detail.append(blank);return}
   const c=details.chat;detail.append(element('h2','',c.title),element('div','muted',(c.project?'Projekt: '+c.project+' · ':'')+details.messages.length+' Nachrichten · '+date(c.updated||c.created)));
+  if(c.metadata&&Object.keys(c.metadata).length){const extra=element('details');extra.append(element('summary','','Gesprächsmetadaten'),element('pre','metadata-json',JSON.stringify(c.metadata,null,2)));detail.append(extra)}
   const chips=element('div','chipbox');for(const id of details.folders){const f=folders.find(x=>x.id===id);if(f)chips.append(element('span','chip',f.name))}detail.append(chips);
   const actions=element('div','detail-actions');
   actions.append(button('▤ Gruppen bearbeiten',()=>editGroups(c.id)));
@@ -121,8 +122,13 @@ function renderDetail(){
   }
   for(const m of details.messages){
     const box=element('div','bubble '+(m.role==='user'?'user':'assistant'));
-    box.append(element('div','role',m.role==='user'?'DU':m.role==='assistant'?'ASSISTENT':'TOOL'));
-    box.append(document.createTextNode(m.content));detail.append(box);
+    box.append(element('div','role',m.role==='user'?'DU':m.role==='assistant'?'ASSISTENT':String(m.role||'Unbekannt').toUpperCase()));
+    box.append(document.createTextNode(m.content));
+    if(m.metadata&&Object.keys(m.metadata).length){
+      const extra=element('details');extra.append(element('summary','','Quellen, Anhänge und Metadaten'));
+      extra.append(element('pre','metadata-json',JSON.stringify(m.metadata,null,2)));box.append(extra);
+    }
+    detail.append(box);
   }
 }
 async function showChat(id){selected=id;try{details=await api('/api/chat/'+encodeURIComponent(id));renderChats();renderDetail();$('detail').scrollTop=0}catch(e){message(e.message,true)}}

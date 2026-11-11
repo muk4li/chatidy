@@ -94,6 +94,25 @@ ollama serve
 
 KI-Vorschläge werden erst nach einer gesonderten Bestätigung erzeugt. Pro Aufruf werden Titel und höchstens 6000 Zeichen Nachrichten an **127.0.0.1:11434** gesendet. Die KI entscheidet nicht autonom und bearbeitet keine ChatGPT-Inhalte.
 
+## Optionale Extractor-Integration und erhaltene Metadaten
+
+Der unabhängige JSON-Adapter importiert Einzeldateien, JSON-Arrays und ZIPs aus
+`chatgpt-conversation-extractor`. Das externe Werkzeug wird nicht zur Pflicht:
+Offizielle ChatGPT-Exporte funktionieren weiterhin direkt. Zusätzliche
+Gesprächsfelder (z. B. Modelle und Projektinformationen) sowie Nachrichtenfelder
+(Zitate, Quellen, Dateireferenzen und Multimodalitätsdaten) werden lokal als JSON
+aufbewahrt und über Chatansicht und JSON-Export zugänglich. Fehlende Zusatzfelder
+löschen bereits gespeicherte Zusatzfelder beim Reimport nicht; vorhandene Felder
+werden auf oberster Ebene aktualisiert. Codeblöcke bleiben unverändert als Text.
+
+Bild-/Anhangdaten bleiben Referenzen und Metadaten: Es werden keine Binärdateien
+aus Archiven extrahiert, keine entfernten Bilder geladen und keine importierten
+Inhalte ausgeführt. Dies ist noch kein vollständiger Medienbetrachter und kein
+Rundlaufexport im Originalformat. Importformate können unterschiedliche IDs nutzen.
+Die additive Schema-Migration auf Version 1 erhält bestehende Datensätze und
+bricht bei unbekannten neueren Datenbankversionen ab. Vor einem Upgrade empfiehlt
+sich eine lokale Sicherung der geschlossenen Datenbank außerhalb des Repositories.
+
 ## Datenschutz
 
 - Exportdateien und SQLite-Datenbank liegen ausschließlich lokal; Chatidy speichert unter `data/chatidy.sqlite3`.
