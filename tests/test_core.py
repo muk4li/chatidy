@@ -28,6 +28,16 @@ class ImporterTests(unittest.TestCase):
         buff=io.BytesIO()
         with zipfile.ZipFile(buff,"w") as archive: archive.writestr("nested/conversations.json",data)
         self.assertEqual(len(parse_export(buff.getvalue(),"export.zip")),1)
+    def test_extractor_json_adapter(self):
+        source={"id":"high-fidelity-1","title":"Extractor Export",
+                "created":"2026-11-11T10:20:00Z","project_id":"project-123",
+                "messages":[{"role":"user","content":"Hallo","timestamp":"2026-11-11T10:20:01Z"},
+                            {"role":"assistant","content":"Antwort","timestamp":"2026-11-11T10:20:02Z"}]}
+        parsed=parse_export(json.dumps(source).encode(),"extractor.json")
+        self.assertEqual(parsed[0]["project"],"project-123")
+        self.assertEqual(len(parsed[0]["messages"]),2)
+        self.assertTrue(parsed[0]["messages"][0]["timestamp"]>0)
+
     def test_reject_bad_export(self):
         with self.assertRaises(ValueError):parse_export(b'{"wrong": "format"}',"conversations.json")
         with self.assertRaises(ValueError):parse_export(b"hello","export.txt")
