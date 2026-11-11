@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark"><title>Chatidy — Dein Wissensarchiv</title>
+<link rel="stylesheet" href="/style.css">
+<script defer src="/app.js"></script>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark">✳</span><div>chatidy<small>PERSONAL KNOWLEDGE</small></div></div>
+    <div class="sidebar-section">
+      <p class="label">BIBLIOTHEK</p>
+      <nav id="views">
+        <button class="navitem active" data-view="all"><span>◈</span> Alle Chats <b id="count-all"></b></button>
+        <button class="navitem" data-view="inbox"><span>⌑</span> Posteingang <b id="count-inbox"></b></button>
+        <button class="navitem" data-view="archived"><span>▣</span> Archiviert</button>
+        <button class="navitem" data-view="unfiled"><span>◇</span> Ohne Gruppe</button>
+      </nav>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-header"><p class="label">ORDNER & GRUPPEN</p><button class="iconbtn" id="new-folder" title="Ordner erstellen" aria-label="Ordner erstellen">＋</button></div>
+      <nav id="folders" class="folder-tree"></nav>
+    </div>
+    <div class="spacer"></div>
+    <div class="local-note"><span>♢ Lokal & geschützt</span><p>Alle Chatverläufe bleiben auf diesem Computer. KI-Vorschläge werden nur auf ausdrücklichen Wunsch an lokales Ollama geschickt.</p></div>
+  </aside>
+  <main>
+    <div class="topline"><span>DEIN PERSÖNLICHER WORKSPACE</span><span class="local-pill">● LOCAL FIRST</span></div>
+    <header class="hero"><h1>Deine Gedanken.<br><em>Wiedergefunden.</em></h1><p>Importiere ChatGPT-Verläufe, entdecke Wissen wieder und organisiere Gespräche ganz nach deinen Regeln.</p></header>
+    <section class="import-zone" id="dropzone">
+      <div class="import-icon">↥</div>
+      <div class="import-description"><strong>ChatGPT-Export importieren</strong><span>ZIP oder conversations.json hier ablegen · lokal verarbeitet · keine Synchronisierung</span></div>
+      <button id="pick-file" class="primary">Datei auswählen</button>
+      <input id="file-input" type="file" accept=".zip,.json" hidden>
+    </section>
+    <div class="notice" id="notice" role="status" hidden></div>
+    <section class="metrics">
+      <div class="metric"><span>GESPRÄCHE</span><strong id="stat-chats">0</strong><small>Importierte Chats</small></div>
+      <div class="metric"><span>NACHRICHTEN</span><strong id="stat-messages">0</strong><small>Volltextsuche verfügbar</small></div>
+      <div class="metric"><span>ORDNER</span><strong id="stat-folders">0</strong><small>Mehrfachzuordnung möglich</small></div>
+      <div class="metric"><span>POSTEINGANG</span><strong id="stat-inbox">0</strong><small>Noch zu prüfen</small></div>
+    </section>
+    <section class="library">
+      <div class="library-header">
+        <div><p class="label">DEINE SAMMLUNG</p><h2 id="view-title">Alle Chats</h2></div>
+        <div class="actionrow">
+          <button id="new-rule" class="soft">⚙ Regeln</button>
+          <button id="export" class="soft">↓ Export</button>
+        </div>
+      </div>
+      <div class="toolbar">
+        <input id="search" type="search" placeholder="⌕  Titel, Nachrichten oder Code durchsuchen …" aria-label="Chat-Suche">
+        <button id="clear" class="soft" title="Suche leeren">×</button>
+      </div>
+      <div class="workspace">
+        <div class="chatpane">
+          <div class="sectionbar"><span id="results-label">0 Ergebnisse</span><button class="textbtn" id="refresh">↻ Aktualisieren</button></div>
+          <div id="chat-list" class="chat-list"><div class="empty">Importiere deinen Export, um die Bibliothek zu füllen.</div></div>
+          <button class="soft loadmore" id="more" hidden>Weitere Chats laden</button>
+        </div>
+        <div class="detailpane" id="detail">
+          <div class="empty detail-empty"><div class="empty-icon">✦</div><strong>Dein Wissen ist hier.</strong><p>Wähle links einen Chat, um Nachrichten, Kategorien und Vorschläge anzusehen.</p></div>
+        </div>
+      </div>
+    </section>
+    <footer>Chatidy · Lokaler ChatGPT-Export-Organizer · Keine Änderung an deinem ChatGPT-Account</footer>
+  </main>
+</div>
+<dialog id="modal"><form method="dialog"><div class="modal-top"><h2 id="modal-title">Aktion</h2><button value="cancel" class="iconbtn" aria-label="Schließen">×</button></div><div id="modal-content"></div><div class="modal-actions"><button value="cancel" class="soft">Abbrechen</button><button id="modal-confirm" value="ok" class="primary">Speichern</button></div></form></dialog>
+</body>
+</html>
