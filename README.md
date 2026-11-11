@@ -34,6 +34,27 @@ Im Browser **http://127.0.0.1:8877** öffnen und dein offizielles ChatGPT-Export
 - Export von bis zu 500 Gesprächen in strukturiertes JSON.
 - Lokaler Webserver (127.0.0.1) ohne ChatGPT-Login und ohne Cloud-Sync.
 
+## Sichere Wiederholungsimporte
+
+Ein Reimport muss alle bereits gespeicherten Nachrichten-IDs des betreffenden
+Chats enthalten. Verkürzte Exporte, leere Verläufe und Gesprächszweigwechsel,
+bei denen gespeicherte Nachrichten entfallen würden, werden abgelehnt. Es werden
+keine Zweige automatisch zusammengeführt oder Nachrichten stillschweigend gelöscht.
+
+Ist ein Änderungszeitpunkt gespeichert, muss der Reimport einen gültigen,
+mindestens ebenso aktuellen Änderungszeitpunkt enthalten. Fehlt dieser oder ist
+der Export älter, bricht der gesamte Dateiimport ab; auch vorher in diesem Import
+verarbeitete Chats bleiben unverändert. Verwende dann einen aktuellen,
+vollständigen Export desselben Gesprächszweigs. Ohne Änderungszeitpunkte auf
+beiden Seiten ist nur die Prüfung der Nachrichten-IDs möglich. Gleiche IDs können
+weiterhin aktualisierte Inhalte enthalten; eine vollständige Versionshistorie
+speichert Chatidy derzeit nicht. Ein Wechsel zwischen Original- und
+Extractor-Import kann wegen unterschiedlicher Nachrichten-IDs abgelehnt werden.
+
+Identische sowie vollständige neuere Exporte bleiben importierbar. Bestehende
+Gruppenzuordnungen und der Review-Status bleiben erhalten. Das Datenbankschema
+wird durch diesen Schutz nicht verändert.
+
 ## Ordner und Regeln
 
 Links in der Navigation auf **+** klicken, um einen Ordner anzulegen. Ordner können Unterordner besitzen. Zum Umbenennen oder Löschen zunächst den betreffenden Ordner öffnen und anschließend erneut **+** wählen. Im Chat auf **Gruppen bearbeiten** klicken, beliebig viele Gruppen auswählen und bestätigen.

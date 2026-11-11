@@ -1,5 +1,6 @@
 """SQLite persistence, multi-folder assignments, rules, reviews and full-text indexing."""
 import os
+import math
 import sqlite3
 from pathlib import Path
 
@@ -117,27 +118,57 @@ def apply_rules(db, chat_id):
             db.execute("""INSERT OR IGNORE INTO memberships(conversation_id,folder_id,origin)
                           VALUES(?,?,'rule')""", (chat_id,rule["folder_id"]))
 
+def _import_timestamp(value):
+    """Accept finite Unix timestamps; missing dates cannot prove freshness."""
+    if value is None:
+        return None
+    try:
+        timestamp = float(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ValueError("Ungültiger Änderungszeitpunkt. Import abgebrochen.") from exc
+    if isinstance(value, bool) or not math.isfinite(timestamp):
+        raise ValueError("Ungültiger Änderungszeitpunkt. Import abgebrochen.")
+    return timestamp
+
+
 def upsert(db, chats):
     count = 0
     with db:
+        # Reimport validation and writes must observe the same database state.
+        # Reserve the writer before reading, including when the first chat exists.
+        if not db.in_transaction:
+            db.execute("BEGIN IMMEDIATE")
         for chat in chats:
             cid = chat["id"]
+            messages = [(m["id"],cid,m["role"],m["content"],m.get("timestamp"))
+                        for m in chat["messages"]]
+            ids = {message[0] for message in messages}
+            if len(ids) != len(messages):
+                raise ValueError("Doppelte Nachrichten-ID innerhalb eines Chats. Import abgebrochen.")
+            updated = _import_timestamp(chat.get("updated"))
+            existing = db.execute("SELECT updated FROM conversations WHERE id=?", (cid,)).fetchone()
+            if existing:
+                previous = _import_timestamp(existing["updated"])
+                if previous is not None and (updated is None or updated < previous):
+                    raise ValueError("Reimport ist älter oder hat keinen Änderungszeitpunkt. "
+                                     "Bitte einen aktuellen vollständigen Export verwenden. Import abgebrochen.")
+                stored_ids = {row[0] for row in db.execute(
+                    "SELECT id FROM messages WHERE conversation_id=?", (cid,))}
+                if not stored_ids.issubset(ids):
+                    raise ValueError("Reimport enthält nicht alle gespeicherten Nachrichten. "
+                                     "Bitte einen vollständigen Export desselben Gesprächszweigs verwenden. "
+                                     "Import abgebrochen.")
             db.execute("""
               INSERT INTO conversations(id,title,created,updated,project,archived)
               VALUES(?,?,?,?,?,?)
               ON CONFLICT(id) DO UPDATE SET title=excluded.title,
               created=excluded.created,updated=excluded.updated,
               project=excluded.project,archived=excluded.archived
-            """, (cid, chat["title"],chat.get("created"),chat.get("updated"),
+            """, (cid, chat["title"],chat.get("created"),updated,
                   chat.get("project") or "",int(chat.get("archived",False))))
             db.execute("DELETE FROM messages WHERE conversation_id=?", (cid,))
-            messages = [(m["id"],cid,m["role"],m["content"],m.get("timestamp"))
-                        for m in chat["messages"]]
             # Message IDs are globally unique in the existing schema. REPLACE
             # would silently delete another conversation's message on collision.
-            ids = [message[0] for message in messages]
-            if len(ids) != len(set(ids)):
-                raise ValueError("Doppelte Nachrichten-ID innerhalb eines Chats. Import abgebrochen.")
             if any(db.execute("SELECT 1 FROM messages WHERE id=?", (mid,)).fetchone()
                    for mid in ids):
                 raise ValueError("Nachrichten-ID bereits in einem anderen Chat vorhanden. Import abgebrochen.")

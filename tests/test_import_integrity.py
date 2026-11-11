@@ -35,7 +35,8 @@ class ImportIntegrityTests(unittest.TestCase):
             f'SELECT * FROM {table} ORDER BY rowid')] for table in tables}
 
     def test_collision_with_existing_chat_rolls_back_entire_batch(self):
-        replacement = chat('first', 'replacement', 'Changed synthetic text')
+        replacement = copy.deepcopy(self.original)
+        replacement['messages'].extend(chat('first', 'replacement', 'Changed synthetic text')['messages'])
         with self.assertRaisesRegex(ValueError, 'anderen Chat'):
             upsert(self.db, [replacement, chat('second', 'replacement')])
         self.assertEqual(self.snapshot(), self.before)

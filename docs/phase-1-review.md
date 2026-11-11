@@ -28,7 +28,7 @@ Die verfolgten Dateien enthalten Quellcode, Dokumentation und synthetische Tests
 
 Priorisierte Restarbeiten:
 
-1. Reimport-Regeln für unvollständige/ältere Exporte definieren; aktuell ersetzt ein gültiger Reimport den Nachrichtenbestand eines Chats.
+1. Reimport-Schutz ist im nachfolgenden Schritt implementiert (siehe unten). Versionshistorie, explizit bestätigte Zweigwechsel und verlustfreie Metadatenaktualisierung bleiben offen.
 2. Ohne gültiges current_node werden derzeit alle Graphnachrichten nach Zeit sortiert; alternative Zweige können vermischt werden. Fehlerhafte Graphverweise und Metadaten brauchen weitere Tests.
 3. ZIP-Bomb-/Größenprüfungen sind vorhanden, aber Sicherheitsregressionen und Behandlung verschlüsselter/defekter Mitglieder sollten ausgebaut werden. Mehrdatei-ZIPs überspringen derzeit teilweise ungültiges JSON.
 4. Upload und JSON-Verarbeitung erfolgen im Speicher; Größenlimits sind kein Streaming. Große echte Exporte wurden nicht getestet.
@@ -36,3 +36,35 @@ Priorisierte Restarbeiten:
 6. Extractor-Metadaten, Zitate und Multimodalität schrittweise verlustärmer übernehmen; derzeit werden Anhänge überwiegend als Platzhalter dargestellt. Markdown wird sicher als Text gezeigt.
 
 Phase 1 insgesamt ist mit diesem ersten abgegrenzten Schritt noch nicht abgeschlossen.
+
+## Folgeschritt: konservativer Reimport-Schutz
+
+Ausgangspunkt: `916ef99` auf main. Implementiert auf einem separaten Branch;
+der Merge bleibt dem Nutzer überlassen.
+
+- Bereits gespeicherte Nachrichten-IDs müssen im Reimport vollständig enthalten sein.
+  Sonst wird die gesamte Transaktion abgebrochen. Das gilt auch bei einer gleich
+  großen Nachrichtenzahl mit anderen IDs und bei neueren Änderungszeitpunkten.
+- Wenn ein Änderungszeitpunkt gespeichert ist, sind ältere Exporte und Exporte
+  ohne Änderungszeitpunkt gesperrt. Angegebene Zeitpunkte müssen endliche
+  numerische Unix-Zeitstempel sein (Extractor-ISO-Daten normalisiert der Adapter).
+- Ein Schreib-Lock wird vor der ersten Datenbankabfrage reserviert, damit sich
+  der zu prüfende Bestand nicht zwischen Prüfung und Aktualisierung ändern kann.
+- Identische Importe und vollständige neuere Inhalte einschließlich weiterer
+  Nachrichten funktionieren weiter. Ordner, Review, Regeln und Vorschläge bleiben
+  erhalten. Kein neues Schema, keine Migration und keine externe Abhängigkeit.
+- 25 Tests erfolgreich unter Python 3.12, einschließlich automatisiertem HTTP-Test
+  für offiziellen Import, Ablehnung verkürzter/älterer Exporte, Suche und Export.
+  Rollbacks werden auch nach Wiederöffnung der Datenbank geprüft. Ausgewählte
+  neue Regressionstests erzeugen am ursprünglichen main erwartungsgemäß sechs
+  Assertion-Fehlschläge ohne Infrastrukturfehler.
+- GitHub Issues, PRs und Actions-Ergebnisse wurden erneut abgefragt, bleiben aber
+  durch API `Forbidden` nicht einsehbar. Lokale Tests ersetzen keine CI-Bestätigung.
+
+Bewusste Grenzen: Es gibt noch keinen bestätigten destruktiven Ersetzungsmodus.
+Zweigwechsel und Wechsel des Importformats mit anderen Nachrichten-IDs sind
+deshalb konservativ gesperrt. Fehlen auf beiden Seiten Änderungszeitpunkte,
+kann das Alter nicht beurteilt werden. Inhalte derselben ID können weiterhin
+ersetzt werden; das ist keine Erkennung aller Textkürzungen. Metadaten wie Titel,
+Projekt und Archivstatus brauchen weiterhin eine eigene Strategie für fehlende
+Felder. Historisch bereits verlorene Inhalte werden nicht wiederhergestellt.
