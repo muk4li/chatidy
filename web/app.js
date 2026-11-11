@@ -23,7 +23,7 @@ function modal(title,contents,onSave,saveLabel='Speichern'){
   };
   dialog.showModal();
 }
-function currentName(){if(folder!==null)return folders.find(f=>f.id===folder)?.name||'Ordner';return ({all:'Alle Gespräche',inbox:'Posteingang',archived:'Archivierte Gespräche',unfiled:'Ohne Gruppe'})[view]}
+function currentName(){if(folder!==null)return folders.find(f=>f.id===folder)?.name||'Ordner';return ({all:'Alle Gespräche',inbox:'Posteingang',archived:'Archivierte Gespräche',unfiled:'Ohne Gruppe',topics:'Themencluster'})[view]}
 function setView(v,id=null){view=v;folder=id;offset=0;selected=null;details=null;renderSidebar();renderDetail();loadChats()}
 async function loadFolders(){folders=await api('/api/folders');$('stat-folders').textContent=folders.length;renderSidebar()}
 function renderSidebar(){
@@ -43,6 +43,7 @@ function renderSidebar(){
 async function loadStats(){const stats=await api('/api/stats');for(const key of ['chats','messages','folders','inbox'])$('stat-'+key).textContent=Number(stats[key]||0).toLocaleString('de-DE');$('count-all').textContent=stats.chats;$('count-inbox').textContent=stats.inbox}
 function date(value){if(!value)return 'Ohne Datum';const number=Number(value);const d=new Date(number<1e11?number*1000:number);return isNaN(d)?'Ohne Datum':d.toLocaleDateString('de-DE')}
 async function loadChats(append=false){
+  if(view==='topics'&&folder===null){return showTopics()}
   if(loading)return;loading=true;
   try{
     const params=new URLSearchParams();if($('search').value.trim())params.set('q',$('search').value.trim());
@@ -53,6 +54,40 @@ async function loadChats(append=false){
     $('view-title').textContent=currentName();$('results-label').textContent=chats.length+' Ergebnisse geladen';
     $('more').hidden=result.length<PAGE;renderChats();
   }catch(e){message('Suche fehlgeschlagen: '+e.message,true)}finally{loading=false}
+}
+async function showTopics(){
+  try{
+    const topics=await api('/api/topics');const q=$('search').value.trim().toLowerCase();
+    const visible=topics.filter(t=>!q||t.label.toLowerCase().includes(q)||t.examples.some(x=>x.toLowerCase().includes(q)));
+    $('view-title').textContent='Themencluster';$('results-label').textContent=visible.length+' Themen gefunden';
+    $('more').hidden=true;const list=$('chat-list');list.replaceChildren();
+    if(!visible.length){list.append(element('div','empty','Noch keine Themen erkannt. Importiere Chats mit ähnlichen Titeln oder Hashtags.'));return}
+    for(const topic of visible){
+      const b=button('',()=>showTopicDetail(topic),'chat-card');
+      b.append(element('div','chat-title',topic.type==='hashtag'?'# '+topic.label:topic.label));
+      const meta=element('div','chat-meta');meta.append(element('span','',topic.count+' Chats'),element('span','pill',topic.type==='group'?'Ordner':topic.type==='title'?'Titel':'Hashtag'));b.append(meta);
+      list.append(b);
+    }
+  }catch(e){message(e.message,true)}
+}
+function showTopicDetail(topic){
+  details=null;selected=null;
+  const panel=$('detail');panel.replaceChildren();
+  panel.append(element('h2','',topic.label));
+  panel.append(element('p','muted',topic.count+' unterschiedliche Gespräche · '+topic.type+'. Themen sind unverbindliche lokale Ansichten, keine KI-Videoanalyse.'));
+  panel.append(element('h3','','Beispielgespräche'));
+  for(const title of topic.examples)panel.append(element('div','bubble',title));
+  panel.append(button('↗ Chats dieses Themas zuordnen',()=>{
+    const target=select('Zielgruppe',folders.map(f=>[f.id,f.name]));
+    modal('Themencluster zu Gruppe hinzufügen',[
+      element('p','muted','Bis zu 500 Chats werden nach deiner Bestätigung zusätzlich einer Gruppe zugeordnet. Bestehende Zuordnungen bleiben erhalten.'),
+      target.wrapper
+    ],async()=>{
+      if(!confirm(topic.conversation_ids.length+' Chats zu dieser Gruppe hinzufügen?'))return;
+      const response=await post('/api/bulk/assign',{conversation_ids:topic.conversation_ids,folder_id:Number(target.input.value)});
+      message(response.assigned+' Chats zugeordnet.');await refresh();
+    },'Zuordnung bestätigen')
+  },'primary'));
 }
 function renderChats(){
   const list=$('chat-list');list.replaceChildren();
