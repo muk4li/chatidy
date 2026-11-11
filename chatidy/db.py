@@ -150,7 +150,7 @@ def list_chats(db, q="", folder=None, mode="all", limit=250, offset=0):
              FROM conversations c WHERE 1=1"""
     args=[]
     if q.strip():
-        sql+=" AND EXISTS(SELECT 1 FROM search_index s WHERE s.conversation_id=c.id AND s.search_index MATCH ?)"
+        sql+=" AND EXISTS(SELECT 1 FROM search_index s WHERE s.conversation_id=c.id AND search_index MATCH ?)"
         # Quote user text as a literal phrase, escaping FTS query syntax.
         args.append('"'+q.strip().replace('"','""')+'"')
     if folder is not None:
