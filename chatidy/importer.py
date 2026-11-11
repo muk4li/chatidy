@@ -4,6 +4,7 @@ import json
 import zipfile
 from pathlib import PurePosixPath
 from datetime import datetime
+from .graph import selected_branch
 
 MAX_UPLOAD = 200 * 1024 * 1024
 MAX_UNCOMPRESSED = 350 * 1024 * 1024
@@ -35,27 +36,9 @@ def content_text(message):
 def parse_chat(raw):
     if not isinstance(raw, dict) or not raw.get("id"):
         return None
-    mapping = raw.get("mapping")
-    if not isinstance(mapping, dict):
-        return None
-    current = raw.get("current_node")
-    chain, seen = [], set()
-    if current in mapping:
-        while current in mapping and current not in seen:
-            seen.add(current)
-            node = mapping[current]
-            if not isinstance(node, dict):
-                break
-            if isinstance(node.get("message"), dict):
-                chain.append(node["message"])
-            current = node.get("parent")
-        chain.reverse()
-    else:
-        chain = [v["message"] for v in mapping.values()
-                 if isinstance(v, dict) and isinstance(v.get("message"), dict)]
-        chain.sort(key=lambda m: m.get("create_time") or 0)
+    chain = selected_branch(raw.get("mapping"), raw.get("current_node"))
     messages = []
-    for i, message in enumerate(chain):
+    for node_id, message in chain:
         author = message.get("author") or {}
         role = author.get("role", "unknown") if isinstance(author, dict) else "unknown"
         if role not in ("user", "assistant", "tool"):
@@ -63,7 +46,7 @@ def parse_chat(raw):
         body = content_text(message)
         if not body.strip():
             continue
-        messages.append({"id": str(message.get("id") or f"{raw['id']}:{i}"),
+        messages.append({"id": str(message.get("id") or f"{raw['id']}:node:{node_id}"),
                          "role": role, "content": body,
                          "timestamp": message.get("create_time")})
     return {"id": str(raw["id"]), "title": str(raw.get("title") or "Ohne Titel"),
