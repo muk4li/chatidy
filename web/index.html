@@ -24,6 +24,7 @@
       <div class="sidebar-header"><p class="label">ORDNER & GRUPPEN</p><button class="iconbtn" id="new-folder" title="Ordner erstellen" aria-label="Ordner erstellen">＋</button></div>
       <nav id="folders" class="folder-tree"></nav>
     </div>
+    <div class="sidebar-section"><p class="label">INTELLIGENTE ORDNER</p><nav id="smart-folders"></nav></div>
     <div class="spacer"></div>
     <div class="local-note"><span>♢ Lokal & geschützt</span><p>Alle Chatverläufe bleiben auf diesem Computer. KI-Vorschläge werden nur auf ausdrücklichen Wunsch an lokales Ollama geschickt.</p></div>
   </aside>
@@ -49,16 +50,25 @@
         <div><p class="label">DEINE SAMMLUNG</p><h2 id="view-title">Alle Chats</h2></div>
         <div class="actionrow">
           <button id="new-rule" class="soft">⚙ Regeln</button>
+          <button id="save-smart" class="soft">Suche speichern</button>
           <button id="export" class="soft">↓ Export</button>
         </div>
       </div>
       <div class="toolbar">
         <input id="search" type="search" placeholder="⌕  Titel, Nachrichten oder Code durchsuchen …" aria-label="Chat-Suche">
+        <select id="tag-filter" aria-label="Nach Tag filtern"><option value="">Alle Tags</option></select>
         <button id="clear" class="soft" title="Suche leeren">×</button>
       </div>
       <div class="workspace">
         <div class="chatpane">
           <div class="sectionbar"><span id="results-label">0 Ergebnisse</span><button class="textbtn" id="refresh">↻ Aktualisieren</button></div>
+          <div class="bulkbar">
+            <label><input id="select-loaded" type="checkbox"> Geladene auswählen (max. 500)</label>
+            <span id="selected-count" role="status">0 ausgewählt</span>
+            <select id="bulk-folder" aria-label="Zielordner für Auswahl"></select>
+            <button id="bulk-assign" class="soft" disabled>Zuordnen</button>
+            <button id="bulk-tags" class="soft" disabled>Tags hinzufügen</button>
+          </div>
           <div id="chat-list" class="chat-list"><div class="empty">Importiere deinen Export, um die Bibliothek zu füllen.</div></div>
           <button class="soft loadmore" id="more" hidden>Weitere Chats laden</button>
         </div>

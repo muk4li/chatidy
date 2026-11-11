@@ -10,7 +10,7 @@ from .db import (connect, list_chats, list_folders, chat_detail, upsert, stats,
                  create_folder, change_folder, assign, create_rule, validate_folder)
 from .importer import parse_export, MAX_UPLOAD
 from .topics import topics
-from . import jobs
+from . import jobs, organisation
 
 ROOT=Path(__file__).resolve().parent.parent
 MAX_BODY=MAX_UPLOAD
@@ -66,16 +66,22 @@ class Handler(BaseHTTPRequestHandler):
             if path.startswith("/api/import/jobs/"):
                 return self.send(200, jobs.public_status(path.removeprefix("/api/import/jobs/")))
             with connect() as db:
+                if path=="/api/tags":
+                    return self.send(200, organisation.tags(db))
+                if path=="/api/smart-folders":
+                    return self.send(200, organisation.smart_folders(db))
                 if path=="/api/stats":
                     return self.send(200,stats(db))
                 if path=="/api/folders":
                     return self.send(200,list_folders(db))
                 if path=="/api/chats":
+                    options = {key: query[key][0] for key in ("q", "mode", "tag", "project") if key in query}
+                    if "smart" in query:
+                        options = organisation.smart_query(db, int(query["smart"][0]))
                     folder=int(query["folder"][0]) if "folder" in query else None
-                    return self.send(200,list_chats(db,query.get("q",[""])[0],folder,
-                                     query.get("mode",["all"])[0],
-                                     int(query.get("limit",[250])[0]),
-                                     int(query.get("offset",[0])[0])))
+                    return self.send(200,list_chats(db, folder=folder,
+                                     limit=int(query.get("limit",[250])[0]),
+                                     offset=int(query.get("offset",[0])[0]), **options))
                 if path.startswith("/api/chat/"):
                     item=chat_detail(db,path.removeprefix("/api/chat/"))
                     return self.send(200,item) if item else self.send(404,{"error":"Chat nicht gefunden"})
@@ -117,6 +123,18 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(200,{"imported":count})
             value=self.get_json()
             with connect() as db:
+                if path=="/api/tags/set":
+                    return self.send(200, {"updated": organisation.apply_tags(db,
+                        [value["conversation_id"]], value["tags"], replace=True)})
+                if path=="/api/bulk/tags":
+                    return self.send(200, {"updated": organisation.apply_tags(db,
+                        value["conversation_ids"], value["tags"])})
+                if path=="/api/smart-folders":
+                    return self.send(200, {"id": organisation.create_smart_folder(db,
+                        value["name"], value["query"])})
+                if path=="/api/smart-folders/delete":
+                    organisation.delete_smart_folder(db, int(value["id"]))
+                    return self.send(200, {"ok": True})
                 if path=="/api/folders":
                     fid=create_folder(db,value.get("name",""),value.get("parent_id"))
                     return self.send(200,{"id":fid})

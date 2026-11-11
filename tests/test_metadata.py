@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 from chatidy.db import connect, upsert, chat_detail
 from chatidy.importer import parse_export
-from chatidy.migrations import migrate
+from chatidy.migrations import migrate, LATEST
 
 
 class MetadataTests(unittest.TestCase):
@@ -61,7 +61,7 @@ class MetadataTests(unittest.TestCase):
             for _ in range(2):
                 db = connect(path)
                 try:
-                    self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0], 1)
+                    self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0], LATEST)
                     self.assertEqual(chat_detail(db, 'old')['chat']['reviewed'], 1)
                     self.assertEqual(chat_detail(db, 'old')['messages'][0]['metadata'], {})
                     self.assertEqual(db.execute('PRAGMA integrity_check').fetchone()[0], 'ok')
@@ -72,7 +72,7 @@ class MetadataTests(unittest.TestCase):
         db = sqlite3.connect(':memory:')
         try:
             db.executescript('CREATE TABLE conversations(id TEXT);CREATE TABLE messages(id TEXT);')
-            with patch('chatidy.migrations.MIGRATIONS', {1: (
+            with patch('chatidy.migrations.LATEST', 1), patch('chatidy.migrations.MIGRATIONS', {1: (
                     "ALTER TABLE conversations ADD COLUMN metadata TEXT", 'INVALID SQL')}):
                 with self.assertRaises(sqlite3.OperationalError):
                     migrate(db)

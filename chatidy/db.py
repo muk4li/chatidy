@@ -164,7 +164,7 @@ def upsert(db, chats):
             for index, message in enumerate(chat["messages"]):
                 metadata = json.loads(old_messages.get(message["id"], '{}'))
                 metadata.update(message.get("metadata", {}))
-                messages[index] = messages[index] + (json.dumps(metadata, ensure_ascii=False),)
+                messages[index] = messages[index] + (json.dumps(metadata, ensure_ascii=False), index)
             metadata = json.loads(existing["metadata"]) if existing else {}
             metadata.update(chat.get("metadata", {}))
             if existing:
@@ -192,8 +192,8 @@ def upsert(db, chats):
                    for mid in ids):
                 raise ValueError("Nachrichten-ID bereits in einem anderen Chat vorhanden. Import abgebrochen.")
             db.executemany("""INSERT INTO messages
-                           (id,conversation_id,role,content,timestamp,metadata)
-                           VALUES(?,?,?,?,?,?)""",messages)
+                           (id,conversation_id,role,content,timestamp,metadata,position)
+                           VALUES(?,?,?,?,?,?,?)""",messages)
             db.execute("DELETE FROM search_index WHERE conversation_id=?", (cid,))
             db.execute("INSERT INTO search_index(conversation_id,title,body) VALUES(?,?,?)",
                        (cid,chat["title"],"\n".join(m["content"] for m in chat["messages"])))
@@ -201,7 +201,7 @@ def upsert(db, chats):
             count+=1
     return count
 
-def list_chats(db, q="", folder=None, mode="all", limit=250, offset=0):
+def list_chats(db, q="", folder=None, mode="all", limit=250, offset=0, tag=None, project=None):
     sql="""SELECT c.*, (SELECT COUNT(*) FROM messages m WHERE m.conversation_id=c.id)
              AS message_count,
              (SELECT COUNT(*) FROM memberships g WHERE g.conversation_id=c.id) AS groups_count
@@ -214,6 +214,12 @@ def list_chats(db, q="", folder=None, mode="all", limit=250, offset=0):
     if folder is not None:
         sql+=" AND EXISTS(SELECT 1 FROM memberships g WHERE g.conversation_id=c.id AND g.folder_id=?)"
         args.append(folder)
+    if tag:
+        sql+=" AND EXISTS(SELECT 1 FROM chat_tags ct JOIN tags t ON t.id=ct.tag_id WHERE ct.conversation_id=c.id AND t.name=?)"
+        args.append(str(tag).strip().casefold())
+    if project:
+        sql+=" AND c.project=?"
+        args.append(project)
     if mode=="inbox":
         sql+=" AND c.reviewed=0"
     elif mode=="archived":
@@ -231,11 +237,12 @@ def chat_detail(db, chat_id):
     chat = dict(row)
     chat["metadata"] = json.loads(chat["metadata"])
     messages = []
-    for message in db.execute("SELECT role,content,timestamp,metadata FROM messages WHERE conversation_id=? ORDER BY COALESCE(timestamp,0),rowid", (chat_id,)):
+    for message in db.execute("SELECT role,content,timestamp,metadata FROM messages WHERE conversation_id=? ORDER BY position,rowid", (chat_id,)):
         item = dict(message)
         item["metadata"] = json.loads(item["metadata"])
         messages.append(item)
     return {"chat":chat,
+            "tags":[r[0] for r in db.execute("SELECT t.name FROM tags t JOIN chat_tags ct ON t.id=ct.tag_id WHERE ct.conversation_id=? ORDER BY t.name", (chat_id,))],
             "messages":messages,
             "folders":[x[0] for x in db.execute(
                 "SELECT folder_id FROM memberships WHERE conversation_id=?",(chat_id,))],

@@ -135,7 +135,8 @@ def run(job_id):
 
 def start(job_id):
     path = str(job_path(job_id))
-    status(job_id)
+    if status(job_id)['state'] == 'done':
+        return
     with _lock:
         if path in _active:
             return

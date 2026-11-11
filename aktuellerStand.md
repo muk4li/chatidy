@@ -31,7 +31,7 @@ Syntaxprüfung mit dessen Grammatik geprüft; kein Python-3.10-Lauf behauptet.
 3. **Extractor-Integration vervollständigen** – abgeschlossen (verlustärmerer JSON-Adapter).
    Metadaten, Bilder-/Anhangreferenzen, Code und weitere Inhalte verlustärmer
    erhalten, ohne Cloud-Aufrufe oder erzwungene externe Abhängigkeit.
-4. **UI und Organisation ausbauen** – ausstehend.
+4. **UI und Organisation ausbauen** – abgeschlossen (nutzbare erste Organisationsversion).
    Mehrfachauswahl, Drag-and-drop, Tags und intelligente Ordner auf stabiler Basis.
 
 ## Ergebnis Folgephase 1 – ZIP und Fehlerbehandlung
@@ -73,11 +73,63 @@ bestehender Daten, Wiederöffnung, Migrations-Rollback und Metadaten-Rundlauf ge
 Grenzen: Binäranhänge und alle alternativen Zweige bleiben außerhalb des Adapters;
 die Originalformat-Serialisierung wird nicht nachgebildet.
 
-## Nächster interner Arbeitsauftrag
+## Ergebnis Folgephase 4 – UI und Organisation
 
-Baue eine kleine vollständige Organisationsversion: Mehrfachauswahl geladener
-Chats mit bestätigter Bulk-Zuordnung, Drag-and-drop zum zusätzlichen Zuordnen,
-lokale Tags und gespeicherte dynamische Suchansichten als intelligente Ordner.
-Nutze additive Migrationen, Eingabevalidierung, sichere DOM-Darstellung und Tests
-für die API sowie einen echten Browsertest. Aktualisiere diesen Status mit den
-Ergebnissen und konkreten verbleibenden Grenzen; keine weiteren Phasen erfinden.
+Mehrfachauswahl bis 500 geladener Chats mit bestätigter zusätzlicher Bulk-
+Ordnerzuordnung. Native Drag-and-drop-Zuordnung einzelner/ausgewählter Chats mit
+Bestätigung; Tags im Detail bearbeiten oder für die Auswahl ergänzen. Dynamische
+intelligente Ordner speichern Suchtext, Tag und Ansichtsfilter; die API kann auch
+Projektfilter speichern. Löschen einer Suchansicht entfernt keine Chats.
+Additive Migration 2 ergänzt Tags/Suchansichten, Migration 3 die explizite
+Nachrichtenposition. Diese erhält die Graphreihenfolge auch nach Datenbank-
+Speicherung bei widersprüchlichen Zeitstempeln. Veraltete Suchantworten dürfen
+keine neuere Ansicht mehr überschreiben. Mobile Navigation scrollt ohne
+überlappende Beschriftungen und ohne horizontalen Seitenüberlauf.
+
+Validierung: alle 55 Python-Tests erfolgreich. Echter Chromium-Browsertest prüft
+Upload mit Fortschritt, Bulk-Auswahl, bestätigte Zuordnung, Tags, Drag-and-drop,
+dynamische Suchordner, Metadatenanzeige ohne externe Anhang-Anfragen und mobiles
+Layout. JavaScript-Syntaxprüfung und Python-3.10-Grammatikprüfung erfolgreich.
+Ein Python-3.10-Lauf sowie entfernte GitHub-CI-Ergebnisse wurden nicht bestätigt.
+Die GitHub-API liefert weiterhin Forbidden für PR-/CI-Abfragen.
+
+## Abgearbeitete interne Folgeaufträge
+
+1. Nach der Graphphase: „ZIP-/JSON-Import strikt prüfen und Teilimporte verhindern.“
+   Ergebnis: Folgephase 1, Commit `516c082`, 38 Tests.
+2. Danach: „Streaming, lokales Staging, Fortschritt und sichere Job-Wiederaufnahme
+   ergänzen, atomaren Hauptdatenbank-Commit erhalten.“
+   Ergebnis: Folgephase 2, Commit `a8d1d5e`, 46 Tests.
+3. Danach: „Optionalen Extractor-Adapter erweitern, Zusatzdaten lokal erhalten und
+   additive Migrationen mit Regressionstests einführen.“
+   Ergebnis: Folgephase 3, Commit `af7d849`, 51 Tests.
+4. Danach: „Mehrfachauswahl, bestätigtes Drag-and-drop, Tags und dynamische
+   Suchordner mit API-/Browsertests implementieren.“
+   Ergebnis: Folgephase 4, 55 Python-Tests und echter Browsertest erfolgreich.
+
+Graphphase: Commit `f3dc01a`; endgültige Positionspersistenz in Folgephase 4 ergänzt.
+
+## Abschluss und verbleibende Grenzen
+
+Keine weitere Phase aus der beauftragten Liste ist offen; alle vier besitzen nun
+eine abgegrenzte, getestete erste Version. Es werden keine neuen Phasen autonom
+angehängt. Der Nutzer prüft und mergt den gemeinsamen Feature-Branch manuell.
+
+- Keine pauschale vollständige Unterstützung aller ChatGPT-Multimodalitätsformate;
+  Binäranhänge bleiben Referenzen, alternative Zweige erhalten keine Versions-UI.
+- Exporte mit Objekt-Hüllen und einzelne große Chats benötigen weiterhin RAM für
+  das ganze Objekt. Upload-/Entpacklimits bleiben 200/350 MB. Resume validiert die
+  Quelle erneut ab Anfang; unvollständige Uploads müssen wiederholt werden.
+- Lokale Jobquellen/Staging bleiben bis zur manuellen Bereinigung gespeichert.
+- Bestehende Metadaten werden nur auf oberster Ebene zusammengeführt. Gleiche
+  Nachrichten-IDs können neuere Textinhalte erhalten; keine Versionshistorie.
+- Drag-and-drop fügt Mitgliedschaften hinzu und ist auf Touch-Geräten durch die
+  Bulk-Leiste ersetzbar. Die Auswahl betrifft nur geladene Chats (maximal 500).
+- Gespeicherte Suchansichten sind explizite lokale Filter, keine KI-Klassifizierung.
+- Keine neue Pflichtabhängigkeit, kein öffentliches Hosting und keine echten
+  Nutzerdaten in Tests/Commits. Lokale Migrationen wurden mit synthetischen
+  Alt-Datenbanken geprüft; vor realen Upgrades lokale Sicherung anlegen.
+
+Empfohlener nächster menschlicher Schritt: Branch-Diff prüfen, CI im GitHub-UI
+kontrollieren und bei Zustimmung manuell mergen. Die automatische PR-Erstellung
+ist abhängig vom derzeit blockierten GitHub-API-Zugriff.

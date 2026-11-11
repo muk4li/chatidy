@@ -4,6 +4,15 @@ MIGRATIONS = {
         "ALTER TABLE conversations ADD COLUMN metadata TEXT NOT NULL DEFAULT '{}'",
         "ALTER TABLE messages ADD COLUMN metadata TEXT NOT NULL DEFAULT '{}'",
     ),
+    2: (
+        "CREATE TABLE tags(id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE)",
+        "CREATE TABLE chat_tags(conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE, tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE, PRIMARY KEY(conversation_id,tag_id))",
+        "CREATE TABLE smart_folders(id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, query TEXT NOT NULL)",
+    ),
+    3: (
+        "ALTER TABLE messages ADD COLUMN position INTEGER NOT NULL DEFAULT 0",
+        "UPDATE messages SET position=rowid",
+    ),
 }
 LATEST = max(MIGRATIONS)
 

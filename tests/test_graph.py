@@ -77,6 +77,7 @@ class GraphTests(unittest.TestCase):
                 raw = graph()
                 upsert(db, parse_export(json.dumps([raw]).encode(), 'synthetic.json'))
                 before = chat_detail(db, raw['id'])
+                self.assertEqual([m['content'] for m in before['messages']], ['Synthetic question', 'Synthetic answer'])
                 upsert(db, parse_export(json.dumps([raw]).encode(), 'synthetic.json'))
                 self.assertEqual(chat_detail(db, raw['id']), before)
                 broken = graph()
