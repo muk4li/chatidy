@@ -43,6 +43,7 @@ def topics(db,limit=60):
         minimum=2 if kind in ("group","hashtag") else 3
         if len(ids)<minimum:continue
         result.append({"type":kind,"label":term.split("|",1)[-1],
-                       "count":len(ids),"conversation_ids":sorted(ids)[:500]})
+                       "count":len(ids),"conversation_ids":sorted(ids)[:500],
+                       "examples":[titles.get(cid,"Ohne Titel") for cid in sorted(ids)[:4]]})
     result.sort(key=lambda x:(-x["count"],x["type"],x["label"]))
     return result[:min(limit,100)]
