@@ -23,7 +23,7 @@ Syntaxprüfung mit dessen Grammatik geprüft; kein Python-3.10-Lauf behauptet.
 
 ## Vier Folgephasen in Ausführungsreihenfolge
 
-1. **ZIP-Import und Fehlerbehandlung härten** – ausstehend.
+1. **ZIP-Import und Fehlerbehandlung härten** – abgeschlossen (erste sichere Version).
    Defektes JSON, ZIP-Bombs, Verschlüsselung und unvollständige Exporte erkennen.
 2. **Große Exporte effizient importieren** – ausstehend.
    Speicherverbrauch reduzieren, Fortschritt anzeigen und unterbrochene Importe
@@ -34,9 +34,21 @@ Syntaxprüfung mit dessen Grammatik geprüft; kein Python-3.10-Lauf behauptet.
 4. **UI und Organisation ausbauen** – ausstehend.
    Mehrfachauswahl, Drag-and-drop, Tags und intelligente Ordner auf stabiler Basis.
 
+## Ergebnis Folgephase 1 – ZIP und Fehlerbehandlung
+
+Kein stilles Überspringen defekter JSON-Dateien oder unbekannter Konversationen.
+Doppelte JSON-Schlüssel/Chat-IDs, mehrdeutige conversations.json, verschlüsselte
+Archive, CRC-Fehler, unzulässige Größen/Dateizahlen und hohe Kompressionsraten
+werden kontrolliert abgelehnt. Keine Extraktion von Archivpfaden. Ein offizielles
+conversations.json hat weiterhin Vorrang vor beiliegenden Kontometadaten.
+38 Tests erfolgreich, einschließlich kleiner synthetischer ZIP-Bomb und manipulierten
+Verschlüsselungsflags. Kein Test verwendet echte Nutzerdaten.
+
 ## Nächster interner Arbeitsauftrag
 
-Härte ZIP/JSON in einer separaten Iteration. Kein stilles Überspringen defekter
-Konversationen, keine Teilimporte, keine Archivextraktion auf Dateipfade. Prüfe
-Größen-, Kompressions- und Verschlüsselungsgrenzen mit synthetischen Tests,
-führe die gesamte Suite aus und ergänze hier Ergebnisse und nächsten Auftrag.
+Implementiere einen lokalen, speicherschonenden Importpfad für große JSON-Arrays
+und ZIP-Dateien. Speichere Uploads lokal, trenne überprüfbares Staging vom atomaren
+Übernehmen, zeige Fortschritt und ermögliche das Wiederaufnehmen eines Jobs nach
+Prozessunterbrechung. Behalte den bisherigen HTTP-Import kompatibel. Kein partieller
+Datenbestand darf nach einem Fehler sichtbar werden. Teste Abbruch/Wiederaufnahme
+und dokumentiere Grenzen sowie den Folgeauftrag für die Extractor-Integration.

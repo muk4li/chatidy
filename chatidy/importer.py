@@ -2,12 +2,14 @@
 import io
 import json
 import zipfile
+import zlib
 from pathlib import PurePosixPath
 from datetime import datetime
 from .graph import selected_branch
 
 MAX_UPLOAD = 200 * 1024 * 1024
 MAX_UNCOMPRESSED = 350 * 1024 * 1024
+MAX_ENTRIES = 12000
 
 def content_text(message):
     content = message.get("content") or {}
@@ -92,16 +94,38 @@ def parse_root(root):
         root=root["conversations"]
     if isinstance(root,dict):
         root=[root]
-    if not isinstance(root,list):
+    if not isinstance(root,list) or not root:
         raise ValueError("Erwartet ChatGPT-conversations.json oder Extractor-JSON.")
     parsed=[]
     for raw in root:
         if not isinstance(raw,dict):
-            continue
+            raise ValueError("Ungültige Konversation im Export.")
         chat=parse_chat(raw) if "mapping" in raw else parse_extractor_chat(raw)
-        if chat:
-            parsed.append(chat)
+        if not chat:
+            raise ValueError("Unvollständige oder unbekannte Konversation im Export.")
+        parsed.append(chat)
     return parsed
+
+def unique_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("Doppelte JSON-Schlüssel im Export.")
+        result[key] = value
+    return result
+
+
+def invalid_constant(value):
+    raise ValueError("Ungültige JSON-Zahl im Export.")
+
+
+def decode_json(data):
+    try:
+        return json.loads(data.decode("utf-8-sig"), object_pairs_hook=unique_object,
+                          parse_constant=invalid_constant)
+    except (ValueError, UnicodeError, RecursionError) as exc:
+        raise ValueError("Ungültiges oder unvollständiges JSON im Export.") from exc
+
 
 def parse_export(data, name):
     if len(data)>MAX_UPLOAD:
@@ -112,29 +136,40 @@ def parse_export(data, name):
             with zipfile.ZipFile(io.BytesIO(data)) as archive:
                 entries=[x for x in archive.infolist()
                          if not x.is_dir() and PurePosixPath(x.filename).suffix.lower()==".json"]
-                if len(entries)>12000 or sum(x.file_size for x in entries)>MAX_UNCOMPRESSED:
+                if len(archive.infolist())>MAX_ENTRIES or sum(x.file_size for x in entries)>MAX_UNCOMPRESSED:
                     raise ValueError("ZIP enthält zu viele bzw. zu große JSON-Dateien.")
+                if any(x.flag_bits & 1 for x in archive.infolist()):
+                    raise ValueError("Verschlüsselte ZIP-Archive werden nicht unterstützt.")
+                if len({x.filename for x in entries}) != len(entries):
+                    raise ValueError("Doppelte JSON-Dateinamen im ZIP-Archiv.")
                 named=[x for x in entries if PurePosixPath(x.filename).name=="conversations.json"]
-                entries=named[:1] if named else entries
+                if len(named)>1:
+                    raise ValueError("Mehrere conversations.json im ZIP-Archiv: Auswahl mehrdeutig.")
+                entries=named if named else entries
                 if not entries:
                     raise ValueError("Keine ChatGPT-JSON-Dateien gefunden.")
                 for item in entries:
-                    if item.compress_size and item.file_size/item.compress_size>500:
+                    if (item.file_size and not item.compress_size) or (item.compress_size and item.file_size/item.compress_size>500):
                         raise ValueError("Verdächtige ZIP-Kompressionsrate.")
                     try:
-                        roots.append(json.loads(archive.read(item).decode("utf-8-sig")))
+                        with archive.open(item) as member:
+                            payload = member.read(MAX_UNCOMPRESSED + 1)
+                        if len(payload) > MAX_UNCOMPRESSED:
+                            raise ValueError("Entpacktes JSON überschreitet das Größenlimit.")
+                        roots.append(decode_json(payload))
                     except (ValueError,UnicodeError) as exc:
-                        if len(entries)==1:
-                            raise ValueError("JSON im Archiv ungültig.") from exc
-        except zipfile.BadZipFile as exc:
+                        raise ValueError("JSON im Archiv ungültig oder unvollständig.") from exc
+        except (zipfile.BadZipFile, zlib.error, RuntimeError, NotImplementedError, EOFError) as exc:
             raise ValueError("Ungültiges ZIP-Archiv.") from exc
     elif name.lower().endswith(".json"):
-        roots=[json.loads(data.decode("utf-8-sig"))]
+        roots=[decode_json(data)]
     else:
         raise ValueError("Bitte eine .zip- oder .json-Datei wählen.")
     merged={}
     for root in roots:
         for chat in parse_root(root):
+            if chat["id"] in merged:
+                raise ValueError("Doppelte Konversations-ID im Export. Import abgebrochen.")
             merged[chat["id"]]=chat
     if not merged:
         raise ValueError("Keine erkennbaren ChatGPT-Konversationen gefunden.")
