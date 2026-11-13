@@ -38,7 +38,7 @@ Graph-, ZIP-, Streaming-, Reimport- und Transaktionsschutz bleiben erhalten.
 
 [CI-Lauf 43516325821](https://github.com/muk4li/chatidy/actions/runs/43516325821)
 prüft Implementierungscommit `b2ac55513612a60b039b3e721cbb9957fe4738d2`.
-Alle sechs Jobs wurden auf der öffentlichen Actions-Seite als erfolgreich bestätigt:
+Alle sechs Jobs dieses Implementierungslaufs wurden auf der öffentlichen Actions-Seite als erfolgreich bestätigt:
 
 | Host | Python 3.10 | Python 3.11 | Python 3.13 |
 | --- | --- | --- | --- |
@@ -62,6 +62,10 @@ gängige Secret-Muster geprüft. Sämtliche Daten sind synthetisch.
 
 Windows ist damit nativ auf echten Windows-CI-Runnern verifiziert. Ein manueller
 Windows-11-Desktopdurchlauf mit dem echten Export des Nutzers wurde nicht ausgeführt.
+Der anschließende Lauf 43516853035 fand bei unverändertem Code ein sporadisches
+Windows-Status-Schreibrennen. Windows-Workerstatus und Statusleser werden nun kurz
+über die Registry-Sperre serialisiert, ohne die Importverarbeitung zu serialisieren.
+Diese zusätzliche Korrektur benötigt erneut vollständige native CI.
 Die ersten fehlgeschlagenen CI-Läufe wurden diagnostiziert und korrigiert;
 Fehlerannotationen stellen synthetische Tracebacks auch ohne API-Logzugriff bereit.
 

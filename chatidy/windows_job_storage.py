@@ -257,6 +257,16 @@ class Job:
         return str(self.fd.path / 'staging.sqlite3')
 
 
+def worker_write(job, name, value):
+    # Windows replacement can be denied while another metadata handle is open,
+    # even with permissive sharing. Status readers already hold this registry
+    # lock and close their handles before releasing it. The job pins keep this
+    # parent path stable after the original root context has exited.
+    parent = SimpleNamespace(path=job.fd.path.parent)
+    with registry(parent):
+        job.write(name, value)
+
+
 def prepare_delete(job, lease):
     # Windows directory renames can fail while a child file is open, including
     # the lock file. The caller already proved no worker owns the lease and

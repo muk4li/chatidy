@@ -215,7 +215,7 @@ def _run(job, job_id):
         staging = sqlite3.connect(job.sqlite_path())
         staging.execute('CREATE TABLE IF NOT EXISTS chats(sequence INTEGER PRIMARY KEY, id TEXT UNIQUE, payload TEXT)')
         state.update(state='validating', error=None)
-        job.write('status.json', state)
+        storage.worker_write(job, 'status.json', state)
         fd = storage.file_open(job.fd, 'source'+state['suffix'])
         with os.fdopen(fd, 'rb') as source:
             digest = hashlib.sha256()
@@ -236,12 +236,12 @@ def _run(job, job_id):
                 if count % 100 == 0:
                     staging.commit()
                     state['validated'] = count
-                    job.write('status.json', state)
+                    storage.worker_write(job, 'status.json', state)
             staging.commit()
         if staging.execute('SELECT count(*) FROM chats').fetchone()[0] != count:
             raise ValueError('Staging unvollständig oder inkonsistent. Bitte neu hochladen.')
         state.update(state='committing', validated=count)
-        job.write('status.json', state)
+        storage.worker_write(job, 'status.json', state)
         db = connect(database_path())
         try:
             with closing(staging.execute('SELECT payload FROM chats ORDER BY sequence')) as rows:
@@ -249,13 +249,13 @@ def _run(job, job_id):
         finally:
             db.close()
         state.update(state='done', imported=imported)
-        job.write('status.json', state)
+        storage.worker_write(job, 'status.json', state)
     except Exception as exc:
         if staging:
             staging.rollback()
         state.update(state='error', error=str(exc) if isinstance(exc, ValueError)
                      else 'Import fehlgeschlagen. Lokalen Speicher prüfen und Import fortsetzen.')
-        job.write('status.json', state)
+        storage.worker_write(job, 'status.json', state)
     finally:
         if staging:
             staging.close()

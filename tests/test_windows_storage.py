@@ -182,7 +182,7 @@ class WindowsStorageTests(unittest.TestCase):
         def writer():
             try:
                 for _ in range(30):
-                    job.write('status.json', value)
+                    job_storage.worker_write(job, 'status.json', value)
             except Exception as exc:
                 failures.append(exc)
         thread = threading.Thread(target=writer)

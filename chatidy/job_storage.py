@@ -214,6 +214,10 @@ def sync(parent):
     os.fsync(parent)
 
 
+def worker_write(job, name, value):
+    job.write(name, value)
+
+
 def prepare_delete(job, lease):
     return lease
 
@@ -225,4 +229,4 @@ def path_identity(path):
 
 if os.name == 'nt':
     from .windows_job_storage import (root, registry, file_open, Job, mkdir,
-        listdir, stat_entry, rename_job, unlink, remove_job, sync, path_identity, prepare_delete)
+        listdir, stat_entry, rename_job, unlink, remove_job, sync, path_identity, prepare_delete, worker_write)
