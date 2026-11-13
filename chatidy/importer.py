@@ -6,6 +6,7 @@ import zlib
 from pathlib import PurePosixPath
 from datetime import datetime
 from .graph import selected_branch
+from .export_layout import classify
 from .streaming import json_values
 
 MAX_UPLOAD = 200 * 1024 * 1024
@@ -143,26 +144,68 @@ def decode_json(data):
         raise ValueError("Ungültiges oder unvollständiges JSON im Export.") from exc
 
 
+def archive_layout(archive):
+    selected, candidates, inventory = classify(archive, MAX_ENTRIES, MAX_UNCOMPRESSED)
+    if not selected:
+        # No official filenames: recognize structured conversation JSON by
+        # shape, not by assuming every JSON resource is a conversation. Invalid
+        # JSON in this ambiguous fallback remains an error, never a silent skip.
+        decoder = json.JSONDecoder(object_pairs_hook=unique_object, parse_constant=invalid_constant)
+        for item in candidates:
+            check_compression(item)
+            with archive.open(item) as source:
+                values = json_values(source, [MAX_UNCOMPRESSED], decoder)
+                try:
+                    root = next(values)
+                    roots = root.get('conversations') if isinstance(root, dict) and 'conversations' in root else [root]
+                    recognized = isinstance(roots, list) and bool(roots) and all(
+                        isinstance(raw, dict) and raw.get('id') and
+                        (isinstance(raw.get('mapping'), dict) or isinstance(raw.get('messages'), list))
+                        for raw in roots)
+                finally:
+                    values.close()
+                if recognized:
+                    selected.append(item)
+        inventory['counts']['conversation_segment'] = len(selected)
+        inventory['counts']['unknown'] -= len(selected)
+    if not selected:
+        raise ValueError('Keine erkennbaren Konversationsdateien im Archiv.')
+    for item in selected:
+        check_compression(item)
+    inventory.update(segment_count=len(selected),
+                     segments=[PurePosixPath(x.filename.replace('\\','/')).name[:160] for x in selected[:20]],
+                     selected_json_bytes=sum(x.file_size for x in selected))
+    return selected, inventory
+
+
+def check_compression(item):
+    if (item.file_size and not item.compress_size) or (item.compress_size and item.file_size/item.compress_size > 500):
+        raise ValueError('Verdächtige ZIP-Kompressionsrate.')
+
+
 def archive_entries(archive):
-    all_entries = archive.infolist()
-    entries = [x for x in all_entries if not x.is_dir()
-               and PurePosixPath(x.filename).suffix.lower() == ".json"]
-    if len(all_entries) > MAX_ENTRIES or sum(x.file_size for x in entries) > MAX_UNCOMPRESSED:
-        raise ValueError("ZIP enthält zu viele bzw. zu große JSON-Dateien.")
-    if any(x.flag_bits & 1 for x in all_entries):
-        raise ValueError("Verschlüsselte ZIP-Archive werden nicht unterstützt.")
-    if len({x.filename for x in entries}) != len(entries):
-        raise ValueError("Doppelte JSON-Dateinamen im ZIP-Archiv.")
-    named = [x for x in entries if PurePosixPath(x.filename).name == "conversations.json"]
-    if len(named) > 1:
-        raise ValueError("Mehrere conversations.json im ZIP-Archiv: Auswahl mehrdeutig.")
-    entries = named if named else entries
-    if not entries:
-        raise ValueError("Keine ChatGPT-JSON-Dateien gefunden.")
-    for item in entries:
-        if (item.file_size and not item.compress_size) or (item.compress_size and item.file_size/item.compress_size > 500):
-            raise ValueError("Verdächtige ZIP-Kompressionsrate.")
-    return entries
+    return archive_layout(archive)[0]
+
+
+def inspect_export(source, name):
+    source.seek(0, 2)
+    size = source.tell()
+    if size > MAX_UPLOAD:
+        raise ValueError('Datei größer als 200 MB.')
+    source.seek(0)
+    if name.lower().endswith('.zip'):
+        try:
+            with zipfile.ZipFile(source) as archive:
+                _, inventory = archive_layout(archive)
+        except (zipfile.BadZipFile, zlib.error, RuntimeError, NotImplementedError, EOFError) as exc:
+            raise ValueError('Ungültiges ZIP-Archiv.') from exc
+    elif name.lower().endswith('.json'):
+        inventory = {'format':'single_json', 'segment_count':1, 'selected_json_bytes':size,
+                     'counts':{'conversation_segment':1}, 'warnings':[], 'manifests_validated':False}
+    else:
+        raise ValueError('Bitte eine .zip- oder .json-Datei wählen.')
+    inventory['archive_bytes'] = size
+    return inventory
 
 
 def iter_export(source, name):

@@ -1,12 +1,12 @@
 # Operatives Backlog
 
 ## EXP-001 – Offizielle Segmentarchive erkennen
-- Priorität: P0; Status: Offen.
+- Priorität: P0; Status: Teilweise implementiert (lokale Regressionen erfolgreich; aktuelle Windows-CI ausstehend).
 - Komponenten: Importer, Archivinventar, Jobvorschau. Abhängigkeiten: keine.
-- [ ] conversations.json und numerisch sortierte conversations-NNN.json auswählen.
-- [ ] Fehlende/doppelte/beschädigte erforderliche Segmente kontrolliert ablehnen.
-- [ ] Metadaten, DAT, HTML, Manifeste und unbekannte Extras separat inventarisieren.
-- [ ] Zusatzdateien weder ausführen noch ungeprüft als Chats parsen.
+- [x] conversations.json und numerisch sortierte conversations-NNN.json auswählen.
+- [x] Fehlende/doppelte/beschädigte erforderliche Segmente kontrolliert ablehnen.
+- [x] Metadaten, DAT, HTML, Manifeste und unbekannte Extras separat inventarisieren.
+- [x] Zusatzdateien weder ausführen noch ungeprüft als Chats parsen.
 - Akzeptanz: ein gemeinsamer Batch für 000–007 unabhängig von ZIP-Reihenfolge.
 - Tests: klassische/segmentierte/Extractor-Archive, Extras, Lücken, CRC/JSON,
   Größenlimits, Mehrdeutigkeit und doppelte Konversations-IDs.

@@ -6,8 +6,10 @@ Durchlaufs werden erst nach ihren Tests hochgestuft; private Exportdaten bleiben
 
 ## Phase 1 – Exportkompatibilität und Datenintegrität
 
-- Teilweise implementiert: offizielle ZIP-Exporte (bisher klassische conversations.json).
-- Offen (P0): nummerierte Konversationsdateien und explizite Archivklassifizierung.
+- Teilweise implementiert: klassische und segmentierte offizielle ZIP-Exporte;
+  synthetisch geprüft, aktuelle Windows-CI ausstehend.
+- Teilweise implementiert (P0): nummerierte Dateien und Archivklassifizierung lokal
+  erfolgreich geprüft; kein ungeprüftes Zusatzschema als unterstützt ausgegeben.
 - Teilweise implementiert (P0): Schema-4-ID-Migration, gemeinsame Konfliktprüfung und
   lokale Regressionen erfolgreich; aktuelle Windows-CI steht noch aus.
 - Offen (P0): Import-Vorschau und bestätigte sichere Segment-Batches.

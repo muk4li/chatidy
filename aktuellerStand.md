@@ -18,6 +18,17 @@ Konfliktprüfung schützt auch Legacy-Importpfade. Migration/Row-Erhalt/FTS/Tags
 Review/Rollback sind synthetisch geprüft. Der gesamte Arbeitsstand besteht lokal
 104 Tests (94 ausgeführt, zehn Windows-Skips); neue Windows-CI folgt nach Push.
 
+Schritt EXP-001: zentrale Archivklassifizierung erkennt klassische und numerische
+Segmente und sortiert 000–007 auch bei unsortierter ZIP-Reihenfolge korrekt.
+Metadaten, DAT, HTML, Manifeste und unbekannte Ressourcen werden separat gezählt,
+keine Ressourcen extrahiert/ausgeführt. Interne Segmentlücken und fehlerhafte
+Pflichtsegmente blockieren den Batch. Ein fehlender letzter Teil bleibt ohne
+validiertes Manifest prinzipiell unerkennbar. Die bekannte Form mit 18 JSONs,
+227 synthetischen DAT-Ressourcen, HTML und Begleittext ist nachgebildet.
+104 lokale Tests erfolgreich (zehn native Windows-Skips); zusätzlicher Browser-
+Workflow für Vorschau, Einzeldatei→Gesamtarchiv, Reimport und ältere Fälle läuft
+bereits erfolgreich im Arbeitsstand. Noch keine neue Windows-CI-Behauptung.
+
 ---
 
 

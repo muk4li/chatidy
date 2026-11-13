@@ -22,7 +22,7 @@ class ArchiveTests(unittest.TestCase):
     def test_bad_json_never_silently_skipped(self):
         for invalid in ('{', '\ufffd', '[null]', '{"wrong":true}', '[1]', '[]'):
             with self.subTest(invalid=invalid), self.assertRaises(ValueError):
-                parse_export(archive([('good.json', VALID), ('bad.json', invalid)]), 'synthetic.zip')
+                parse_export(archive([('conversations-000.json', VALID), ('conversations-001.json', invalid)]), 'synthetic.zip')
 
     def test_truncated_archive_and_crc_failure(self):
         data = archive([('synthetic.json', VALID)])

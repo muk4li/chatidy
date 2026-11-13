@@ -128,6 +128,38 @@ inaktive Knoten werden abgelehnt. Nachrichten ohne eigene ID erhalten eine stabi
 ID aus Chat- und Knotenschlüssel; ältere positional erzeugte Fallback-IDs können
 daher vom konservativen Reimport-Schutz abgelehnt werden.
 
+## Offizielle ZIP-Exporte mit nummerierten Segmenten
+
+Unterstützt werden klassische `conversations.json` sowie zusammengehörige
+`conversations-NNN.json`-Segmente. Die Nummern werden numerisch sortiert, müssen
+bei 0 beginnen und lückenlos sein. Doppelte Nummern, mehrere Segmentverzeichnisse
+oder ein Gemisch aus klassischer und segmentierter Variante werden als mehrdeutig
+abgelehnt. Beschädigte ausgewählte Segmente brechen den ganzen Batch ab.
+
+Das Archiv wird vor dem Parsen klassifiziert: Gesprächssegmente, zusätzliche
+JSON-Metadaten, Anhänge/Binärressourcen, HTML-Darstellung, Begleitdateien und
+unbekannte Ressourcen. `codex.json`, `ads.json`, Kontoeinstellungen, Bibliotheks-/
+Anhangzuordnungen sowie `shared_conversations.json` und `sectioned_conversations.json`
+werden nur inventarisiert. DAT und HTML werden weder extrahiert noch ausgeführt.
+`export_manifest.json` und `sites/export_manifest.json` werden gezählt; ihre
+ungeprüften Felder bestimmen weder Segmentzahl noch Dateipfade oder Limits.
+Ein fehlendes letztes Segment ist ohne validiertes Manifest nicht nachweisbar;
+die Vorschau macht diese Grenze sichtbar.
+
+Unbekannte Zusatzdateien blockieren einen eindeutig erkannten offiziellen Export
+nicht. Ohne offizielle Dateinamen können strukturell erkannte Conversation-/
+Extractor-JSON-Dateien importiert werden. Gültige unbekannte JSON-Objekte werden
+als Zusatzressourcen behandelt; beschädigtes JSON im mehrdeutigen Extractor-
+Fallback bleibt aus Sicherheitsgründen ein Fehler. Doppelte Gesprächs-IDs im
+selben Batch werden abgelehnt, statt Versionen still zusammenzuführen.
+
+Nur ausgewählte Gespräche werden normalisiert in die Bibliothek übernommen.
+Sensible Konto-/Werbedaten werden nicht zusätzlich in der Bibliothek persistiert;
+die private lokale ZIP-Uploadkopie enthält bis zur bestätigten Jobbereinigung
+weiterhin den ursprünglichen Archivinhalt. Es wurde kein privater Originalexport
+für Entwicklung oder CI hochgeladen. Neue unbekannte Zusatzschemas gelten nicht
+allein aufgrund ihres Dateinamens als unterstützt.
+
 ## Große Exporte und wiederaufnehmbare Importjobs
 
 Die Weboberfläche lädt die Datei in einen lokalen Importjob (weiterhin maximal

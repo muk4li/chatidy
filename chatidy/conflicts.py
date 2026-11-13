@@ -63,4 +63,3 @@ def classify_chat(db, chat):
         additions |= key not in old_meta
     additions |= old_time != updated
     return 'complete' if additions else 'identical'
-
