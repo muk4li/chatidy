@@ -10,6 +10,14 @@ Auswahl im ZIP sind im Code reproduzierbare Ursachen; das private Originalarchiv
 wird nicht angefordert, untersucht oder in der Cloud gespeichert. Noch keine
 Behauptung zur Vollständigkeit der ungeprüften offiziellen Zusatzschemas.
 
+Schritt DATA-001: Schema 4 kopiert Nachrichten verlustfrei auf den Schlüssel
+(conversation_id,id). Die ursprüngliche ID wird nicht umgeschrieben. Gleiche IDs
+in unterschiedlichen Chats überschreiben sich nicht; doppelte IDs im selben
+Chat sowie unklare gleichalte Textänderungen bleiben blockiert. Die gemeinsame
+Konfliktprüfung schützt auch Legacy-Importpfade. Migration/Row-Erhalt/FTS/Tags/
+Review/Rollback sind synthetisch geprüft. Der gesamte Arbeitsstand besteht lokal
+104 Tests (94 ausgeführt, zehn Windows-Skips); neue Windows-CI folgt nach Push.
+
 ---
 
 

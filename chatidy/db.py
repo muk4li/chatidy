@@ -1,8 +1,8 @@
 """SQLite persistence, multi-folder assignments, rules, reviews and full-text indexing."""
 import os
-import math
 import json
 from .migrations import check_version, migrate
+from .conflicts import classify_chat, _import_timestamp
 import sqlite3
 from pathlib import Path
 
@@ -130,17 +130,6 @@ def apply_rules(db, chat_id):
             db.execute("""INSERT OR IGNORE INTO memberships(conversation_id,folder_id,origin)
                           VALUES(?,?,'rule')""", (chat_id,rule["folder_id"]))
 
-def _import_timestamp(value):
-    """Accept finite Unix timestamps; missing dates cannot prove freshness."""
-    if value is None:
-        return None
-    try:
-        timestamp = float(value)
-    except (TypeError, ValueError, OverflowError) as exc:
-        raise ValueError("Ungültiger Änderungszeitpunkt. Import abgebrochen.") from exc
-    if isinstance(value, bool) or not math.isfinite(timestamp):
-        raise ValueError("Ungültiger Änderungszeitpunkt. Import abgebrochen.")
-    return timestamp
 
 
 def upsert(db, chats):
@@ -159,6 +148,8 @@ def upsert(db, chats):
                 raise ValueError("Doppelte Nachrichten-ID innerhalb eines Chats. Import abgebrochen.")
             updated = _import_timestamp(chat.get("updated"))
             existing = db.execute("SELECT updated,metadata FROM conversations WHERE id=?", (cid,)).fetchone()
+            if existing is not None and classify_chat(db, chat) == "identity":
+                raise ValueError("Unklare Nachrichten-/Versionsidentität. Kein automatisches Überschreiben zulässig.")
             old_messages = {row["id"]: row["metadata"] for row in db.execute(
                 "SELECT id,metadata FROM messages WHERE conversation_id=?", (cid,))}
             for index, message in enumerate(chat["messages"]):
@@ -186,11 +177,8 @@ def upsert(db, chats):
             """, (cid, chat["title"],chat.get("created"),updated,
                   chat.get("project") or "",int(chat.get("archived",False)),json.dumps(metadata, ensure_ascii=False)))
             db.execute("DELETE FROM messages WHERE conversation_id=?", (cid,))
-            # Message IDs are globally unique in the existing schema. REPLACE
-            # would silently delete another conversation's message on collision.
-            if any(db.execute("SELECT 1 FROM messages WHERE id=?", (mid,)).fetchone()
-                   for mid in ids):
-                raise ValueError("Nachrichten-ID bereits in einem anderen Chat vorhanden. Import abgebrochen.")
+            # Identity is (conversation_id, original message id). Never REPLACE:
+            # duplicates within a conversation still fail atomically.
             db.executemany("""INSERT INTO messages
                            (id,conversation_id,role,content,timestamp,metadata,position)
                            VALUES(?,?,?,?,?,?,?)""",messages)
@@ -237,7 +225,7 @@ def chat_detail(db, chat_id):
     chat = dict(row)
     chat["metadata"] = json.loads(chat["metadata"])
     messages = []
-    for message in db.execute("SELECT role,content,timestamp,metadata FROM messages WHERE conversation_id=? ORDER BY position,rowid", (chat_id,)):
+    for message in db.execute("SELECT id,role,content,timestamp,metadata FROM messages WHERE conversation_id=? ORDER BY position,rowid", (chat_id,)):
         item = dict(message)
         item["metadata"] = json.loads(item["metadata"])
         messages.append(item)

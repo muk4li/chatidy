@@ -12,11 +12,11 @@
   Größenlimits, Mehrdeutigkeit und doppelte Konversations-IDs.
 
 ## DATA-001 – Nachrichtenidentität pro Gespräch
-- Priorität: P0; Status: Offen.
+- Priorität: P0; Status: Teilweise implementiert (Code und lokale Regressionen erfolgreich; aktuelle Windows-CI ausstehend).
 - Komponenten: SQLite, Migrationen, upsert, Details/Export, FTS5. Abhängigkeiten: keine.
-- [ ] Globale Kollisionsursache synthetisch reproduzieren.
-- [ ] Bestehende IDs/Metadaten/Reihenfolge verlustfrei per Migration erhalten.
-- [ ] Gleiche ID in verschiedenen Chats erlauben, doppelte IDs im selben Chat ablehnen.
+- [x] Globale Kollisionsursache synthetisch reproduzieren.
+- [x] Bestehende IDs/Metadaten/Reihenfolge verlustfrei per Migration erhalten.
+- [x] Gleiche ID in verschiedenen Chats erlauben, doppelte IDs im selben Chat ablehnen.
 - Akzeptanz: kein fremder Chat wird überschrieben; Einzeldatei danach Gesamt-ZIP ist idempotent.
 - Tests: Migration von Schema 3, Rollback, FKs, FTS, Tags/Review/Ordner und Reimport.
 

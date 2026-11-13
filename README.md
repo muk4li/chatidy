@@ -85,9 +85,9 @@ Häufige Windows-Fehler:
 - Volltextsuche in Nachrichten und Titeln mit SQLite FTS5.
 - Virtuelle verschachtelte Ordner und mehrere Gruppen pro Chat.
 - Zuordnungen, Ordner und Review-Status bleiben bei erneutem Exportimport erhalten.
-- Nachrichten-IDs müssen innerhalb und zwischen Chats eindeutig sein. Bei einer
-  Kollision wird der gesamte Import zurückgerollt, statt Nachrichten eines anderen
-  Chats zu überschreiben. Eine Wiederholung desselben Chats bleibt möglich.
+- Nachrichten sind durch Gesprächs-ID und ursprüngliche Nachrichten-ID gemeinsam
+  eindeutig. Gleiche IDs in verschiedenen Chats bleiben unabhängig; doppelte IDs
+  innerhalb eines Chats brechen den gesamten Import mit Rollback ab.
 - Intelligenter Posteingang für noch nicht geprüfte Gespräche.
 - Lokale Themencluster aus gemeinsamen Titelbegriffen, Hashtags und vorhandenen Gruppen; bis zu 500 Chats pro Cluster nach Bestätigung gesammelt zuweisen.
 - Regelbasierte Zuordnung anhand von Titel, Nachrichteninhalt und Projektmetadaten.
@@ -108,9 +108,9 @@ mindestens ebenso aktuellen Änderungszeitpunkt enthalten. Fehlt dieser oder ist
 der Export älter, bricht der gesamte Dateiimport ab; auch vorher in diesem Import
 verarbeitete Chats bleiben unverändert. Verwende dann einen aktuellen,
 vollständigen Export desselben Gesprächszweigs. Ohne Änderungszeitpunkte auf
-beiden Seiten ist nur die Prüfung der Nachrichten-IDs möglich. Gleiche IDs können
-weiterhin aktualisierte Inhalte enthalten; eine vollständige Versionshistorie
-speichert Chatidy derzeit nicht. Ein Wechsel zwischen Original- und
+beiden Seiten ist nur die Prüfung der Nachrichten-IDs möglich. Geänderte Inhalte derselben IDs benötigen eine nachweislich neuere vollständige
+Version. Unklare Änderungen ohne neueren Zeitstempel werden auch über die
+Legacy-Importpfade abgelehnt; eine vollständige Versionshistorie gibt es nicht. Ein Wechsel zwischen Original- und
 Extractor-Import kann wegen unterschiedlicher Nachrichten-IDs abgelehnt werden.
 
 Identische sowie vollständige neuere Exporte bleiben importierbar. Bestehende
@@ -269,7 +269,7 @@ Bild-/Anhangdaten bleiben Referenzen und Metadaten: Es werden keine Binärdateie
 aus Archiven extrahiert, keine entfernten Bilder geladen und keine importierten
 Inhalte ausgeführt. Dies ist noch kein vollständiger Medienbetrachter und kein
 Rundlaufexport im Originalformat. Importformate können unterschiedliche IDs nutzen.
-Die additive Schema-Migration auf Version 1 erhält bestehende Datensätze und
+Die Metadaten-Migration (Version 1) erhält bestehende Datensätze und
 bricht bei unbekannten neueren Datenbankversionen ab. Vor einem Upgrade empfiehlt
 sich eine lokale Sicherung der geschlossenen Datenbank außerhalb des Repositories.
 
@@ -321,3 +321,13 @@ beschreibt [aktuellerStand.md](aktuellerStand.md).
 - Semantische Vektorsuche, umfassende Bulk-Bearbeitung und direkte Python-API-Anbindung an den Extractor stehen aus. Drag-and-drop ordnet zusätzlich zu, statt Mitgliedschaften zu verschieben. Themencluster sind deterministisch und dienen der Sichtung.
 - Es gibt keine automatische Live-Synchronisierung oder direkte Änderung von Chats auf chatgpt.com.
 - Chatidy ist ein persönlicher, lokal gebundener Dienst und darf nicht öffentlich ins Internet gestellt werden.
+
+## Nachrichtenidentität und Schema 4
+
+Schema 4 stellt die Nachrichtentabelle transaktional auf den zusammengesetzten
+Schlüssel `(conversation_id, id)` um. Vorhandene IDs, Inhalte, Metadaten und
+Positionen werden kopiert und erhalten; Ordner, Tags, Review und FTS5 bleiben
+unverändert. Ein fehlgeschlagener Umbau rollt Daten, Schema und Versionsnummer
+zurück. Bestehende Dateien vor dem Upgrade bei geschlossener Anwendung lokal
+sichern. Die Änderung kann zusätzliches temporäres SQLite-/WAL-Speichervolumen
+benötigen. Der private Originalexport wurde für die Entwicklung nicht untersucht.

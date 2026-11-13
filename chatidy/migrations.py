@@ -1,4 +1,4 @@
-"""Small, transactional, additive schema migrations for existing local libraries."""
+"""Transactional schema migrations preserving existing local records."""
 MIGRATIONS = {
     1: (
         "ALTER TABLE conversations ADD COLUMN metadata TEXT NOT NULL DEFAULT '{}'",
@@ -12,6 +12,12 @@ MIGRATIONS = {
     3: (
         "ALTER TABLE messages ADD COLUMN position INTEGER NOT NULL DEFAULT 0",
         "UPDATE messages SET position=rowid",
+    ),
+    4: (
+        "CREATE TABLE messages_v4(id TEXT NOT NULL, conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE, role TEXT, content TEXT NOT NULL, timestamp REAL, metadata TEXT NOT NULL DEFAULT '{}', position INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(conversation_id,id))",
+        "INSERT INTO messages_v4(id,conversation_id,role,content,timestamp,metadata,position) SELECT id,conversation_id,role,content,timestamp,metadata,position FROM messages",
+        "DROP TABLE messages",
+        "ALTER TABLE messages_v4 RENAME TO messages",
     ),
 }
 LATEST = max(MIGRATIONS)

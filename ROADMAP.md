@@ -8,7 +8,8 @@ Durchlaufs werden erst nach ihren Tests hochgestuft; private Exportdaten bleiben
 
 - Teilweise implementiert: offizielle ZIP-Exporte (bisher klassische conversations.json).
 - Offen (P0): nummerierte Konversationsdateien und explizite Archivklassifizierung.
-- Offen (P0): ID-Migration auf gesprächsbezogene Nachrichtenidentität.
+- Teilweise implementiert (P0): Schema-4-ID-Migration, gemeinsame Konfliktprüfung und
+  lokale Regressionen erfolgreich; aktuelle Windows-CI steht noch aus.
 - Offen (P0): Import-Vorschau und bestätigte sichere Segment-Batches.
 - Teilweise implementiert: große Exporte (Streaming/Jobs; 200/350-MB-Limits,
   Einzelobjekte benötigen RAM; keine unbegrenzte Skalierbarkeit).
