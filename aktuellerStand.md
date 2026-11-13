@@ -1,5 +1,18 @@
 # Aktueller Stand von Chatidy
 
+## Laufender Durchlauf – segmentierte offizielle Exporte
+
+Ausgangspunkt main `c7702a6`; Branch `feature/segmented-export-preview`.
+ROADMAP.md, AGENTS.md und TASKS.md legen Produktplan, Entwicklungsregeln und
+prüfbare P0-Arbeitspakete fest. Ausgangssuite: 84 Tests, 74 bestanden, zehn native
+Windows-Tests hier übersprungen. Globale Nachrichten-IDs und ungefilterte JSON-
+Auswahl im ZIP sind im Code reproduzierbare Ursachen; das private Originalarchiv
+wird nicht angefordert, untersucht oder in der Cloud gespeichert. Noch keine
+Behauptung zur Vollständigkeit der ungeprüften offiziellen Zusatzschemas.
+
+---
+
+
 ## Neuester Durchlauf – P0: native Windows-Importjobs
 
 Ausgangscommit: `80f420d360f801f59f2db3e9eab5d2e10f0bbdc6` auf main.
