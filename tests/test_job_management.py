@@ -171,6 +171,7 @@ jobs.run(sys.argv[1])
             foreign.rmdir() if directory else foreign.unlink()
             jobs.delete(job, confirmed=True)
 
+    @unittest.skipIf(os.name == 'nt', 'POSIX mechanism; native Windows coverage is in test_windows_storage')
     def test_file_symlink_hardlink_job_symlink_and_root_symlink_are_rejected(self):
         outside = self.path / 'outside.txt'
         outside.write_text('Synthetic outside file')
@@ -206,6 +207,7 @@ jobs.run(sys.argv[1])
             self.create()
         self.assertEqual(outside.read_text(), 'Synthetic outside file')
 
+    @unittest.skipIf(os.name == 'nt', 'POSIX mechanism; native Windows coverage is in test_windows_storage')
     def test_symlinked_parent_is_not_resolved_implicitly(self):
         real = self.path / 'real'
         real.mkdir()
@@ -219,14 +221,14 @@ jobs.run(sys.argv[1])
     def test_interrupted_cleanup_is_visible_and_retryable_only_with_confirmation(self):
         job = self.create()
         jobs.run(job)
-        unlink = os.unlink
+        unlink = job_storage.unlink
         calls = []
-        def interrupted(name, **kwargs):
+        def interrupted(job, name):
             calls.append(name)
             if len(calls) == 2:
                 raise OSError('Synthetic cleanup interruption')
-            return unlink(name, **kwargs)
-        with patch('chatidy.jobs.os.unlink', interrupted), self.assertRaises(ValueError):
+            return unlink(job, name)
+        with patch('chatidy.job_storage.unlink', interrupted), self.assertRaises(ValueError):
             jobs.delete(job, confirmed=True)
         info = jobs.public_status(job)
         self.assertEqual(info['state'], 'cleanup_pending')
@@ -241,6 +243,27 @@ jobs.run(sys.argv[1])
         self.assertEqual(jobs.listing()['count'], 0)
         self.assertTrue(self.db_path.exists())
 
+    @unittest.skipIf(os.name == 'nt', 'POSIX unlinked-open-file semantics; Windows has concurrent status coverage')
+    def test_atomic_status_replacement_during_open_does_not_look_like_a_hardlink(self):
+        job = self.create()
+        path = jobs.job_path(job)/'status.json'
+        original = job_storage.regular
+        replaced = []
+        inode = path.stat().st_ino
+        def replace_during_open(fd):
+            if not replaced and os.fstat(fd).st_ino == inode:
+                replaced.append(True)
+                temporary = path.with_name('status.tmp')
+                temporary.write_bytes(path.read_bytes())
+                os.replace(temporary, path)
+                self.assertEqual(os.fstat(fd).st_nlink, 0)
+            return original(fd)
+        with patch('chatidy.job_storage.regular', replace_during_open):
+            value = jobs.public_status(job)
+        self.assertTrue(replaced)
+        self.assertEqual(value['state'], 'uploaded')
+        self.assertTrue(value['can_resume'])
+
     def test_corrupt_status_can_only_be_cleaned_after_confirmation(self):
         job = self.create()
         (jobs.job_path(job)/'status.json').write_text('not JSON')
@@ -253,6 +276,7 @@ jobs.run(sys.argv[1])
         jobs.delete(job, confirmed=True)
         self.assertEqual(jobs.listing()['count'], 0)
 
+    @unittest.skipIf(os.name == 'nt', 'POSIX mechanism; native Windows coverage is in test_windows_storage')
     def test_unsupported_locking_fails_closed(self):
         job = self.create()
         with patch('chatidy.job_storage.fcntl', None):
@@ -260,6 +284,7 @@ jobs.run(sys.argv[1])
                 jobs.delete(job, confirmed=True)
         self.assertTrue((jobs.job_path(job)/'source.json').exists())
 
+    @unittest.skipIf(os.name == 'nt', 'POSIX mechanism; native Windows coverage is in test_windows_storage')
     def test_world_writable_custom_parent_is_rejected(self):
         unsafe = self.path/'unsafe'
         unsafe.mkdir(mode=0o777)
@@ -297,6 +322,7 @@ jobs.run(sys.argv[1])
                 thread.join(timeout=5)
                 server.server_close()
 
+    @unittest.skipIf(os.name == 'nt', 'POSIX mechanism; native Windows coverage is in test_windows_storage')
     def test_symlinked_control_and_sqlite_files_block_all_mutation(self):
         sentinel = self.path / 'outside-secret.txt'
         sentinel.write_text('Synthetic protected data')
@@ -349,6 +375,7 @@ jobs.run(sys.argv[1])
                 child.wait(timeout=5)
             child.stdout.close()
 
+    @unittest.skipIf(os.name == 'nt', 'POSIX mechanism; native Windows coverage is in test_windows_storage')
     def test_main_database_cannot_be_deleted_even_if_relocated_into_job(self):
         job = self.create()
         source = jobs.job_path(job) / 'source.json'
@@ -359,6 +386,7 @@ jobs.run(sys.argv[1])
             jobs.delete(job, confirmed=True)
         self.assertTrue(source.exists())
 
+    @unittest.skipIf(os.name == 'nt', 'POSIX mechanism; native Windows coverage is in test_windows_storage')
     def test_directory_swap_to_symlink_does_not_follow_outside_target(self):
         job = self.create()
         source = jobs.job_path(job) / 'source.json'

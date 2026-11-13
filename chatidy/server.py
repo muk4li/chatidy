@@ -1,5 +1,6 @@
 """Local Chatidy web server. Standard library only, loopback binding, no telemetry."""
 import json
+from contextlib import closing
 import os
 import urllib.error
 import urllib.request
@@ -67,7 +68,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(200, jobs.listing())
             if path.startswith("/api/import/jobs/"):
                 return self.send(200, jobs.public_status(path.removeprefix("/api/import/jobs/")))
-            with connect() as db:
+            with closing(connect()) as db, db:
                 if path=="/api/tags":
                     return self.send(200, organisation.tags(db))
                 if path=="/api/smart-folders":
@@ -124,11 +125,11 @@ class Handler(BaseHTTPRequestHandler):
                 raw=self.read_body()
                 name=self.headers.get("X-Filename","export.zip")
                 chats=parse_export(raw,name)
-                with connect() as db:
+                with closing(connect()) as db, db:
                     count=upsert(db,chats)
                 return self.send(200,{"imported":count})
             value=self.get_json()
-            with connect() as db:
+            with closing(connect()) as db, db:
                 if path=="/api/tags/set":
                     return self.send(200, {"updated": organisation.apply_tags(db,
                         [value["conversation_id"]], value["tags"], replace=True)})

@@ -1,5 +1,110 @@
 # Aktueller Stand von Chatidy
 
+## Neuester Durchlauf – P0: native Windows-Importjobs
+
+Ausgangscommit: `80f420d360f801f59f2db3e9eab5d2e10f0bbdc6` auf main.
+Feature-Branch: `feature/native-windows-import-jobs`.
+
+### Implementierte Lösung und Sicherheit
+
+Der Job-Lebenszyklus verwendet eine kleine Storage-Schnittstelle. Linux behält
+flock, descriptorrelative Operationen und /proc/self/fd. Das neue native Windows-
+Backend verwendet ausschließlich die Python-Standardbibliothek und Win32-APIs:
+
+- CreateFileW öffnet Reparse Points selbst. Junctions, Symlinks, Hardlinks und
+  fremde Dateitypen werden vor Verarbeitung/Bereinigung abgelehnt.
+- Handles aller Pfadkomponenten bleiben während des Jobs offen und verweigern
+  FILE_SHARE_DELETE. Die Jobpfade können deshalb während Streaming und nativer
+  SQLite-Nutzung nicht umbenannt/ausgetauscht werden.
+- Geschützte DACLs beschränken neue Dateien/Ordner auf den Benutzer und SYSTEM.
+  Bestehende breite Schreibrechte werden abgelehnt, nicht pauschal repariert.
+- msvcrt-Bytebereichssperren koordinieren Verwaltung und Jobs prozessübergreifend.
+  Die Bereinigung prüft zuerst, dass kein Worker aktiv ist. Danach darf die eigene
+  Cleanup-Lease unter der durchgehend gehaltenen Registry-Sperre geschlossen
+  werden, damit Windows die Lockdatei nicht als Rename-Hindernis behandelt.
+- MoveFileEx ersetzt gespülte Statusdateien atomar. Vor der Entfernung von Daten
+  wird das umbenannte Jobverzeichnis erneut gepinnt und seine native Identität
+  geprüft. Dateilöschungen erfolgen über geprüfte Handles. Originalexport,
+  Hauptdatenbank und Sidecars bleiben geschützt; Löschung verlangt Bestätigung.
+- HTTP-Verbindungen und Staging-Cursor werden deterministisch geschlossen. Die CI
+  hat außerdem ein Statuslese-Rennen sichtbar gemacht: eine bereits geöffnete,
+  inzwischen atomar ersetzte Datei mit Linkzahl 0 ist kein Hardlink. Mehrere Links
+  bleiben abgelehnt. Hierfür existiert ein Regressionstest.
+
+Keine neue Schema-Migration, keine externen Pflichtpakete und kein WSL/Docker.
+Graph-, ZIP-, Streaming-, Reimport- und Transaktionsschutz bleiben erhalten.
+
+### Tatsächlich verifiziert
+
+[CI-Lauf 43517257301](https://github.com/muk4li/chatidy/actions/runs/43517257301)
+prüft Implementierungscommit `f66248b` einschließlich serialisierter Windows-Statuspublikation.
+Alle sechs Jobs dieses Implementierungslaufs wurden auf der öffentlichen Actions-Seite als erfolgreich bestätigt:
+
+| Host | Python 3.10 | Python 3.11 | Python 3.13 |
+| --- | --- | --- | --- |
+| ubuntu-latest | erfolgreich | erfolgreich | erfolgreich |
+| windows-latest | erfolgreich | erfolgreich | erfolgreich |
+
+Die native Windows-Suite enthält zusätzlich Junction-/Reparse-Abwehr, ACL-Prüfung,
+Bytebereichssperren, parallele Jobs, echte Prozessabbrüche/Wiederaufnahme, offene
+Dateihandles und SQLite-WAL. Der plattformübergreifende HTTP-Test führt einen
+normalen offiziellen ZIP-Import mit Fortschritt und bestätigter Bereinigung aus
+und prüft SQLite/FTS5 sowie den unveränderten Originalexport. POSIX-spezifische
+Mechanismentests laufen weiterhin unter Linux. Ein Windows-Symlink-Test darf bei
+fehlendem Privileg ausdrücklich übersprungen werden; die Junction-Tests werden
+nicht aus diesem Grund übersprungen.
+
+Lokal unter Linux: 84 entdeckte Tests, 74 erfolgreich ausgeführt und zehn native
+Windows-Tests ausdrücklich übersprungen. Chromium-Browsertest für den vollständigen
+bestehenden Import-/Organisations-/Jobverwaltungsablauf erfolgreich, einschließlich
+mobilen Layouts. Python-3.10-Grammatik und gestagte Dateien auf private Daten/
+gängige Secret-Muster geprüft. Sämtliche Daten sind synthetisch.
+
+Windows ist damit nativ auf echten Windows-CI-Runnern verifiziert. Ein manueller
+Windows-11-Desktopdurchlauf mit dem echten Export des Nutzers wurde nicht ausgeführt.
+Die Wiederholung der CI hat zusätzlich ein sporadisches Windows-Status-Schreibrennen
+aufgedeckt. Windows-Workerstatus und Statusleser werden nun kurz über die Registry-
+Sperre serialisiert, ohne die Importverarbeitung zu serialisieren. Auch diese
+Korrektur ist im oben verlinkten vollständigen nativen CI-Lauf erfolgreich geprüft.
+Frühere fehlgeschlagene CI-Läufe wurden diagnostiziert und korrigiert;
+Fehlerannotationen stellen synthetische Tracebacks auch ohne API-Logzugriff bereit.
+
+### Windows-11-Schnellstart und Grenzen
+
+Python 3.13 installieren, Projekt lokal entpacken und PowerShell dort öffnen:
+
+```powershell
+$env:CHATIDY_DB = Join-Path $env:LOCALAPPDATA "Chatidy\chatidy.sqlite3"
+py -3.13 -m chatidy
+```
+
+Dann Browser auf http://127.0.0.1:8877, vollständiges Export-ZIP auswählen und bis
+Erfolgreich warten. Jobdaten nur bestätigt bereinigen. Vor einer Sicherung die
+Anwendung mit Strg+C beenden und Datenbankordner inklusive vorhandener Sidecars
+sowie den Originalexport separat sichern. Vollständige Anleitung/Fehlerhilfe: README.
+
+Zunächst lokale feste NTFS-Laufwerke: keine UNC-/Netzlaufwerke, FAT/exFAT,
+OneDrive-Reparse-Pfade, Junctions oder Alternate Data Streams. Keine unsicheren
+Fallbacks. Windows bietet kein POSIX-Verzeichnis-fsync; gespülte Dateien,
+Write-through und SQLite-Journaling sichern Prozessabbrüche, sind aber keine
+Garantie gegen jedes Hardwareversagen. Programme mit denselben Benutzerrechten,
+SYSTEM und Administratoren bleiben Teil der lokalen Vertrauensgrenze. Die Limits
+bleiben 200 MB Upload / 350 MB entpacktes JSON; einzelne große Objekte benötigen RAM.
+
+### Lieferung und nächster Schritt
+
+Die Änderungen sind auf dem Feature-Branch gepusht. GitHub-API-Aufrufe zur PR-
+Erstellung liefern weiterhin Forbidden; die öffentliche Actions-Seite erlaubt
+hingegen die CI-Prüfung. Ein PR und Merge dürfen nicht als erledigt gelten, solange
+sie nicht tatsächlich bestätigt sind. main wurde in diesem Durchlauf nicht verändert.
+Nächster sinnvoller Schritt: Branch per PR prüfen/mergen und den ersten echten
+Windows-11-Import lokal nach der README durchführen, ohne private Exporte hochzuladen.
+
+---
+
+## Historie – Importjob-Datenschutz
+
+
 ## Neuester Durchlauf – sichere Importjob-Verwaltung
 
 Tatsächlich geprüfter main-Ausgangspunkt: `0ecabfb44ea4d68e5cd5251f65c2cffefbb43444`.
