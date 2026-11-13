@@ -1,5 +1,76 @@
 # Aktueller Stand von Chatidy
 
+## Neuester Durchlauf – P0: native Windows-Importjobs
+
+Ausgangscommit: `80f420d360f801f59f2db3e9eab5d2e10f0bbdc6` auf main.
+Feature-Branch: `feature/native-windows-import-jobs`.
+
+### Ursache und Änderung
+
+Die bisherige Jobverwaltung verwendete ausschließlich flock/O_NOFOLLOW/dir_fd,
+POSIX-Benutzerrechte und /proc/self/fd. Das verhinderte den normalen Jobimport auf
+Windows. Der Job-Lebenszyklus verwendet nun plattformneutrale Storage-Operationen.
+Linux behält sein descriptorrelatives Backend. Windows nutzt ein explizites
+NTFS-Backend mit typisierten Win32-Aufrufen über ctypes (Standardbibliothek):
+
+- CreateFileW öffnet Reparse Points selbst; Junctions/Symlinks werden abgelehnt.
+- Gehaltene Handles aller Pfadkomponenten verhindern deren Austausch während
+  Streaming/Staging. Windows-SQLite arbeitet dadurch mit normalen Dateipfaden.
+- Geschützte DACLs für neue Dateien/Ordner; bestehende breite Schreibrechte,
+  Hardlinks und unzulässige Dateitypen werden abgelehnt, nicht still repariert.
+- Prozessübergreifende msvcrt-Bytebereichssperren koordinieren Jobs und Verwaltung.
+- Statusdateien werden gespült und über MoveFileEx atomar ersetzt. Verzeichnis-
+  Umbenennungen und Löschungen verwenden geprüfte Handles und Identitätskontrollen.
+- Die Job-Lease wird erst am Ende der bestätigten Bereinigung unter weiterhin
+  gehaltener Registry-Sperre geschlossen, damit keine delete-pending Lockdatei
+  die Entfernung des Windows-Verzeichnisses blockiert.
+- Keine Schemaänderung, kein WSL/Docker und keine neue externe Pflichtabhängigkeit.
+
+### Validierung – ehrlicher Zwischenstand vor Windows-CI
+
+Linux: 82 entdeckte Tests, davon 73 erfolgreich ausgeführt und neun echte
+Windows-Tests explizit übersprungen. Der neue plattformübergreifende HTTP-Test
+prüft offiziellen ZIP-Upload, Fortschritt, SQLite/FTS5, bestätigte Bereinigung
+und unveränderten Originalexport. Bestehende Linux-Regressionen bleiben erhalten.
+Windows-Matrix für Python 3.10/3.11/3.13 ist angelegt. Native Tests prüfen
+Junctions, Reparse Points, ACLs, Windows-Pfade, Bytebereichssperren, offene Dateien,
+SQLite-WAL und Schutz der Original-/Hauptdatenbank. Generische Prozessabbruch-,
+Parallelitäts- und Wiederaufnahme-Tests laufen ebenfalls in dieser Matrix.
+POSIX-spezifische Mechanismentests sind unter Windows gezielt durch native Tests
+ergänzt; fehlende Symlink-Berechtigung kann dort einen einzelnen Test überspringen.
+
+Windows ist erst nach erfolgreicher echter Windows-CI als verifiziert zu bezeichnen.
+Dieser Zwischenstand behauptet noch keinen solchen Erfolg. Die öffentliche
+GitHub-Actions-Webseite ist lesbar, obwohl die API bisher Forbidden lieferte;
+nach dem Push wird damit der konkrete Lauf überprüft, soweit verfügbar.
+
+### Bekannte Grenzen und Windows-Schnellstart
+
+Zunächst lokale feste NTFS-Laufwerke, keine UNC-/Netzlaufwerke, FAT/exFAT,
+OneDrive-Reparse-Pfade oder Junctions. Sicherheitsablehnungen werden nicht durch
+schwächere Fallbacks umgangen. Windows bietet kein POSIX-Verzeichnis-fsync;
+Status-Write-through und SQLite-Journaling sichern Prozessabbrüche, sind aber
+keine pauschale Garantie gegen jedes Speicher-/Hardwareversagen. Programme mit
+denselben Benutzerrechten sowie SYSTEM/Administratoren bleiben Teil der lokalen
+Vertrauensgrenze. Upload-/Entpacklimits bleiben 200/350 MB.
+
+README enthält den vollständigen Windows-11-Schnellstart. Kurz: Python installieren,
+Projekt lokal entpacken, in PowerShell im Projektverzeichnis ausführen:
+
+```powershell
+$env:CHATIDY_DB = Join-Path $env:LOCALAPPDATA "Chatidy\chatidy.sqlite3"
+py -3.13 -m chatidy
+```
+
+Dann Browser auf http://127.0.0.1:8877, vollständiges Export-ZIP auswählen,
+Fortschritt bis Erfolgreich prüfen. Jobdaten nur bestätigt bereinigen und bei
+beendeter Anwendung Datenbankordner inklusive Sidecars und Originalexport sichern.
+
+---
+
+## Historie – Importjob-Datenschutz
+
+
 ## Neuester Durchlauf – sichere Importjob-Verwaltung
 
 Tatsächlich geprüfter main-Ausgangspunkt: `0ecabfb44ea4d68e5cd5251f65c2cffefbb43444`.

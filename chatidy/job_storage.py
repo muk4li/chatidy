@@ -27,7 +27,12 @@ def validate_id(value):
 
 
 def root_path():
-    return Path(os.path.abspath(os.getenv('CHATIDY_DB', 'data/chatidy.sqlite3'))).parent / 'import-jobs'
+    configured = os.getenv('CHATIDY_DB', 'data/chatidy.sqlite3')
+    if os.name == 'nt':
+        drive, tail = os.path.splitdrive(configured)
+        if drive and (len(drive) != 2 or not tail.startswith(('\\', '/'))):
+            raise ValueError('Keine UNC-, Geräte- oder laufwerksrelativen Importjob-Pfade erlaubt.')
+    return Path(os.path.abspath(configured)).parent / 'import-jobs'
 
 
 def directory(name, parent=None):
@@ -170,3 +175,47 @@ class Job:
         if not Path('/proc/self/fd').is_dir():
             raise ValueError('Import-Staging benötigt auf diesem System /proc/self/fd.')
         return f'/proc/self/fd/{self.fd}/staging.sqlite3'
+
+# The job lifecycle uses only these filesystem primitives. Keep the POSIX
+# descriptor-relative backend; select native handles explicitly on Windows.
+def mkdir(parent, name):
+    validate_id(name)
+    os.mkdir(name, 0o700, dir_fd=parent)
+
+
+def listdir(parent):
+    return os.listdir(parent)
+
+
+def stat_entry(parent, name):
+    return os.stat(name, dir_fd=parent, follow_symlinks=False)
+
+
+def rename_job(job, parent, name):
+    validate_id(name.removeprefix('.deleting-'))
+    os.rename(job.name, name, src_dir_fd=parent, dst_dir_fd=parent)
+    job.name = name
+
+
+def unlink(job, name):
+    if name not in FILES:
+        raise ValueError('Unbekannte Importjob-Datei.')
+    os.unlink(name, dir_fd=job.fd)
+
+
+def remove_job(job, parent, name):
+    os.rmdir(name, dir_fd=parent)
+
+
+def sync(parent):
+    os.fsync(parent)
+
+
+def path_identity(path):
+    info = path.stat()
+    return info.st_dev, info.st_ino
+
+
+if os.name == 'nt':
+    from .windows_job_storage import (root, registry, file_open, Job, mkdir,
+        listdir, stat_entry, rename_job, unlink, remove_job, sync, path_identity)

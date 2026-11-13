@@ -16,6 +16,67 @@ python -m chatidy
 
 Im Browser **http://127.0.0.1:8877** öffnen und dein offizielles ChatGPT-Export-ZIP oder `conversations.json` importieren.
 
+## Windows 11: nativer Schnellstart
+
+Kein WSL, Docker oder zusätzliches Python-Paket erforderlich. Die native
+Windows-Implementierung und CI-Matrix sind neu; der aktuelle Verifikationsstand
+steht in [aktuellerStand.md](aktuellerStand.md). Ein Linux-Test allein bestätigt
+keine Windows-Unterstützung.
+
+1. Installiere Python 3.13 (oder 3.11) von **python.org**. Aktiviere im Installer
+   den Python-Launcher bzw. **Add Python to PATH**. Prüfe in PowerShell
+   `py -3.13 --version` (bei Python 3.11 entsprechend `py -3.11`).
+2. Lade das Repository über GitHub **Code → Download ZIP** herunter und entpacke
+   es, oder klone es mit Git. Öffne PowerShell im Projektverzeichnis: Dort müssen
+   `README.md` und der Unterordner `chatidy` liegen.
+3. Wähle einen lokalen Datenbankpfad außerhalb des Checkouts, von OneDrive und
+   Netzlaufwerken. Auf einem normalen Windows-System ist dies ein NTFS-Laufwerk:
+
+   ```powershell
+   $env:CHATIDY_DB = Join-Path $env:LOCALAPPDATA "Chatidy\chatidy.sqlite3"
+   py -3.13 -m chatidy
+   ```
+
+   Der Ordner wird angelegt. Verwende denselben Datenbankpfad bei jedem Start;
+   ohne die Variable wird stattdessen `data/chatidy.sqlite3` im Projekt genutzt.
+4. Öffne im Browser `http://127.0.0.1:8877`. Wähle **Datei auswählen** und deinen
+   vollständigen offiziellen ChatGPT-Export als ZIP. Die Originaldatei wird nur
+   gelesen; Chatidy speichert eine private lokale Kopie im Jobverzeichnis.
+5. Verfolge den Status im Importbereich bzw. unter **Lokale Importjobs verwalten**.
+   Erst **Erfolgreich** bestätigt die atomare Übernahme. Prüfe danach die Anzahl
+   der Chats/Nachrichten und suche nach einem bekannten Begriff.
+6. Ein vollständiger Upload kann nach einem Prozessabbruch über **Fortsetzen**
+   erneut geprüft und übernommen werden. Ein abgebrochener Upload muss neu
+   hochgeladen werden. **Jobdaten löschen** verlangt eine Bestätigung und
+   entfernt nur die Jobkopie, nicht importierte Chats oder den Originalexport.
+7. Warte möglichst auf den Abschluss aktiver Jobs und beende den Server im
+   PowerShell-Fenster mit **Strg+C**. Nach einem unerwarteten Abbruch bleiben
+   SQLite-Transaktionen und Job-Wiederaufnahme wirksam.
+8. Sichere bei beendeter Anwendung den gesamten Datenbankordner, einschließlich
+   eventuell vorhandener `-wal`-/`-shm`-Dateien, und separat den ursprünglichen
+   Export. Sichere private Daten außerhalb dieses öffentlichen Repositories.
+
+Die Limits bleiben **200 MB Upload / 350 MB entpacktes JSON**. Einzelne sehr große
+Konversationen benötigen weiterhin ausreichend RAM. Größere Exporte werden
+kontrolliert abgelehnt; nicht willkürlich in beschädigte Teilgraphen zerlegen.
+
+Häufige Windows-Fehler:
+
+- **`py` nicht gefunden:** PowerShell nach der Installation neu öffnen oder
+  `python --version` prüfen und `python -m chatidy` verwenden.
+- **`No module named chatidy`:** In den entpackten Projektordner wechseln.
+- **NTFS-/Reparse-/Junction-Fehler:** Einen echten lokalen NTFS-Ordner außerhalb
+  von OneDrive, Junctions, Symlinks, UNC-, Geräte- und Netzlaufwerkspfaden wählen.
+  Diese Sicherheitsprüfung nicht umgehen.
+- **Zugriff verweigert / Datei wird verwendet:** Andere Chatidy-Instanzen,
+  SQLite-Programme oder Editoren mit offenen Jobdateien schließen. Eine
+  unterbrochene Bereinigung anschließend erneut ausdrücklich bestätigen.
+- **Unsichere Berechtigungen:** Einen neuen privaten Datenordner unter
+  `%LOCALAPPDATA%` verwenden. Vorhandene Daten nicht löschen oder ihre Rechte
+  pauschal auf „Jeder: Vollzugriff“ erweitern.
+- **Port 8877 belegt:** Eine noch laufende Chatidy-Instanz beenden. Den Server
+  weiterhin ausschließlich über Loopback verwenden.
+
 ## Funktionen
 
 - ChatGPT-ZIP/JSON importieren; aktive Gesprächszweige aus der Export-Graphstruktur rekonstruieren.
@@ -125,14 +186,25 @@ die üblichen SQLite-Dateiendungen und Sidecars. Ein beliebig benannter eigener
 Datenbankpfad ohne solche Endung muss zusätzlich lokal ausgeschlossen werden;
 `.gitignore` schützt weiterhin nicht vor `git add -f` oder bereits verfolgten Daten.
 
-Die gehärtete Jobverwaltung benötigt derzeit POSIX-`flock`, descriptorrelative
-Dateioperationen und für SQLite-Staging Linux-`/proc/self/fd`. Ohne diese
-Voraussetzungen wird der Vorgang sicher abgelehnt; der synchrone `/api/import`
-bleibt verfügbar. Symlinks in den Jobpfaden sowie für andere schreibbare
-Verzeichnisse werden abgelehnt (System-Tempverzeichnisse mit Sticky-Bit sind
-zulässig). Sperren koordinieren Chatidy-Prozesse auf lokalen Dateisystemen;
-sie ersetzen keine Betriebssystem-Zugriffskontrolle gegen denselben Benutzer.
-Keine zusätzliche Datenbankmigration und keine Cloud-Verbindung sind erforderlich.
+Die Storage-Abstraktion wählt das Backend ausdrücklich nach Betriebssystem:
+Unter Linux bleiben `flock`, descriptorrelative Operationen und `/proc/self/fd`
+erhalten. Unter Windows verwendet sie `CreateFileW` mit Reparse-Prüfung,
+über die gesamte Verarbeitung gehaltene Verzeichnishandles, private NTFS-DACLs,
+`msvcrt`-Dateisperren und native atomare Statusersetzung. SQLite erhält dort einen
+regulären, durch die gehaltenen Pfad-Handles geschützten Dateinamen. Renames und
+Löschungen erfolgen über geprüfte Windows-Handles; aktive Job-Leases und die
+Registry-Sperre bleiben auf beiden Plattformen wirksam.
+
+Windows unterstützt zunächst **lokale feste NTFS-Laufwerke**. Junctions,
+Symlinks, sonstige Reparse Points, Hardlinks, UNC-/Gerätepfade, Netzlaufwerke und
+für andere Benutzer schreibbare Jobdateien werden kontrolliert abgelehnt.
+SYSTEM und Administratoren bleiben vertrauenswürdige Betriebssystemidentitäten.
+Ein fehlender Windows-Symlink-Test wegen fehlender Berechtigung zählt nicht als
+bestandener Test; Junction-Tests benötigen diese Berechtigung nicht. Die Abwehr
+ersetzt keine Zugriffskontrolle gegen Programme mit demselben Benutzerkonto.
+Auf anderen nicht unterstützten Plattformen bleibt der synchrone `/api/import`
+verfügbar; es gibt keinen unsicheren Storage-Fallback. Keine neue Pflichtabhängigkeit
+und keine Datenbankmigration sind erforderlich.
 
 Zusätzliche lokale HTTP-Endpunkte (Host-/Origin-Prüfung bleibt aktiv):
 
@@ -223,7 +295,10 @@ sich eine lokale Sicherung der geschlossenen Datenbank außerhalb des Repositori
 python -m unittest discover -s tests -v
 ```
 
-GitHub Actions führt die Unit-Tests unter Python 3.11 und 3.13 aus.
+GitHub Actions definiert die vollständige Unit-Testmatrix für `ubuntu-latest` und
+`windows-latest` mit Python 3.10, 3.11 und 3.13. Windows-spezifische Tests laufen
+ausschließlich auf einem echten Windows-Host; übersprungene Tests zählen nicht als
+Windows-Verifikation.
 Optionaler echter Browsertest mit installiertem Node, Playwright und Chromium:
 
 ```bash

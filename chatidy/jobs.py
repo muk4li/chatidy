@@ -103,7 +103,7 @@ def listing():
         return {'jobs': [], 'count': 0, 'storage_bytes': 0, 'ignored_entries': 0}
     results, ignored = [], 0
     with storage.root() as root_fd, storage.registry(root_fd):
-        for name in sorted(os.listdir(root_fd)):
+        for name in sorted(storage.listdir(root_fd)):
             if name == 'management.lock':
                 continue
             job_id = name.removeprefix('.deleting-')
@@ -162,7 +162,7 @@ def create(source, size, name):
         raise ValueError('Bitte eine .zip- oder .json-Datei wählen.')
     job_id = uuid.uuid4().hex
     with storage.root(create=True) as root_fd, storage.registry(root_fd):
-        os.mkdir(job_id, 0o700, dir_fd=root_fd)
+        storage.mkdir(root_fd, job_id)
         job = storage.Job(root_fd, job_id)
         lease = job.acquire()
         state = {'id': job_id, 'state': 'uploading', 'validated': 0, 'total_bytes': size,
@@ -331,8 +331,7 @@ def delete(job_id, confirmed=False):
                 protected = set()
                 for path in (database_path(), Path(str(database_path())+'-wal'), Path(str(database_path())+'-shm'), Path(str(database_path())+'-journal')):
                     try:
-                        info = path.stat()
-                        protected.add((info.st_dev, info.st_ino))
+                        protected.add(storage.path_identity(path))
                     except FileNotFoundError:
                         pass
                 if any((info.st_dev, info.st_ino) in protected for info in entries.values()):
@@ -344,14 +343,14 @@ def delete(job_id, confirmed=False):
                         value = {'id': job_id, 'created': 0, 'validated': 0}
                     tombstone = '.deleting-'+job_id
                     try:
-                        os.stat(tombstone, dir_fd=root_fd, follow_symlinks=False)
+                        storage.stat_entry(root_fd, tombstone)
                     except FileNotFoundError:
                         pass
                     else:
                         raise ValueError('Mehrdeutige Bereinigungsdaten. Lokal prüfen.')
                     job.write('deletion.json', {key: value[key] for key in ('id', 'created', 'validated')})
-                    os.rename(job_id, tombstone, src_dir_fd=root_fd, dst_dir_fd=root_fd)
-                    os.fsync(root_fd)
+                    storage.rename_job(job, root_fd, tombstone)
+                    storage.sync(root_fd)
                 else:
                     tombstone = job.name
                 # Keep recovery markers until the end. On failure the tombstone
@@ -360,14 +359,20 @@ def delete(job_id, confirmed=False):
                 order = sorted(set(entries) - {'status.json', 'deletion.json', 'job.lock'})
                 order += [name for name in ('status.json', 'deletion.json', 'job.lock') if name in entries]
                 for name in order:
-                    now = os.stat(name, dir_fd=job.fd, follow_symlinks=False)
+                    now = storage.stat_entry(job.fd, name)
                     before = entries[name]
                     if (now.st_dev, now.st_ino) != (before.st_dev, before.st_ino):
                         raise ValueError('Jobdateien wurden während der Bereinigung verändert. Vorgang abgebrochen.')
-                    os.unlink(name, dir_fd=job.fd)
-                os.fsync(job.fd)
-                os.rmdir(tombstone, dir_fd=root_fd)
-                os.fsync(root_fd)
+                    if name == 'job.lock':
+                        # The registry lock and tombstone prevent new workers.
+                        # Windows cannot remove a directory with a delete-pending
+                        # open lock file, so release its lease at the very end.
+                        os.close(lease)
+                        lease = None
+                    storage.unlink(job, name)
+                storage.sync(job.fd)
+                storage.remove_job(job, root_fd, tombstone)
+                storage.sync(root_fd)
             finally:
                 if lease is not None:
                     os.close(lease)
