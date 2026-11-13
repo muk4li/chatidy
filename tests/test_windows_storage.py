@@ -5,6 +5,7 @@ import os
 import sqlite3
 import subprocess
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -172,6 +173,32 @@ class WindowsStorageTests(unittest.TestCase):
             jobs.delete(job_id, confirmed=True)
         self.assertEqual(jobs.listing()['jobs'][0]['state'], 'blocked')
         self.assertTrue(source.exists())
+
+    def test_status_is_readable_during_atomic_replacements(self):
+        job_id = self.create()
+        job, lease = jobs._lease(job_id)
+        value = job.read('status.json')
+        failures = []
+        def writer():
+            try:
+                for _ in range(30):
+                    job.write('status.json', value)
+            except Exception as exc:
+                failures.append(exc)
+        thread = threading.Thread(target=writer)
+        try:
+            thread.start()
+            for _ in range(30):
+                info = jobs.public_status(job_id)
+                self.assertEqual(info['state'], 'uploaded')
+                self.assertTrue(info['active'])
+            thread.join(timeout=10)
+            self.assertFalse(thread.is_alive())
+            self.assertEqual(failures, [])
+        finally:
+            thread.join(timeout=10)
+            os.close(lease)
+            job.close()
 
     def test_windows_ids_paths_and_alternate_streams(self):
         from chatidy import windows_handles as win

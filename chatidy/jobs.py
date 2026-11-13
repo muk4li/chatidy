@@ -337,6 +337,7 @@ def delete(job_id, confirmed=False):
                         pass
                 if any((info.st_dev, info.st_ino) in protected for info in entries.values()):
                     raise ValueError('Jobdatei gehört zur Chatidy-Datenbank. Bereinigung verweigert.')
+                lease = storage.prepare_delete(job, lease)
                 if not deleting:
                     try:
                         value = _read(job, job_id)
@@ -364,7 +365,7 @@ def delete(job_id, confirmed=False):
                     before = entries[name]
                     if (now.st_dev, now.st_ino) != (before.st_dev, before.st_ino):
                         raise ValueError('Jobdateien wurden während der Bereinigung verändert. Vorgang abgebrochen.')
-                    if name == 'job.lock':
+                    if name == 'job.lock' and lease is not None:
                         # The registry lock and tombstone prevent new workers.
                         # Windows cannot remove a directory with a delete-pending
                         # open lock file, so release its lease at the very end.

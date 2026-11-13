@@ -176,7 +176,7 @@ def open_handle(path, access, share=SHARE_ALL, disposition=OPEN_EXISTING, direct
         info = information(handle)
         if bool(info.attributes & DIRECTORY) != directory:
             raise ValueError('Ungültiger Dateityp im Importjob.')
-        if not directory and info.links != 1:
+        if not directory and info.links > 1:
             raise ValueError('Hardlinks sind in Importjobs nicht erlaubt.')
         return handle
     except BaseException:

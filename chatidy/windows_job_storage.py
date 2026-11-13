@@ -257,6 +257,15 @@ class Job:
         return str(self.fd.path / 'staging.sqlite3')
 
 
+def prepare_delete(job, lease):
+    # Windows directory renames can fail while a child file is open, including
+    # the lock file. The caller already proved no worker owns the lease and
+    # holds the registry lock for the ENTIRE cleanup, so releasing this cleanup
+    # lease cannot let a worker start. Keep all ancestor pins intact.
+    os.close(lease)
+    return None
+
+
 def rename_job(job, parent, name):
     validate_id(name.removeprefix('.deleting-'))
     # MoveFileEx is the documented Win32 directory rename operation. Temporarily

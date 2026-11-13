@@ -243,6 +243,27 @@ jobs.run(sys.argv[1])
         self.assertEqual(jobs.listing()['count'], 0)
         self.assertTrue(self.db_path.exists())
 
+    @unittest.skipIf(os.name == 'nt', 'POSIX unlinked-open-file semantics; Windows has concurrent status coverage')
+    def test_atomic_status_replacement_during_open_does_not_look_like_a_hardlink(self):
+        job = self.create()
+        path = jobs.job_path(job)/'status.json'
+        original = job_storage.regular
+        replaced = []
+        inode = path.stat().st_ino
+        def replace_during_open(fd):
+            if not replaced and os.fstat(fd).st_ino == inode:
+                replaced.append(True)
+                temporary = path.with_name('status.tmp')
+                temporary.write_bytes(path.read_bytes())
+                os.replace(temporary, path)
+                self.assertEqual(os.fstat(fd).st_nlink, 0)
+            return original(fd)
+        with patch('chatidy.job_storage.regular', replace_during_open):
+            value = jobs.public_status(job)
+        self.assertTrue(replaced)
+        self.assertEqual(value['state'], 'uploaded')
+        self.assertTrue(value['can_resume'])
+
     def test_corrupt_status_can_only_be_cleaned_after_confirmation(self):
         job = self.create()
         (jobs.job_path(job)/'status.json').write_text('not JSON')

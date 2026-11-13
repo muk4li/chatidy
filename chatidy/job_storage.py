@@ -42,7 +42,7 @@ def directory(name, parent=None):
 
 def regular(fd):
     info = os.fstat(fd)
-    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_uid != os.getuid():
+    if not stat.S_ISREG(info.st_mode) or info.st_nlink > 1 or info.st_uid != os.getuid():
         raise ValueError('Unsichere Importjob-Datei: nur eigene reguläre Dateien ohne Hardlinks erlaubt.')
     return info
 
@@ -211,6 +211,10 @@ def sync(parent):
     os.fsync(parent)
 
 
+def prepare_delete(job, lease):
+    return lease
+
+
 def path_identity(path):
     info = path.stat()
     return info.st_dev, info.st_ino
@@ -218,4 +222,4 @@ def path_identity(path):
 
 if os.name == 'nt':
     from .windows_job_storage import (root, registry, file_open, Job, mkdir,
-        listdir, stat_entry, rename_job, unlink, remove_job, sync, path_identity)
+        listdir, stat_entry, rename_job, unlink, remove_job, sync, path_identity, prepare_delete)

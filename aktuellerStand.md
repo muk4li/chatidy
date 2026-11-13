@@ -47,7 +47,12 @@ synthetische Tracebacks ohne Zugriff auf angemeldete Rohlogs untersucht werden k
 Der Folgelauf identifizierte Fehler beim Windows-Verzeichnis-Rename und offene
 SQLite-Verbindungen/Cursor. Die Korrektur nutzt MoveFileEx mit erneuter Pinning-/
 Identitätsprüfung vor dem Löschen sowie deterministisches Schließen aller
-HTTP-Verbindungen und des Staging-Cursors. Diese Korrektur braucht erneut echte CI. Die öffentliche
+HTTP-Verbindungen und des Staging-Cursors. Diese Korrektur braucht erneut echte CI. Im nächsten Lauf wurde zusätzlich die
+eigene offene Lockdatei als Windows-Rename-Hindernis isoliert: nach bewiesener
+Inaktivität wird sie unter weiterhin durchgehend gehaltener Registry-Sperre vor
+dem Rename geschlossen. Ein Statuslese-Rennen bei atomarer Ersetzung erhält
+einen Regressionstest; bereits geöffnete, inzwischen unbenannte Dateien mit
+Linkzahl 0 sind keine Hardlinks. Mehrere Links bleiben gesperrt. Die öffentliche
 GitHub-Actions-Webseite ist lesbar, obwohl die API bisher Forbidden lieferte;
 nach dem Push wird damit der konkrete Lauf überprüft, soweit verfügbar.
 
