@@ -16,8 +16,8 @@ from chatidy.db import connect, list_chats
 def junction(link, target):
     # mklink /J is a Windows built-in and requires no symlink privilege.
     # All paths here are generated synthetic fixtures, not API input.
-    command = f'mklink /J "{link}" "{target}"'
-    result = subprocess.run(['cmd', '/d', '/s', '/c', command], capture_output=True, text=True)
+    result = subprocess.run(['cmd', '/d', '/c', 'mklink', '/J', str(link), str(target)],
+                            capture_output=True, text=True)
     if result.returncode:
         raise AssertionError('Junction fixture could not be created: '+result.stderr)
 
@@ -208,6 +208,7 @@ class WindowsStorageTests(unittest.TestCase):
         for value in ('C:relative', '\\\\server\\share\\jobs', '\\\\?\\C:\\jobs', 'C:\\jobs:stream'):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 win.validate_volume(Path(value))
-        with patch.dict(os.environ, CHATIDY_DB='C:relative.db'):
-            with self.assertRaises(ValueError):
-                job_storage.root_path()
+        for configured in ('C:relative.db', str(self.path/'library.db')+':stream'):
+            with patch.dict(os.environ, CHATIDY_DB=configured):
+                with self.assertRaises(ValueError):
+                    job_storage.root_path()

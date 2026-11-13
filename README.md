@@ -191,8 +191,8 @@ Unter Linux bleiben `flock`, descriptorrelative Operationen und `/proc/self/fd`
 erhalten. Unter Windows verwendet sie `CreateFileW` mit Reparse-Prüfung,
 über die gesamte Verarbeitung gehaltene Verzeichnishandles, private NTFS-DACLs,
 `msvcrt`-Dateisperren und native atomare Statusersetzung. SQLite erhält dort einen
-regulären, durch die gehaltenen Pfad-Handles geschützten Dateinamen. Renames und
-Löschungen erfolgen über geprüfte Windows-Handles; aktive Job-Leases und die
+regulären, durch die gehaltenen Pfad-Handles geschützten Dateinamen. Vor dem Löschen wird das umbenannte Verzeichnis erneut gepinnt und seine
+native Identität geprüft; Dateilöschungen erfolgen über geprüfte Windows-Handles; aktive Job-Leases und die
 Registry-Sperre bleiben auf beiden Plattformen wirksam.
 
 Windows unterstützt zunächst **lokale feste NTFS-Laufwerke**. Junctions,

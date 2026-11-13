@@ -20,7 +20,8 @@ NTFS-Backend mit typisierten Win32-Aufrufen über ctypes (Standardbibliothek):
   Hardlinks und unzulässige Dateitypen werden abgelehnt, nicht still repariert.
 - Prozessübergreifende msvcrt-Bytebereichssperren koordinieren Jobs und Verwaltung.
 - Statusdateien werden gespült und über MoveFileEx atomar ersetzt. Verzeichnis-
-  Umbenennungen und Löschungen verwenden geprüfte Handles und Identitätskontrollen.
+  Umbenennungen werden unter Verwaltungssperre mit anschließendem erneuten Pinning
+  und Identitätsprüfung durchgeführt; Löschungen verwenden geprüfte Handles.
 - Die Job-Lease wird erst am Ende der bestätigten Bereinigung unter weiterhin
   gehaltener Registry-Sperre geschlossen, damit keine delete-pending Lockdatei
   die Entfernung des Windows-Verzeichnisses blockiert.
@@ -28,7 +29,7 @@ NTFS-Backend mit typisierten Win32-Aufrufen über ctypes (Standardbibliothek):
 
 ### Validierung – ehrlicher Zwischenstand vor Windows-CI
 
-Linux: 82 entdeckte Tests, davon 73 erfolgreich ausgeführt und neun echte
+Linux: 84 entdeckte Tests, davon 74 erfolgreich ausgeführt und zehn echte
 Windows-Tests explizit übersprungen. Der neue plattformübergreifende HTTP-Test
 prüft offiziellen ZIP-Upload, Fortschritt, SQLite/FTS5, bestätigte Bereinigung
 und unveränderten Originalexport. Bestehende Linux-Regressionen bleiben erhalten.
@@ -52,7 +53,10 @@ eigene offene Lockdatei als Windows-Rename-Hindernis isoliert: nach bewiesener
 Inaktivität wird sie unter weiterhin durchgehend gehaltener Registry-Sperre vor
 dem Rename geschlossen. Ein Statuslese-Rennen bei atomarer Ersetzung erhält
 einen Regressionstest; bereits geöffnete, inzwischen unbenannte Dateien mit
-Linkzahl 0 sind keine Hardlinks. Mehrere Links bleiben gesperrt. Die öffentliche
+Linkzahl 0 sind keine Hardlinks. Mehrere Links bleiben gesperrt. Danach waren auf Windows 3.11/3.13 nur noch
+zwei Fehler im Junction-Testaufbau offen (cmd-Quoting); die tatsächlichen Import-,
+Lock-, SQLite- und Bereinigungstests waren erfolgreich. Der Testaufbau ist nun
+korrigiert und muss erneut vollständig einschließlich Junction-Abwehr bestehen. Die öffentliche
 GitHub-Actions-Webseite ist lesbar, obwohl die API bisher Forbidden lieferte;
 nach dem Push wird damit der konkrete Lauf überprüft, soweit verfügbar.
 

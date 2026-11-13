@@ -32,7 +32,10 @@ def root_path():
         drive, tail = os.path.splitdrive(configured)
         if drive and (len(drive) != 2 or not tail.startswith(('\\', '/'))):
             raise ValueError('Keine UNC-, Geräte- oder laufwerksrelativen Importjob-Pfade erlaubt.')
-    return Path(os.path.abspath(configured)).parent / 'import-jobs'
+    absolute = Path(os.path.abspath(configured))
+    if os.name == 'nt' and any(':' in part or part.rstrip(' .') != part for part in absolute.parts[1:]):
+        raise ValueError('Keine mehrdeutigen Windows-Pfadkomponenten oder Alternate Data Streams erlaubt.')
+    return absolute.parent / 'import-jobs'
 
 
 def directory(name, parent=None):

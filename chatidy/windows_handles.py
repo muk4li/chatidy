@@ -41,10 +41,6 @@ class AceHeader(c.Structure):
     _fields_ = [('kind', w.BYTE), ('flags', w.BYTE), ('size', w.WORD)]
 
 
-class RenameInfo(c.Structure):
-    _fields_ = [('replace', w.BOOLEAN), ('root', HANDLE), ('length', w.DWORD), ('name', w.WCHAR * 1)]
-
-
 class DispositionInfo(c.Structure):
     _fields_ = [('delete', w.BOOLEAN)]
 
@@ -203,15 +199,6 @@ def validate_volume(path):
     checked(VolumeInfo(anchor, None, 0, None, None, None, filesystem, len(filesystem)))
     if filesystem.value.upper() != 'NTFS':
         raise ValueError('Sichere Windows-Importjobs benötigen derzeit NTFS.')
-
-
-def rename(handle, target):
-    encoded = str(target).encode('utf-16-le')
-    buffer = c.create_string_buffer(RenameInfo.name.offset + len(encoded))
-    info = c.cast(buffer, c.POINTER(RenameInfo)).contents
-    info.replace, info.root, info.length = False, None, len(encoded)
-    c.memmove(c.addressof(buffer) + RenameInfo.name.offset, encoded, len(encoded))
-    checked(SetInfo(handle, 3, buffer, len(buffer)))  # FileRenameInfo
 
 
 def mark_delete(handle):
