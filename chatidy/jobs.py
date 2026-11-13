@@ -1,5 +1,6 @@
 """Durable import lifecycle and explicitly confirmed, confined job cleanup."""
 import hashlib
+from contextlib import closing
 import json
 import math
 import os
@@ -243,8 +244,8 @@ def _run(job, job_id):
         job.write('status.json', state)
         db = connect(database_path())
         try:
-            imported = upsert(db, (json.loads(row[0]) for row in
-                                  staging.execute('SELECT payload FROM chats ORDER BY sequence')))
+            with closing(staging.execute('SELECT payload FROM chats ORDER BY sequence')) as rows:
+                imported = upsert(db, (json.loads(row[0]) for row in rows))
         finally:
             db.close()
         state.update(state='done', imported=imported)

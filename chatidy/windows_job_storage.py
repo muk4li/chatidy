@@ -259,10 +259,19 @@ class Job:
 
 def rename_job(job, parent, name):
     validate_id(name.removeprefix('.deleting-'))
-    job.fd.deletion_handle()
-    win.rename(job.fd.handle, parent.path / name)
-    job.fd.path = parent.path / name
-    job.name = name
+    # MoveFileEx is the documented Win32 directory rename operation. Temporarily
+    # release only this leaf pin (the entire ancestor chain stays pinned and the
+    # registry/job locks remain held). No contents are removed until the renamed
+    # directory is re-pinned and its native file identity has been verified.
+    previous = win.identity(job.fd.handle)
+    win.Close(job.fd.handle)
+    job.fd.handle = None
+    target = parent.path / name
+    win.checked(win.MoveFile(str(job.fd.path), str(target), 8))
+    job.fd.path, job.name = target, name
+    job.fd.handle = win.open_handle(target, 0x80 | 1, share=win.SHARE_PIN, directory=True)
+    if win.identity(job.fd.handle) != previous:
+        raise ValueError('Importjob-Verzeichnis wurde beim Umbenennen ersetzt. Keine Dateien gelöscht.')
 
 
 def unlink(job, name):

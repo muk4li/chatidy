@@ -43,7 +43,11 @@ Windows ist erst nach erfolgreicher echter Windows-CI als verifiziert zu bezeich
 Dieser Zwischenstand behauptet noch keinen solchen Erfolg. Im ersten echten Lauf
 43514922424 waren Linux-Jobs erfolgreich, Windows-Jobs jedoch fehlgeschlagen.
 CI-Fehlerannotationen ergänzen nun die unveränderte vollständige Suite, damit
-synthetische Tracebacks ohne Zugriff auf angemeldete Rohlogs untersucht werden können. Die öffentliche
+synthetische Tracebacks ohne Zugriff auf angemeldete Rohlogs untersucht werden können.
+Der Folgelauf identifizierte Fehler beim Windows-Verzeichnis-Rename und offene
+SQLite-Verbindungen/Cursor. Die Korrektur nutzt MoveFileEx mit erneuter Pinning-/
+Identitätsprüfung vor dem Löschen sowie deterministisches Schließen aller
+HTTP-Verbindungen und des Staging-Cursors. Diese Korrektur braucht erneut echte CI. Die öffentliche
 GitHub-Actions-Webseite ist lesbar, obwohl die API bisher Forbidden lieferte;
 nach dem Push wird damit der konkrete Lauf überprüft, soweit verfügbar.
 
