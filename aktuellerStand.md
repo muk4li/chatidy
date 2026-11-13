@@ -40,7 +40,10 @@ POSIX-spezifische Mechanismentests sind unter Windows gezielt durch native Tests
 ergänzt; fehlende Symlink-Berechtigung kann dort einen einzelnen Test überspringen.
 
 Windows ist erst nach erfolgreicher echter Windows-CI als verifiziert zu bezeichnen.
-Dieser Zwischenstand behauptet noch keinen solchen Erfolg. Die öffentliche
+Dieser Zwischenstand behauptet noch keinen solchen Erfolg. Im ersten echten Lauf
+43514922424 waren Linux-Jobs erfolgreich, Windows-Jobs jedoch fehlgeschlagen.
+CI-Fehlerannotationen ergänzen nun die unveränderte vollständige Suite, damit
+synthetische Tracebacks ohne Zugriff auf angemeldete Rohlogs untersucht werden können. Die öffentliche
 GitHub-Actions-Webseite ist lesbar, obwohl die API bisher Forbidden lieferte;
 nach dem Push wird damit der konkrete Lauf überprüft, soweit verfügbar.
 
