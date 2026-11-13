@@ -19,9 +19,10 @@ Im Browser **http://127.0.0.1:8877** öffnen und dein offizielles ChatGPT-Export
 ## Windows 11: nativer Schnellstart
 
 Kein WSL, Docker oder zusätzliches Python-Paket erforderlich. Die native
-Windows-Implementierung und CI-Matrix sind neu; der aktuelle Verifikationsstand
-steht in [aktuellerStand.md](aktuellerStand.md). Ein Linux-Test allein bestätigt
-keine Windows-Unterstützung.
+Windows-Implementierung ist auf echten `windows-latest`-Runnern mit Python
+3.10, 3.11 und 3.13 erfolgreich geprüft. Der konkrete CI-Nachweis steht in
+[aktuellerStand.md](aktuellerStand.md). Ein manueller Windows-11-Desktopdurchlauf
+mit deinem echten Export bleibt davon getrennt.
 
 1. Installiere Python 3.13 (oder 3.11) von **python.org**. Aktiviere im Installer
    den Python-Launcher bzw. **Add Python to PATH**. Prüfe in PowerShell

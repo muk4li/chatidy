@@ -5,82 +5,96 @@
 Ausgangscommit: `80f420d360f801f59f2db3e9eab5d2e10f0bbdc6` auf main.
 Feature-Branch: `feature/native-windows-import-jobs`.
 
-### Ursache und Änderung
+### Implementierte Lösung und Sicherheit
 
-Die bisherige Jobverwaltung verwendete ausschließlich flock/O_NOFOLLOW/dir_fd,
-POSIX-Benutzerrechte und /proc/self/fd. Das verhinderte den normalen Jobimport auf
-Windows. Der Job-Lebenszyklus verwendet nun plattformneutrale Storage-Operationen.
-Linux behält sein descriptorrelatives Backend. Windows nutzt ein explizites
-NTFS-Backend mit typisierten Win32-Aufrufen über ctypes (Standardbibliothek):
+Der Job-Lebenszyklus verwendet eine kleine Storage-Schnittstelle. Linux behält
+flock, descriptorrelative Operationen und /proc/self/fd. Das neue native Windows-
+Backend verwendet ausschließlich die Python-Standardbibliothek und Win32-APIs:
 
-- CreateFileW öffnet Reparse Points selbst; Junctions/Symlinks werden abgelehnt.
-- Gehaltene Handles aller Pfadkomponenten verhindern deren Austausch während
-  Streaming/Staging. Windows-SQLite arbeitet dadurch mit normalen Dateipfaden.
-- Geschützte DACLs für neue Dateien/Ordner; bestehende breite Schreibrechte,
-  Hardlinks und unzulässige Dateitypen werden abgelehnt, nicht still repariert.
-- Prozessübergreifende msvcrt-Bytebereichssperren koordinieren Jobs und Verwaltung.
-- Statusdateien werden gespült und über MoveFileEx atomar ersetzt. Verzeichnis-
-  Umbenennungen werden unter Verwaltungssperre mit anschließendem erneuten Pinning
-  und Identitätsprüfung durchgeführt; Löschungen verwenden geprüfte Handles.
-- Die Job-Lease wird erst am Ende der bestätigten Bereinigung unter weiterhin
-  gehaltener Registry-Sperre geschlossen, damit keine delete-pending Lockdatei
-  die Entfernung des Windows-Verzeichnisses blockiert.
-- Keine Schemaänderung, kein WSL/Docker und keine neue externe Pflichtabhängigkeit.
+- CreateFileW öffnet Reparse Points selbst. Junctions, Symlinks, Hardlinks und
+  fremde Dateitypen werden vor Verarbeitung/Bereinigung abgelehnt.
+- Handles aller Pfadkomponenten bleiben während des Jobs offen und verweigern
+  FILE_SHARE_DELETE. Die Jobpfade können deshalb während Streaming und nativer
+  SQLite-Nutzung nicht umbenannt/ausgetauscht werden.
+- Geschützte DACLs beschränken neue Dateien/Ordner auf den Benutzer und SYSTEM.
+  Bestehende breite Schreibrechte werden abgelehnt, nicht pauschal repariert.
+- msvcrt-Bytebereichssperren koordinieren Verwaltung und Jobs prozessübergreifend.
+  Die Bereinigung prüft zuerst, dass kein Worker aktiv ist. Danach darf die eigene
+  Cleanup-Lease unter der durchgehend gehaltenen Registry-Sperre geschlossen
+  werden, damit Windows die Lockdatei nicht als Rename-Hindernis behandelt.
+- MoveFileEx ersetzt gespülte Statusdateien atomar. Vor der Entfernung von Daten
+  wird das umbenannte Jobverzeichnis erneut gepinnt und seine native Identität
+  geprüft. Dateilöschungen erfolgen über geprüfte Handles. Originalexport,
+  Hauptdatenbank und Sidecars bleiben geschützt; Löschung verlangt Bestätigung.
+- HTTP-Verbindungen und Staging-Cursor werden deterministisch geschlossen. Die CI
+  hat außerdem ein Statuslese-Rennen sichtbar gemacht: eine bereits geöffnete,
+  inzwischen atomar ersetzte Datei mit Linkzahl 0 ist kein Hardlink. Mehrere Links
+  bleiben abgelehnt. Hierfür existiert ein Regressionstest.
 
-### Validierung – ehrlicher Zwischenstand vor Windows-CI
+Keine neue Schema-Migration, keine externen Pflichtpakete und kein WSL/Docker.
+Graph-, ZIP-, Streaming-, Reimport- und Transaktionsschutz bleiben erhalten.
 
-Linux: 84 entdeckte Tests, davon 74 erfolgreich ausgeführt und zehn echte
-Windows-Tests explizit übersprungen. Der neue plattformübergreifende HTTP-Test
-prüft offiziellen ZIP-Upload, Fortschritt, SQLite/FTS5, bestätigte Bereinigung
-und unveränderten Originalexport. Bestehende Linux-Regressionen bleiben erhalten.
-Windows-Matrix für Python 3.10/3.11/3.13 ist angelegt. Native Tests prüfen
-Junctions, Reparse Points, ACLs, Windows-Pfade, Bytebereichssperren, offene Dateien,
-SQLite-WAL und Schutz der Original-/Hauptdatenbank. Generische Prozessabbruch-,
-Parallelitäts- und Wiederaufnahme-Tests laufen ebenfalls in dieser Matrix.
-POSIX-spezifische Mechanismentests sind unter Windows gezielt durch native Tests
-ergänzt; fehlende Symlink-Berechtigung kann dort einen einzelnen Test überspringen.
+### Tatsächlich verifiziert
 
-Windows ist erst nach erfolgreicher echter Windows-CI als verifiziert zu bezeichnen.
-Dieser Zwischenstand behauptet noch keinen solchen Erfolg. Im ersten echten Lauf
-43514922424 waren Linux-Jobs erfolgreich, Windows-Jobs jedoch fehlgeschlagen.
-CI-Fehlerannotationen ergänzen nun die unveränderte vollständige Suite, damit
-synthetische Tracebacks ohne Zugriff auf angemeldete Rohlogs untersucht werden können.
-Der Folgelauf identifizierte Fehler beim Windows-Verzeichnis-Rename und offene
-SQLite-Verbindungen/Cursor. Die Korrektur nutzt MoveFileEx mit erneuter Pinning-/
-Identitätsprüfung vor dem Löschen sowie deterministisches Schließen aller
-HTTP-Verbindungen und des Staging-Cursors. Diese Korrektur braucht erneut echte CI. Im nächsten Lauf wurde zusätzlich die
-eigene offene Lockdatei als Windows-Rename-Hindernis isoliert: nach bewiesener
-Inaktivität wird sie unter weiterhin durchgehend gehaltener Registry-Sperre vor
-dem Rename geschlossen. Ein Statuslese-Rennen bei atomarer Ersetzung erhält
-einen Regressionstest; bereits geöffnete, inzwischen unbenannte Dateien mit
-Linkzahl 0 sind keine Hardlinks. Mehrere Links bleiben gesperrt. Danach waren auf Windows 3.11/3.13 nur noch
-zwei Fehler im Junction-Testaufbau offen (cmd-Quoting); die tatsächlichen Import-,
-Lock-, SQLite- und Bereinigungstests waren erfolgreich. Der Testaufbau ist nun
-korrigiert und muss erneut vollständig einschließlich Junction-Abwehr bestehen. Die öffentliche
-GitHub-Actions-Webseite ist lesbar, obwohl die API bisher Forbidden lieferte;
-nach dem Push wird damit der konkrete Lauf überprüft, soweit verfügbar.
+[CI-Lauf 43516325821](https://github.com/muk4li/chatidy/actions/runs/43516325821)
+prüft Implementierungscommit `b2ac55513612a60b039b3e721cbb9957fe4738d2`.
+Alle sechs Jobs wurden auf der öffentlichen Actions-Seite als erfolgreich bestätigt:
 
-### Bekannte Grenzen und Windows-Schnellstart
+| Host | Python 3.10 | Python 3.11 | Python 3.13 |
+| --- | --- | --- | --- |
+| ubuntu-latest | erfolgreich | erfolgreich | erfolgreich |
+| windows-latest | erfolgreich | erfolgreich | erfolgreich |
 
-Zunächst lokale feste NTFS-Laufwerke, keine UNC-/Netzlaufwerke, FAT/exFAT,
-OneDrive-Reparse-Pfade oder Junctions. Sicherheitsablehnungen werden nicht durch
-schwächere Fallbacks umgangen. Windows bietet kein POSIX-Verzeichnis-fsync;
-Status-Write-through und SQLite-Journaling sichern Prozessabbrüche, sind aber
-keine pauschale Garantie gegen jedes Speicher-/Hardwareversagen. Programme mit
-denselben Benutzerrechten sowie SYSTEM/Administratoren bleiben Teil der lokalen
-Vertrauensgrenze. Upload-/Entpacklimits bleiben 200/350 MB.
+Die native Windows-Suite enthält zusätzlich Junction-/Reparse-Abwehr, ACL-Prüfung,
+Bytebereichssperren, parallele Jobs, echte Prozessabbrüche/Wiederaufnahme, offene
+Dateihandles und SQLite-WAL. Der plattformübergreifende HTTP-Test führt einen
+normalen offiziellen ZIP-Import mit Fortschritt und bestätigter Bereinigung aus
+und prüft SQLite/FTS5 sowie den unveränderten Originalexport. POSIX-spezifische
+Mechanismentests laufen weiterhin unter Linux. Ein Windows-Symlink-Test darf bei
+fehlendem Privileg ausdrücklich übersprungen werden; die Junction-Tests werden
+nicht aus diesem Grund übersprungen.
 
-README enthält den vollständigen Windows-11-Schnellstart. Kurz: Python installieren,
-Projekt lokal entpacken, in PowerShell im Projektverzeichnis ausführen:
+Lokal unter Linux: 84 entdeckte Tests, 74 erfolgreich ausgeführt und zehn native
+Windows-Tests ausdrücklich übersprungen. Chromium-Browsertest für den vollständigen
+bestehenden Import-/Organisations-/Jobverwaltungsablauf erfolgreich, einschließlich
+mobilen Layouts. Python-3.10-Grammatik und gestagte Dateien auf private Daten/
+gängige Secret-Muster geprüft. Sämtliche Daten sind synthetisch.
+
+Windows ist damit nativ auf echten Windows-CI-Runnern verifiziert. Ein manueller
+Windows-11-Desktopdurchlauf mit dem echten Export des Nutzers wurde nicht ausgeführt.
+Die ersten fehlgeschlagenen CI-Läufe wurden diagnostiziert und korrigiert;
+Fehlerannotationen stellen synthetische Tracebacks auch ohne API-Logzugriff bereit.
+
+### Windows-11-Schnellstart und Grenzen
+
+Python 3.13 installieren, Projekt lokal entpacken und PowerShell dort öffnen:
 
 ```powershell
 $env:CHATIDY_DB = Join-Path $env:LOCALAPPDATA "Chatidy\chatidy.sqlite3"
 py -3.13 -m chatidy
 ```
 
-Dann Browser auf http://127.0.0.1:8877, vollständiges Export-ZIP auswählen,
-Fortschritt bis Erfolgreich prüfen. Jobdaten nur bestätigt bereinigen und bei
-beendeter Anwendung Datenbankordner inklusive Sidecars und Originalexport sichern.
+Dann Browser auf http://127.0.0.1:8877, vollständiges Export-ZIP auswählen und bis
+Erfolgreich warten. Jobdaten nur bestätigt bereinigen. Vor einer Sicherung die
+Anwendung mit Strg+C beenden und Datenbankordner inklusive vorhandener Sidecars
+sowie den Originalexport separat sichern. Vollständige Anleitung/Fehlerhilfe: README.
+
+Zunächst lokale feste NTFS-Laufwerke: keine UNC-/Netzlaufwerke, FAT/exFAT,
+OneDrive-Reparse-Pfade, Junctions oder Alternate Data Streams. Keine unsicheren
+Fallbacks. Windows bietet kein POSIX-Verzeichnis-fsync; gespülte Dateien,
+Write-through und SQLite-Journaling sichern Prozessabbrüche, sind aber keine
+Garantie gegen jedes Hardwareversagen. Programme mit denselben Benutzerrechten,
+SYSTEM und Administratoren bleiben Teil der lokalen Vertrauensgrenze. Die Limits
+bleiben 200 MB Upload / 350 MB entpacktes JSON; einzelne große Objekte benötigen RAM.
+
+### Lieferung und nächster Schritt
+
+Die Änderungen sind auf dem Feature-Branch gepusht. GitHub-API-Aufrufe zur PR-
+Erstellung liefern weiterhin Forbidden; die öffentliche Actions-Seite erlaubt
+hingegen die CI-Prüfung. Ein PR und Merge dürfen nicht als erledigt gelten, solange
+sie nicht tatsächlich bestätigt sind. main wurde in diesem Durchlauf nicht verändert.
+Nächster sinnvoller Schritt: Branch per PR prüfen/mergen und den ersten echten
+Windows-11-Import lokal nach der README durchführen, ohne private Exporte hochzuladen.
 
 ---
 
