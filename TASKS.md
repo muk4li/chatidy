@@ -75,10 +75,10 @@
 - Tests: überlappende Segment-Snapshots, widersprüchliche Inhalte, Metadaten und Rollback.
 
 ## DELIV-001 – PR und Merge der Exportkorrekturen
-- Priorität: P1; Status: Blockiert (GitHub-API-Schreibzugriff liefert Forbidden).
+- Priorität: P1; Status: Abgeschlossen – PR #6 auf main gemergt (Merge-Commit `81665a8`), am 2026-11-14 nachgeprüft.
 - Komponenten: GitHub/CI. Abhängigkeiten: EXP-001, DATA-001, IMP-001.
 - [x] Feature-Branch und sechs erfolgreiche CI-Jobs gegen die Implementierung.
-- [ ] Tatsächlich erstellten PR und ggf. Merge bestätigen; keine Erfolgsaussage ohne Nachweis.
+- [x] Tatsächlich erstellten PR und ggf. Merge bestätigen; keine Erfolgsaussage ohne Nachweis.
 - Akzeptanz: PR gegen aktuellen main, grüne CI, geklärte Risiken, kein Force-Push.
 - Tests: Commit-/Branch-Zuordnung und CI-Matrix prüfen. Manueller PR-Link:
   https://github.com/muk4li/chatidy/pull/new/feature/segmented-export-preview

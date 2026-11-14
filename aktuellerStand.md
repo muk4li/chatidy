@@ -1,10 +1,18 @@
 # Aktueller Stand von Chatidy
 
+**Stand:** 2026-11-14 · **Basis-Commit:** `81665a8` auf `main`
+
+- **Läuft:** Lokaler Import offizieller und segmentierter ChatGPT-Exporte mit Vorschau und Batch-Bestätigung, SQLite/FTS5-Suche, Ordner, Regeln, Posteingang, JSON-Export. 105 Tests lokal bestanden (10 Windows-Skips); CI-Matrix Linux/Windows × Python 3.10/3.11/3.13.
+- **Offen:** META-001, SCALE-001, UX-001 (teilweise), KNOW-001, DATA-002 in `TASKS.md`. Nur Loopback, kein Remote-Login (Centrality F-02).
+- **Nächster Schritt:** noch festzulegen; Kandidaten META-001 und DATA-002.
+
 ## Durchlauf – Verweis auf übergreifende Architektur (2026-11-14)
 
 Ausgangscommit: `81665a899afb93b52587cfe65b19ccb2dda78efc` auf main. Branch:
 `docs/centrality-reference`. Nur Dokumentation: `AGENTS.md` verweist jetzt auf
 Centrality als Owner der Gesamtarchitektur und der Verträge zwischen den Repos.
+Dazu: fester Kopf nach dem Repo-Doku-Standard, neue `CLAUDE.md` (`@AGENTS.md`),
+DELIV-001 in `TASKS.md` als abgeschlossen markiert (PR #6 war bereits gemergt).
 Kein Code, keine Tests oder Datenformate geändert; vollständige Testsuite lokal
 ausgeführt.
 
