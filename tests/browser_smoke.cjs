@@ -29,7 +29,7 @@ const {spawn,spawnSync}=require('node:child_process');
     page.on('request',r=>{if(!r.url().startsWith(base))remote.push(r.url())});
     let acceptDialogs=true;const dialogs=[];
     page.on('dialog',d=>{dialogs.push(d.message());return acceptDialogs?d.accept():d.dismiss()});
-    console.log('Browser checkpoint: page loaded');await page.goto(base);await page.locator('#stat-folders').filter({hasText:'19'}).waitFor();
+    console.log('Browser checkpoint: page loaded');await page.goto(base);await page.locator('#stat-folders').filter({hasText:'8'}).waitFor();
     const chats=[{id:'synthetic-one',title:'Synthetic One',messages:[{role:'user',content:'Synthetic SQLite question',files:[{url:'https://example.invalid/private.png'}]}]},
       {id:'synthetic-two',title:'Synthetic Two',messages:[{role:'assistant',content:'Synthetic second answer'}]}];
     await page.locator('#file-input').setInputFiles({name:'synthetic.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(chats))});
@@ -43,7 +43,7 @@ const {spawn,spawnSync}=require('node:child_process');
     console.log('Browser checkpoint: upload finished');await page.locator('#select-loaded').check();
     assert.match(await page.locator('#selected-count').textContent(),/^2 /);
     const folders=await (await fetch(base+'/api/folders')).json();
-    const target=folders.find(f=>f.name==='ChatGPT'&&f.parent_id===null);
+    const target=folders.find(f=>f.name==='Programmieren'&&f.parent_id===null);
     await page.locator('#bulk-folder').selectOption(String(target.id));await page.locator('#bulk-assign').click();
     await page.waitForFunction(()=>document.getElementById('selected-count').textContent==='0 ausgewählt');
     for(const c of chats){const detail=await (await fetch(base+'/api/chat/'+c.id)).json();assert(detail.folders.includes(target.id))}
@@ -51,8 +51,8 @@ const {spawn,spawnSync}=require('node:child_process');
     await page.getByRole('button',{name:'Tags bearbeiten',exact:true}).click();
     await page.getByLabel('Tags, durch Komma getrennt').fill('Alpha, Wissen');await page.locator('#modal-confirm').click();
     await page.locator('#detail .chip').filter({hasText:'# alpha'}).waitFor();
-    const dropTarget=folders.find(f=>f.name==='Privat'&&f.parent_id===null);
-    await page.locator('.chat-row').filter({hasText:'Synthetic One'}).dragTo(page.getByRole('button',{name:/▤ Privat/}));
+    const dropTarget=folders.find(f=>f.name==='Persönliches'&&f.parent_id===null);
+    await page.locator('.chat-row').filter({hasText:'Synthetic One'}).dragTo(page.getByRole('button',{name:/▤ Persönliches/}));
     await page.waitForFunction(async({base,id})=>{
       const r=await fetch(base+'/api/chat/synthetic-one');return (await r.json()).folders.includes(id);
     },{base,id:dropTarget.id});

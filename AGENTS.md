@@ -9,6 +9,8 @@
 - Ausschließlich synthetische Testdaten. Private Exporte, personenbezogene Inhalte,
   private IDs/Dateinamen, Datenbanken, Jobdateien und Secrets niemals committen
   oder pushen. Vor jedem Commit gestagte Dateiliste UND Inhalte prüfen.
+- Import-/Job-Storage-Schutz ist ausreichend. Keine weitere Härtung oder neuen
+  Plattform-Sonderfälle ohne ausdrücklichen Auftrag des Nutzers; Bugs darin werden behoben.
 - Local-first: keine Cloud-Dienste für Chatinhalte, kein automatisches Laden
   importierter URLs, Server weiterhin nur an Loopback binden.
 - Datenbankänderungen versioniert und transaktional migrieren. Bestehende Daten
