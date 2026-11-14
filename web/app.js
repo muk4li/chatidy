@@ -2,7 +2,15 @@
 const $=id=>document.getElementById(id);
 let view='all',folder=null,folders=[],chats=[],selected=null,offset=0,loading=false,searchTimer=null,details=null;
 const PAGE=100;
-let chosen=new Set(),smartFolders=[],smart=null,loadEpoch=0;
+let chosen=new Set(),smartFolders=[],smart=null,loadEpoch=0,tags=[],page='library';
+const store={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+let collapsed=new Set(store.get('chatidy-collapsed-folders',[]));
+function showPage(name){
+  page=name;$('import-page').hidden=name!=='import';$('library-page').hidden=name!=='library';document.body.classList.toggle('page-import',name==='import');
+  if(name==='import')closeReader();
+  renderSidebar();
+}
+function closeReader(){document.body.classList.remove('reading')}
 async function api(path,options={}){
   const res=await fetch(path,options);const body=await res.json();
   if(!res.ok)throw new Error(body.error||'Anfrage fehlgeschlagen');return body;
@@ -25,20 +33,21 @@ function modal(title,contents,onSave,saveLabel='Speichern'){
   dialog.showModal();
 }
 function currentName(){if(smart!==null)return smartFolders.find(f=>f.id===smart)?.name||'Intelligenter Ordner';if(folder!==null)return folders.find(f=>f.id===folder)?.name||'Ordner';return ({all:'Alle Gespräche',inbox:'Posteingang',archived:'Archivierte Gespräche',unfiled:'Ohne Gruppe',topics:'Themencluster'})[view]}
-function setView(v,id=null){smart=null;$('search').disabled=false;$('tag-filter').disabled=false;chosen.clear();renderSelection();view=v;folder=id;offset=0;selected=null;details=null;renderSidebar();renderDetail();loadChats()}
+function setView(v,id=null){page='library';$('import-page').hidden=true;$('library-page').hidden=false;document.body.classList.remove('page-import');smart=null;$('search').disabled=false;$('tag-filter').disabled=false;chosen.clear();renderSelection();view=v;folder=id;offset=0;selected=null;details=null;renderSidebar();renderDetail();loadChats()}
 async function loadFolders(){
   folders=await api('/api/folders');$('stat-folders').textContent=folders.length;
   const target=$('bulk-folder'),current=target.value;target.replaceChildren(new Option('Zielordner wählen',''));
   for(const f of folders)target.add(new Option(f.name,String(f.id)));target.value=current;renderSidebar();
 }
 async function loadOrganisation(){
-  const [tags,smartResult]=await Promise.all([api('/api/tags'),api('/api/smart-folders')]);smartFolders=smartResult;
+  const [tagResult,smartResult]=await Promise.all([api('/api/tags'),api('/api/smart-folders')]);smartFolders=smartResult;tags=tagResult;
   const target=$('tag-filter'),current=target.value;target.replaceChildren(new Option('Alle Tags',''));
   for(const tag of tags)target.add(new Option(tag.name+' ('+tag.count+')',tag.name));target.value=current;
   renderSidebar();
 }
 function setSmart(id){
   const item=smartFolders.find(f=>f.id===id);if(!item)return;
+  page='library';$('import-page').hidden=true;$('library-page').hidden=false;document.body.classList.remove('page-import');
   smart=id;folder=null;view='all';offset=0;chosen.clear();selected=null;details=null;
   $('search').value=item.query.q||'';$('search').disabled=true;$('tag-filter').value=item.query.tag||'';$('tag-filter').disabled=true;
   renderSelection();renderSidebar();renderDetail();loadChats();
@@ -65,28 +74,46 @@ function editTags(ids,replace=false){
   },'Tags übernehmen');
 }
 function renderSidebar(){
-  document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',smart===null&&folder===null&&view===b.dataset.view));
+  const library=page==='library';
+  document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',library&&smart===null&&folder===null&&view===b.dataset.view));
+  document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',page===b.dataset.page));
   const nav=$('folders');nav.replaceChildren();
+  const hasChildren=id=>folders.some(x=>x.parent_id===id);
   function walk(parent,depth,seen){
     if(depth>15)return;
     for(const f of folders.filter(x=>x.parent_id===parent)){
       if(seen.has(f.id))continue;
-      const b=button('',()=>setView('all',f.id),'folderbtn'+(folder===f.id?' active':''));
-      b.style.paddingLeft=(12+depth*13)+'px';const name=element('span','','▤ '+f.name);
+      const row=element('div','folderrow');row.style.paddingLeft=(depth*12)+'px';
+      const twisty=element('button','twisty'+(hasChildren(f.id)?'':' leafpad'),'▸');twisty.type='button';
+      const open=!collapsed.has(f.id);
+      if(hasChildren(f.id)){twisty.setAttribute('aria-expanded',String(open));twisty.setAttribute('aria-label',(open?'Zuklappen: ':'Aufklappen: ')+f.name);
+        twisty.onclick=()=>{open?collapsed.add(f.id):collapsed.delete(f.id);store.set('chatidy-collapsed-folders',[...collapsed]);renderSidebar()}}
+      else{twisty.tabIndex=-1;twisty.setAttribute('aria-hidden','true')}
+      const b=button('',()=>setView('all',f.id),'folderbtn'+(library&&folder===f.id?' active':''));
+      const name=element('span','','▤ '+f.name);
       const count=element('small','',String(f.item_count));b.append(name,count);b.title='Ordner öffnen: '+f.name;
       b.ondragover=e=>{if(e.dataTransfer.types.includes('application/x-chatidy-ids')){e.preventDefault();b.classList.add('drop-target')}};
       b.ondragleave=()=>b.classList.remove('drop-target');
       b.ondrop=e=>{e.preventDefault();b.classList.remove('drop-target');try{const ids=JSON.parse(e.dataTransfer.getData('application/x-chatidy-ids'));if(Array.isArray(ids)&&ids.length&&ids.length<=500)assignChats(ids,f.id)}catch(error){message('Ungültige Drag-and-drop-Auswahl.',true)}};
-      nav.append(b);walk(f.id,depth+1,new Set([...seen,f.id]));
+      row.append(twisty,b);nav.append(row);
+      if(open||!hasChildren(f.id))walk(f.id,depth+1,new Set([...seen,f.id]));
     }
   }walk(null,0,new Set());
+  if(!folders.length)nav.append(element('p','muted','Noch keine Ordner.'));
   const smartNav=$('smart-folders');smartNav.replaceChildren();
   for(const f of smartFolders){
     const row=element('div','smart-row');
-    row.append(button('◇ '+f.name,()=>setSmart(f.id),'folderbtn'+(smart===f.id?' active':'')),
+    row.append(button('◇ '+f.name,()=>setSmart(f.id),'folderbtn'+(library&&smart===f.id?' active':'')),
       button('×',async()=>{if(!confirm('Intelligenten Ordner löschen? Chats bleiben erhalten.'))return;try{await post('/api/smart-folders/delete',{id:f.id});if(smart===f.id)setView('all');await loadOrganisation()}catch(e){message(e.message,true)}},'textbtn'));
     smartNav.append(row);
   }
+  if(!smartFolders.length)smartNav.append(element('p','muted','Speichere eine Suche, um sie hier abzulegen.'));
+  const tagNav=$('tag-list');tagNav.replaceChildren();const activeTag=$('tag-filter').value;
+  for(const tag of tags){
+    const b=button('# '+tag.name,()=>{if(smart!==null)return;$('tag-filter').value=activeTag===tag.name?'':tag.name;setView('all')},'tagbtn'+(activeTag===tag.name?' active':''));
+    b.append(element('small','',String(tag.count)));b.title='Nach Tag filtern: '+tag.name;tagNav.append(b);
+  }
+  if(!tags.length)tagNav.append(element('p','muted','Noch keine Tags.'));
 }
 async function loadStats(){const stats=await api('/api/stats');for(const key of ['chats','messages','folders','inbox'])$('stat-'+key).textContent=Number(stats[key]||0).toLocaleString('de-DE');$('count-all').textContent=stats.chats;$('count-inbox').textContent=stats.inbox}
 function date(value){if(!value)return 'Ohne Datum';const number=Number(value);const d=new Date(number<1e11?number*1000:number);return isNaN(d)?'Ohne Datum':d.toLocaleDateString('de-DE')}
@@ -115,7 +142,7 @@ async function showTopics(epoch){
     $('more').hidden=true;const list=$('chat-list');list.replaceChildren();
     if(!visible.length){list.append(element('div','empty','Noch keine Themen erkannt. Importiere Chats mit ähnlichen Titeln oder Hashtags.'));return}
     for(const topic of visible){
-      const b=button('',()=>showTopicDetail(topic),'chat-card');
+      const b=button('',()=>showTopicDetail(topic),'chat-card topic');
       b.append(element('div','chat-title',topic.type==='hashtag'?'# '+topic.label:topic.label));
       const meta=element('div','chat-meta');meta.append(element('span','',topic.count+' Chats'),element('span','pill',topic.type==='group'?'Ordner':topic.type==='title'?'Titel':'Hashtag'));b.append(meta);
       list.append(b);
@@ -123,7 +150,7 @@ async function showTopics(epoch){
   }catch(e){message(e.message,true)}
 }
 function showTopicDetail(topic){
-  details=null;selected=null;
+  details=null;selected=null;document.body.classList.add('reading');
   const panel=$('detail');panel.replaceChildren();
   panel.append(element('h2','',topic.label));
   panel.append(element('p','muted',topic.count+' unterschiedliche Gespräche · '+topic.type+'. Themen sind unverbindliche lokale Ansichten, keine KI-Videoanalyse.'));
@@ -150,38 +177,51 @@ function renderChats(){
     const check=element('input');check.type='checkbox';check.checked=chosen.has(chat.id);check.setAttribute('aria-label','Chat auswählen: '+chat.title);
     check.onchange=()=>{if(check.checked&&chosen.size>=500){check.checked=false;message('Maximal 500 Chats auswählen.',true);return}check.checked?chosen.add(chat.id):chosen.delete(chat.id);renderSelection()};
     const b=button('',()=>showChat(chat.id),'chat-open');row.append(check,b);
-    b.append(element('div','chat-title',chat.title||'Ohne Titel'));
-    const meta=element('div','chat-meta');meta.append(element('span','',date(chat.updated||chat.created)));
-    meta.append(element('span','',chat.message_count+' Nachrichten'));
-    if(chat.groups_count)meta.append(element('span','pill',chat.groups_count+' Gruppen'));
-    if(!chat.reviewed)meta.append(element('span','pill','Neu'));
+    b.append(element('div','chat-title',chat.title||'Ohne Titel'),element('span','chat-date',date(chat.updated||chat.created)),element('span','chat-count',String(chat.message_count)));
+    b.title=(chat.title||'Ohne Titel')+' · '+chat.message_count+' Nachrichten';
+    const meta=element('div','chat-meta');
+    if(!chat.reviewed)meta.append(element('span','pill new','Neu'));
+    if(chat.groups_count)meta.append(element('span','pill',chat.groups_count+(chat.groups_count===1?' Gruppe':' Gruppen')));
     b.append(meta);list.append(row);
   }
 }
+// Splits ``` fenced blocks into <pre>; everything stays textContent (no HTML from chats).
+function appendContent(box,content){
+  const text=String(content??'');const parts=text.split(/```/);
+  if(parts.length<3){box.append(document.createTextNode(text));return}
+  parts.forEach((part,i)=>{
+    if(i%2===0||i===parts.length-1&&parts.length%2===0){if(part)box.append(document.createTextNode(i%2===0?part.replace(/^\n/,''):'```'+part));return}
+    const newline=part.indexOf('\n');const head=newline>=0?part.slice(0,newline).trim():'';
+    const code=element('pre','code',(/^[\w+#.-]{1,20}$/.test(head)?part.slice(newline+1):part).replace(/\n$/,''));
+    if(/^[\w+#.-]{1,20}$/.test(head))code.dataset.lang=head;box.append(code);
+  });
+}
+function section(title,open=true){const d=element('details','section');d.open=open;d.append(element('summary','',title));const body=element('div','sectionbody');d.append(body);return [d,body]}
 function renderDetail(){
   const detail=$('detail');detail.replaceChildren();
-  if(!details){const blank=element('div','empty detail-empty');blank.append(element('div','empty-icon','✦'),element('strong','','Dein Wissen ist hier.'),element('p','','Wähle einen Chat, um den Verlauf und seine Gruppen zu sehen.'));detail.append(blank);return}
-  const c=details.chat;detail.append(element('h2','',c.title),element('div','muted',(c.project?'Projekt: '+c.project+' · ':'')+details.messages.length+' Nachrichten · '+date(c.updated||c.created)));
-  if(c.metadata&&Object.keys(c.metadata).length){const extra=element('details');extra.append(element('summary','','Gesprächsmetadaten'),element('pre','metadata-json',JSON.stringify(c.metadata,null,2)));detail.append(extra)}
-  const chips=element('div','chipbox');for(const id of details.folders){const f=folders.find(x=>x.id===id);if(f)chips.append(element('span','chip',f.name))}detail.append(chips);
+  if(!details){const blank=element('div','empty detail-empty');blank.append(element('div','empty-icon','✳'),element('strong','','Kein Chat geöffnet'),element('p','','Wähle in der Liste einen Chat, um Verlauf, Gruppen und Tags zu sehen.'));detail.append(blank);return}
+  const c=details.chat;detail.append(element('h2','',c.title),element('div','muted',(c.project?'Projekt: '+c.project+' · ':'')+details.messages.length+' Nachrichten · '+date(c.updated||c.created)+(c.reviewed?' · geprüft':' · noch nicht geprüft')));
   const actions=element('div','detail-actions');
-  actions.append(button('▤ Gruppen bearbeiten',()=>editGroups(c.id)));
-  actions.append(button('✦ KI-Kategorien',()=>suggest(c.id)));
   actions.append(button(c.reviewed?'↺ Erneut prüfen':'✓ Geprüft',async()=>{
     try{await post('/api/review',{conversation_id:c.id,reviewed:!c.reviewed});await refresh();await showChat(c.id)}catch(e){message(e.message,true)}
-  }));
+  },c.reviewed?'soft':'primary'));
+  actions.append(button('✦ KI-Kategorien',()=>suggest(c.id)));
   actions.append(button('↓ Chat exportieren',()=>exportChats([c.id])));
-  actions.append(button('Tags bearbeiten',()=>editTags([c.id],true)));
   detail.append(actions);
-  const tagChips=element('div','chipbox');for(const name of details.tags||[])tagChips.append(element('span','chip','# '+name));detail.append(tagChips);
-  if(details.suggestions.length){
-    const info=element('div','notice','KI-Vorschläge: '+details.suggestions.map(x=>folders.find(f=>f.id===x.folder_id)?.name||x.folder_id).join(', ')+' – bitte in Gruppen bearbeiten bestätigen.');
-    detail.append(info);
-  }
+  const [groups,groupBody]=section('Gruppen & Tags');
+  const chips=element('div','chipbox');for(const id of details.folders){const f=folders.find(x=>x.id===id);if(f)chips.append(element('span','chip','▤ '+f.name))}
+  if(!chips.childElementCount)chips.append(element('span','muted','Keiner Gruppe zugeordnet.'));
+  const tagChips=element('div','chipbox');for(const name of details.tags||[])tagChips.append(element('span','chip tag','# '+name));
+  const groupActions=element('div','detail-actions');groupActions.append(button('▤ Gruppen bearbeiten',()=>editGroups(c.id)),button('Tags bearbeiten',()=>editTags([c.id],true)));
+  groupBody.append(chips,tagChips,groupActions);
+  if(details.suggestions.length)groupBody.append(element('div','notice','KI-Vorschläge: '+details.suggestions.map(x=>folders.find(f=>f.id===x.folder_id)?.name||x.folder_id).join(', ')+' – bitte über „Gruppen bearbeiten“ bestätigen.'));
+  detail.append(groups);
+  if(c.metadata&&Object.keys(c.metadata).length){const [meta,metaBody]=section('Gesprächsmetadaten',false);metaBody.append(element('pre','metadata-json',JSON.stringify(c.metadata,null,2)));detail.append(meta)}
+  detail.append(element('div','msglabel','Verlauf · '+details.messages.length+' Nachrichten'));
   for(const m of details.messages){
     const box=element('div','bubble '+(m.role==='user'?'user':'assistant'));
     box.append(element('div','role',m.role==='user'?'DU':m.role==='assistant'?'ASSISTENT':String(m.role||'Unbekannt').toUpperCase()));
-    box.append(document.createTextNode(m.content));
+    appendContent(box,m.content);
     if(m.metadata&&Object.keys(m.metadata).length){
       const extra=element('details');extra.append(element('summary','','Quellen, Anhänge und Metadaten'));
       extra.append(element('pre','metadata-json',JSON.stringify(m.metadata,null,2)));box.append(extra);
@@ -189,7 +229,7 @@ function renderDetail(){
     detail.append(box);
   }
 }
-async function showChat(id){selected=id;try{details=await api('/api/chat/'+encodeURIComponent(id));renderChats();renderDetail();$('detail').scrollTop=0}catch(e){message(e.message,true)}}
+async function showChat(id){selected=id;try{details=await api('/api/chat/'+encodeURIComponent(id));renderChats();renderDetail();$('detail').scrollTop=0;document.body.classList.add('reading')}catch(e){message(e.message,true)}}
 function editGroups(cid){
   if(!details)return;
   const list=element('div');
@@ -330,16 +370,21 @@ function renderImportPreview(job){
 }
 async function pollImport(){
   if(!importJob)return;
+  const polled=importJob;
   $('import-status').hidden=false;
   try{
-    const result=await api('/api/import/jobs/'+importJob);
+    const result=await api('/api/import/jobs/'+polled);
+    // A newer import may have started while this request was in flight.
+    if(importJob!==polled)return;
     const labels=jobLabels;
     renderImportPreview(result);
     $('import-status-text').textContent=(labels[result.state]||result.state)+' · '+(result.validated||0)+' Chats geprüft'+(result.error?' · '+result.error:'')+(result.result?' · '+result.result.imported+' übernommen, '+result.result.unchanged+' unverändert':'');
     $('resume-import').hidden=!result.can_resume||result.state==='awaiting_confirmation';
     if(result.state==='done'){
       clearTimeout(importPoll);localStorage.removeItem('chatidy-import-job');importJob=null;
-      $('pick-file').disabled=false;await Promise.all([refresh(),loadJobs()]);return;
+      $('pick-file').disabled=false;await Promise.all([refresh(),loadJobs()]);
+      if(page==='import'){setView('all');message('Import abgeschlossen'+(result.result?': '+result.result.imported+' übernommen, '+result.result.unchanged+' unverändert.':'.'))}
+      return;
     }
     if($('job-management').open)await loadJobs();
     if(result.active||result.state==='uploaded')importPoll=setTimeout(pollImport,1500);
@@ -358,14 +403,18 @@ async function importFile(file){
   if(!file)return;
   if(!/\.(json|zip)$/i.test(file.name)){message('Bitte eine ZIP- oder JSON-Datei auswählen.',true);return}
   if(file.size>200*1024*1024){message('Datei zu groß (maximal 200 MB).',true);return}
-  $('pick-file').disabled=true;message('Upload läuft lokal …');
+  // Stop following the previous job so its late results cannot switch pages or clear the new job.
+  clearTimeout(importPoll);importJob=null;
+  showPage('import');$('pick-file').disabled=true;message('Upload läuft lokal …');
   try{
     const result=await api('/api/import/analyze',{method:'POST',headers:{'Content-Type':'application/octet-stream','X-Filename':file.name.replace(/[^a-zA-Z0-9_.-]/g,'_')},body:file});
     importJob=result.id;localStorage.setItem('chatidy-import-job',importJob);clearTimeout(importPoll);pollImport();
   }catch(e){message('Import fehlgeschlagen: '+e.message,true)}finally{$('pick-file').disabled=false}
 }
-if(importJob)pollImport();
+if(importJob){page='import';$('import-page').hidden=false;$('library-page').hidden=true;document.body.classList.add('page-import');pollImport()}
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
+document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{showPage(b.dataset.page);if(b.dataset.page==='import')loadJobs()});
+$('close-reader').onclick=closeReader;
 $('select-loaded').onchange=()=>{chosen=$('select-loaded').checked?new Set(chats.slice(0,500).map(c=>c.id)):new Set();renderChats();renderSelection()};
 $('bulk-assign').onclick=()=>assignChats([...chosen],$('bulk-folder').value);
 $('bulk-tags').onclick=()=>editTags([...chosen]);
@@ -384,4 +433,4 @@ $('pick-file').onclick=()=>$('file-input').click();$('file-input').onchange=e=>i
 const drop=$('dropzone');for(const type of ['dragenter','dragover'])drop.addEventListener(type,e=>{e.preventDefault();drop.classList.add('drag')});
 for(const type of ['dragleave','drop'])drop.addEventListener(type,e=>{e.preventDefault();drop.classList.remove('drag')});
 drop.addEventListener('drop',e=>importFile(e.dataTransfer.files[0]));
-refresh().catch(e=>message('Startfehler: '+e.message,true));
+refresh().then(async()=>{if(!importJob&&Number((await api('/api/stats')).chats||0)===0)showPage('import')}).catch(e=>message('Startfehler: '+e.message,true));

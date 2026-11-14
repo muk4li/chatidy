@@ -34,8 +34,10 @@ Die folgenden offenen Themen sind Backlog, keine automatisch folgenden Aufträge
 
 - Implementiert und getestet: Ordner, Tags, Mehrfachauswahl (geladene Ergebnisse),
   zusätzliche Drag-and-drop-Zuordnung, gespeicherte Suchansichten, Regeln, Review.
+- Implementiert und getestet (Browser, synthetisch): dreigeteilte Oberfläche
+  (Navigation | Chat-Liste | Leseansicht), Import auf eigener Seite, Tag-Filter in der Navigation.
 - Teilweise implementiert: intelligente Sammlungen, Filter/Suche, Markdown/Code
-  (FTS5 und sichere Textdarstellung; keine umfassende Markdown-Renderpipeline).
+  (FTS5, sichere Textdarstellung, abgesetzte Codeblöcke; keine umfassende Markdown-Renderpipeline).
 - Offen: eigenständige Favoriten, fortgeschrittene Filter, größere Bulk-Workflows.
 
 ## Phase 3 – Lokale Intelligenz
