@@ -6,7 +6,7 @@ const fs=require('node:fs/promises');
 const os=require('node:os');
 const path=require('node:path');
 const net=require('node:net');
-const {spawn}=require('node:child_process');
+const {spawn,spawnSync}=require('node:child_process');
 
 (async()=>{
   const directory=await fs.mkdtemp(path.join(os.tmpdir(),'chatidy-browser-'));
@@ -33,6 +33,12 @@ const {spawn}=require('node:child_process');
     const chats=[{id:'synthetic-one',title:'Synthetic One',messages:[{role:'user',content:'Synthetic SQLite question',files:[{url:'https://example.invalid/private.png'}]}]},
       {id:'synthetic-two',title:'Synthetic Two',messages:[{role:'assistant',content:'Synthetic second answer'}]}];
     await page.locator('#file-input').setInputFiles({name:'synthetic.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(chats))});
+    await page.locator('#confirm-batch').waitFor();
+    assert.equal((await (await fetch(base+'/api/stats')).json()).chats,0,'Preview must not import chats');
+    const readyJob=await page.evaluate(()=>localStorage.getItem('chatidy-import-job'));
+    assert.equal((await (await fetch(base+'/api/import/jobs/'+readyJob)).json()).active,false,'Confirmation waits for the analyzer lease to close');
+    assert.match(await page.locator('#import-preview').textContent(),/2 erkannte Gespräche/);
+    await page.locator('#confirm-batch').click();
     await page.waitForFunction(()=>document.getElementById('stat-chats').textContent==='2');
     console.log('Browser checkpoint: upload finished');await page.locator('#select-loaded').check();
     assert.match(await page.locator('#selected-count').textContent(),/^2 /);
@@ -97,13 +103,38 @@ const {spawn}=require('node:child_process');
     acceptDialogs=true;await failedRow.getByRole('button',{name:'Jobdaten löschen',exact:true}).click();
     await page.waitForFunction(()=>document.querySelectorAll('#job-list .job-row').length===0);
     assert.equal((await (await fetch(base+'/api/chats?q=SQLite')).json()).length,1);
+    const synthetic=spawnSync(process.env.PYTHON||'python',['-c',
+      "import sys,json,base64;sys.path.insert(0,'tests');from test_archives import archive;from test_segmented_exports import segmented,conversation;print(json.dumps({'zip':base64.b64encode(archive(segmented())).decode(),'single':conversation(0)}))"],{cwd:root,encoding:'utf8'});
+    assert.equal(synthetic.status,0,synthetic.stderr);const bundle=JSON.parse(synthetic.stdout);
+    let seed=await fetch(base+'/api/import',{method:'POST',headers:{'X-Filename':'conversations-000.json'},body:JSON.stringify([bundle.single])});assert(seed.ok);
+    async function waitDone(id){await page.waitForFunction(async({base,id})=>{const value=await (await fetch(base+'/api/import/jobs/'+id)).json();return value.state==='done'&&!value.active},{base,id})}
+    for(let iteration=0;iteration<2;iteration++){
+      await page.locator('#file-input').setInputFiles({name:'synthetic-segmented.zip',mimeType:'application/zip',buffer:Buffer.from(bundle.zip,'base64')});
+      await page.locator('#confirm-batch').waitFor();
+      assert.match(await page.locator('#import-preview').textContent(),/Nummerierter offizieller Export.*8 Konversationsdateien.*8 erkannte Gespräche/s);
+      assert.equal((await (await fetch(base+'/api/stats')).json()).chats,iteration?11:4);
+      const planned=await page.evaluate(()=>localStorage.getItem('chatidy-import-job'));
+      await page.locator('#confirm-batch').click();await waitDone(planned);
+      const report=await (await fetch(base+'/api/import/jobs/'+planned)).json();
+      assert.equal(report.result.imported,iteration?0:7);assert.equal(report.result.unchanged,iteration?8:1);
+      assert.equal((await (await fetch(base+'/api/stats')).json()).chats,11);
+      await page.waitForFunction(()=>document.getElementById('import-preview').hidden);
+    }
+    const old={...bundle.single,update_time:10};
+    await page.locator('#file-input').setInputFiles({name:'synthetic-old.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify([old]))});
+    await page.locator('#confirm-batch').waitFor();
+    assert(await page.locator('#confirm-batch').isDisabled());
+    await page.locator('#import-preview select').selectOption('skip');
+    const oldJob=await page.evaluate(()=>localStorage.getItem('chatidy-import-job'));
+    await page.locator('#confirm-batch').click();await waitDone(oldJob);
+    assert.equal((await (await fetch(base+'/api/chat/synthetic-0')).json()).chat.updated,20);
     await page.setViewportSize({width:390,height:844});
     assert(await page.evaluate(()=>{const buttons=[...document.querySelectorAll('#views button')];return buttons.slice(1).every((b,i)=>b.getBoundingClientRect().left>=buttons[i].getBoundingClientRect().right)}),'Mobile navigation buttons must not overlap');
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Mobile layout must fit viewport without horizontal overflow');
     await page.screenshot({path:path.join(directory,'mobile.png'),fullPage:true});
     assert(await page.locator('#bulk-tags').isVisible());
     assert.deepEqual(errors,[],'Browser must not raise JavaScript errors');
-    console.log('PASS: import/organisation baseline, job inventory, confirmed/cancelled cleanup, active-job protection, process termination/resume, FTS preservation and mobile layout');
+    console.log('PASS: preview before writes, segmented ZIP after single-file import, full reimport, class-scoped older skip, native job/organisation baseline and mobile layout');
     console.log('Synthetic screenshot: '+path.join(directory,'mobile.png'));
   }finally{
     if(jobWorker){jobWorker.kill('SIGKILL');await new Promise(resolve=>jobWorker.exitCode!==null||jobWorker.signalCode!==null?resolve():jobWorker.once('exit',resolve))}

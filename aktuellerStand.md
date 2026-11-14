@@ -1,5 +1,93 @@
 # Aktueller Stand von Chatidy
 
+## Durchlauf – offizielle segmentierte Exporte und Datenintegrität
+
+Ausgangscommit: `c7702a670cad54bfe8265bdd49f6dad322ece2ef` auf main.
+Branch: `feature/segmented-export-preview`. Die öffentliche PR-Liste enthielt
+beim Prüfen keine offenen PRs; der vorherige main-CI-Lauf 43520240796 war erfolgreich.
+
+### Umgesetzt und lokal geprüft
+
+- Schema 4 kopiert Nachrichten auf `(conversation_id,id)`; ursprüngliche IDs,
+  Positionen, Metadaten, Ordner, Tags, Review und FTS bleiben erhalten. Gleiche IDs
+  in verschiedenen Chats sind unabhängig; doppelte IDs im selben Chat bleiben
+  Fehler. Der Schema-3-Umbau und ein absichtlich fehlgeschlagener Umbau sind geprüft.
+- Archivklassifizierung vor dem Parsen: klassische und nummerierte Segmente,
+  Metadatenrollen, Anhänge, HTML, Begleitdateien und unbekannte Ressourcen.
+  000–007 werden numerisch und gemeinsam verarbeitet, selbst bei umgekehrter
+  ZIP-Reihenfolge. Interne Lücken, doppelte Nummern, defekte Pflichtsegmente und
+  mehrdeutige Dateivarianten brechen den Import ab.
+- Eine vollständig synthetische Form mit 18 JSON-Dateien, 227 DAT-Ressourcen,
+  HTML und Begleittext ist getestet. Kontodaten, Werbung, Codex, Bibliotheks-/
+  Assetzuordnungen und beide Manifestrollen werden nicht als Chats interpretiert.
+  Kein privater Originalexport oder dessen Inhalte/IDs wurde angefordert oder verwendet.
+- Neue Weboberfläche: Analyse → Vorschau → eine Batch-Bestätigung. Vorher keine
+  Gesprächsübernahme oder Migration durch den Analysepfad. Inventar, Gesprächszahl,
+  Konflikte, Warnungen und grobe Speicherprognose sind sichtbar. Identisches bleibt
+  unverändert; sichere neuere Versionen/Ergänzungen werden automatisch behandelt.
+- Ältere und abweichende/unvollständige Chats können je klar definierter Klasse
+  ausdrücklich vollständig unverändert bleiben. Unklare Identitäten sind nicht
+  ignorierbar. Entscheidungen bleiben auf denselben Job und Quellenhash begrenzt.
+- Beim Commit erneute Konfliktprüfung unter Schreibsperre; bei geänderter Bibliothek
+  ggf. neue Vorschau. Atomicität und Wiederaufnahme bleiben erhalten. Die gemeinsame
+  Identitätsprüfung schützt auch die kompatiblen explizit mutierenden Legacy-APIs.
+
+### Tatsächlich geprüfter Stand
+
+105 Tests entdeckt: 95 erfolgreich ausgeführt und zehn native Windows-Tests hier
+übersprungen. Echter Chromium-Browsertest erfolgreich: Vorschau ohne Datenübernahme,
+Einzeldatei danach Gesamt-ZIP, Reimport, klassenbezogener älterer Batch, unveränderte
+Bestandsdaten sowie bisherige Jobverwaltung/Organisation und mobile Ansicht.
+Die Bestätigung wird erst nach Ende der aktiven Analyse angezeigt, sodass eine
+späte Statusabfrage keine bereits gewählten Klassenentscheidungen zurücksetzt.
+
+[CI 43561857600](https://github.com/muk4li/chatidy/actions/runs/43561857600) bestätigt
+Implementierungscommit `fd62bc4` mit sechs erfolgreichen Jobs:
+
+| Host | Python 3.10 | Python 3.11 | Python 3.13 |
+| --- | --- | --- | --- |
+| ubuntu-latest | erfolgreich | erfolgreich | erfolgreich |
+| windows-latest | erfolgreich | erfolgreich | erfolgreich |
+
+Alle neuen generischen Export-/Migrations-/Vorschautests laufen damit auch nativ
+auf Windows. Ein manueller Windows-11-Test mit dem privaten Originalexport wurde
+nicht durchgeführt. Ausgangsbestand und Features sind getrennt von diesem Nachweis.
+
+Commits: Planung `4f4d681`, Identität `7682250`, Layout `607f3ce`, Vorschau/Batch
+`fd62bc4`. Ein nachfolgender UI-/Dokumentationsabschluss ändert nicht die geprüfte
+Python-Implementierung. Dateiliste/Inhalte und gängige Secret-Muster vor jedem
+Commit geprüft, ausschließlich synthetische Daten. Python-3.10-Grammatik und
+JavaScript-Syntax zusätzlich geprüft.
+
+PR-Erstellung wurde konkret versucht; die API antwortet weiter mit Forbidden.
+Kein PR-/Merge-Erfolg wird behauptet. Der Branch ist gepusht, main bleibt
+unverändert. ROADMAP.md und TASKS.md markieren EXP-001/DATA-001/IMP-001 anhand
+obenstehender Akzeptanz und CI als implementiert/getestet; DELIV-001 bleibt blockiert.
+
+### Grenzen und Backlog
+
+Manifeste und zusätzliche JSON-Schemas bleiben absichtlich ungeprüft und werden
+nur inventarisiert. Ein fehlendes letztes Segment ist ohne vertrauenswürdig
+validierte Gesamtzahl nicht erkennbar. Im mehrdeutigen Extractor-ZIP-Fallback bleibt
+beschädigtes JSON ein Fehler. Doppelte Gesprächs-IDs in einem Batch werden nicht
+still dedupliziert oder zusammengeführt. Es gibt keinen destruktiven Ersetzungsmodus.
+Die private Uploadkopie enthält bis zur bestätigten Bereinigung weiterhin das ganze
+Archiv; die Bibliothek erhält nur ausgewählte Gesprächsdaten. DAT bleibt Inventar/
+Referenz, ohne Medienextraktion. Speicherprognose ist grob, keine Quota.
+
+Upload-/JSON-Limits bleiben 200/350 MB; ein großes Einzelobjekt benötigt RAM.
+Kein automatisches Hochsetzen aufgrund der komprimierten Archivgröße. Native
+Windows-NTFS- und Linux-Sicherheitsgrenzen bleiben erhalten. Der private echte
+Export und ein manueller Windows-11-Durchlauf mit ihm wurden nicht geprüft.
+
+ROADMAP.md enthält die fünf Produktphasen, AGENTS.md praktische Entwicklungsregeln,
+TASKS.md die P0-Arbeitspakete mit Akzeptanz/Tests und die offenen P1–P3-Themen.
+META-001, SCALE-001 und DATA-002 bleiben ausdrücklich offen/teilweise: Schemas,
+Speicherbudgets und komplexe Versions-/Zweigrekonstruktion sind nicht als fertig markiert.
+
+---
+
+
 ## Neuester Durchlauf – P0: native Windows-Importjobs
 
 Ausgangscommit: `80f420d360f801f59f2db3e9eab5d2e10f0bbdc6` auf main.

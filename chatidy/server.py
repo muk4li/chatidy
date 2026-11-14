@@ -107,10 +107,16 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(403,{"error":"Ungültiger Host oder Origin."})
         path=urlsplit(self.path).path
         try:
-            if path=="/api/import/jobs":
+            if path in ("/api/import/jobs", "/api/import/analyze"):
                 job_id = jobs.create(self.rfile, int(self.headers.get("Content-Length", "0")),
-                                     self.headers.get("X-Filename", "export.zip"))
+                                     self.headers.get("X-Filename", "export.zip"),
+                                     confirmation_required=path=="/api/import/analyze")
                 jobs.start(job_id)
+                return self.send(202, jobs.public_status(job_id))
+            if path.startswith("/api/import/jobs/") and path.endswith("/confirm"):
+                value = self.get_json()
+                job_id = path.removeprefix("/api/import/jobs/").removesuffix("/confirm")
+                jobs.confirm(job_id, confirmed=value.get("confirm", False), policies=value.get("policies", {}))
                 return self.send(202, jobs.public_status(job_id))
             if path.startswith("/api/import/jobs/") and path.endswith("/delete"):
                 value = self.get_json()

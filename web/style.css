@@ -8,3 +8,5 @@
 @media(max-width:650px){.navitem{flex:0 0 auto}}
 
 .job-management{margin:18px 0;padding:16px;border:1px solid #44394f;border-radius:12px;background:#17151e}.job-management>summary{font-weight:700}.job-row{padding:16px 0;border-top:1px solid #44394f;overflow-wrap:anywhere}.job-actions{display:flex;gap:10px;flex-wrap:wrap}.job-state{font-size:14px}#job-summary{line-height:1.6}#job-management .sectionbar{padding:10px 0;flex-wrap:wrap}
+
+.import-preview{margin:16px 0;padding:22px;border:1px solid #765785;border-radius:16px;background:#201b28;overflow-wrap:anywhere}.import-preview[hidden]{display:none}.import-preview h2{margin-top:0}.import-preview label{display:grid;gap:8px;margin:12px 0;font-size:13px}.import-preview select{width:100%;padding:11px;background:#121018;color:#eeeef7;border:1px solid #765785;border-radius:8px}.import-preview li,.import-preview p{font-size:13px;line-height:1.6}

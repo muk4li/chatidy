@@ -34,23 +34,24 @@ class ImportIntegrityTests(unittest.TestCase):
         return {table: [tuple(row) for row in self.db.execute(
             f'SELECT * FROM {table} ORDER BY rowid')] for table in tables}
 
-    def test_collision_with_existing_chat_rolls_back_entire_batch(self):
+    def test_same_message_id_in_two_chats_keeps_independent_contents(self):
         replacement = copy.deepcopy(self.original)
         replacement['messages'].extend(chat('first', 'replacement', 'Changed synthetic text')['messages'])
-        with self.assertRaisesRegex(ValueError, 'anderen Chat'):
-            upsert(self.db, [replacement, chat('second', 'replacement')])
-        self.assertEqual(self.snapshot(), self.before)
-        self.assertEqual(len(list_chats(self.db, 'SQLite')), 1)
-        self.assertEqual(list_chats(self.db, 'Changed'), [])
+        upsert(self.db, [replacement, chat('second', 'replacement', 'Independent synthetic text')])
+        self.assertEqual(len(chat_detail(self.db, 'first')['messages']), 2)
+        self.assertEqual(chat_detail(self.db, 'second')['messages'][0]['content'], 'Independent synthetic text')
+        self.assertEqual(len(list_chats(self.db, 'Changed')), 1)
+        self.assertEqual(len(list_chats(self.db, 'Independent')), 1)
         self.assertEqual(chat_detail(self.db, 'first')['folders'], [self.folder])
 
-    def test_existing_message_cannot_be_stolen(self):
-        with self.assertRaisesRegex(ValueError, 'anderen Chat'):
-            upsert(self.db, [chat('second', 'shared')])
-        self.assertEqual(self.snapshot(), self.before)
+    def test_existing_message_cannot_be_stolen_by_same_id_in_another_chat(self):
+        before = chat_detail(self.db, 'first')
+        upsert(self.db, [chat('second', 'shared', 'Independent content')])
+        self.assertEqual(chat_detail(self.db, 'first'), before)
+        self.assertEqual(self.db.execute('SELECT count(*) FROM messages WHERE id=?', ('shared',)).fetchone()[0], 2)
         self.db.close()
         self.db = connect(self.path)
-        self.assertEqual(self.snapshot(), self.before)
+        self.assertEqual(chat_detail(self.db, 'first'), before)
         self.assertEqual(self.db.execute('PRAGMA integrity_check').fetchone()[0], 'ok')
         self.assertEqual(self.db.execute('PRAGMA foreign_key_check').fetchall(), [])
 
