@@ -3,6 +3,13 @@
 Historische Durchläufe; damalige Grenzen und nächste Schritte sind keine aktuelle
 Priorisierung. Aktueller Überblick: [aktuellerStand.md](../aktuellerStand.md).
 
+## Durchlauf – Verstellbare Seitenleisten und Zähler (2026-11-14)
+
+Ausgangscommit: `00c4287` auf main (PR #11 gemergt). Branch: `feat/ui-sidebar-resize`.
+Einklappbare Navigationsbereiche, per Ziehen/Pfeiltasten verstellbare Navigation und
+Leseansicht, Zähler für Archiviert/Ohne Gruppe/Themencluster; `stats()` um `archived`
+und `unfiled` ergänzt (mit Regressionstest gegen die jeweiligen Listenansichten).
+
 ## Durchlauf – Dreigeteilte Oberfläche (2026-11-14)
 
 Ausgangscommit: `8fe4da2` auf main. Branch: `feat/ui-three-pane`. Nur `web/` und
