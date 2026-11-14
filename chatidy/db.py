@@ -266,4 +266,7 @@ def stats(db):
     return {"chats":db.execute("SELECT COUNT(*) FROM conversations").fetchone()[0],
             "messages":db.execute("SELECT COUNT(*) FROM messages").fetchone()[0],
             "folders":db.execute("SELECT COUNT(*) FROM folders").fetchone()[0],
-            "inbox":db.execute("SELECT COUNT(*) FROM conversations WHERE reviewed=0").fetchone()[0]}
+            "inbox":db.execute("SELECT COUNT(*) FROM conversations WHERE reviewed=0").fetchone()[0],
+            "archived":db.execute("SELECT COUNT(*) FROM conversations WHERE archived=1").fetchone()[0],
+            "unfiled":db.execute("SELECT COUNT(*) FROM conversations c WHERE NOT EXISTS("
+                                 "SELECT 1 FROM memberships g WHERE g.conversation_id=c.id)").fetchone()[0]}

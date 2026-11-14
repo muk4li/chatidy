@@ -34,8 +34,11 @@ Die folgenden offenen Themen sind Backlog, keine automatisch folgenden Aufträge
 
 - Implementiert und getestet: Ordner, Tags, Mehrfachauswahl (geladene Ergebnisse),
   zusätzliche Drag-and-drop-Zuordnung, gespeicherte Suchansichten, Regeln, Review.
+- Implementiert und getestet (Browser, synthetisch): dreigeteilte Oberfläche
+  (Navigation | Chat-Liste | Leseansicht), Import auf eigener Seite, Tag-Filter in der Navigation,
+  einklappbare Bereiche, verstellbare Seitenleisten, Zähler für alle Ansichten.
 - Teilweise implementiert: intelligente Sammlungen, Filter/Suche, Markdown/Code
-  (FTS5 und sichere Textdarstellung; keine umfassende Markdown-Renderpipeline).
+  (FTS5, sichere Textdarstellung, abgesetzte Codeblöcke; keine umfassende Markdown-Renderpipeline).
 - Offen: eigenständige Favoriten, fortgeschrittene Filter, größere Bulk-Workflows.
 
 ## Phase 3 – Lokale Intelligenz
@@ -43,6 +46,7 @@ Die folgenden offenen Themen sind Backlog, keine automatisch folgenden Aufträge
 - Teilweise implementiert: explizite Ollama-Vorschläge und deterministische Themencluster.
 - Offen: semantische Suche, lokale Embeddings, erklärbare Kategorisierungsvorschläge,
   Konfidenzwerte und Feedback-Lernen. Keine autonome Klassifikation ohne Sicherheitsgrenzen.
+  Konkreter Backlog-Ansatz für viele Chats (Embeddings + Beispiele, LLM nur für unsichere Fälle): AUTO-001.
 
 ## Phase 4 – Knowledge Management
 

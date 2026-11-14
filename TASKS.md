@@ -75,7 +75,13 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - Priorität: P2; Status: Teilweise implementiert.
 - Komponenten: UI, Suche. Abhängigkeiten: stabile P0-Importbasis.
 - [x] Ordner, Tags, Review, Regeln, Mehrfachauswahl und zusätzliche Drag-Zuordnung.
-- [ ] Favoriten, fortgeschrittene Filter, sichere Markdown-/Code-Darstellung.
+- [x] UI-Layout: Navigation | Chat-Liste | Leseansicht, Import auf eigener Seite,
+  einklappbarer Ordnerbaum, Tag-Liste als Filter, Kennzahlen in der Navigation.
+- [x] Codeblöcke (```) im Verlauf abgesetzt, ausschließlich als Text (kein HTML).
+- [x] Einklappbare Navigationsbereiche, verstellbare Breite von Navigation und
+  Leseansicht, Anzahl für Archiviert/Ohne Gruppe/Themencluster (`/api/stats` additiv).
+- [x] Größere Navigationssymbole; Auf-/Zuklapp-Pfeile als gleich große CSS-Dreiecke (▶/▼).
+- [ ] Favoriten, fortgeschrittene Filter, weitere Markdown-Darstellung.
 - Akzeptanz: Rückwärtskompatibilität, Tastatur-/Mobile-Bedienung und kein XSS.
 - Tests: API-, DOM- und echter Browsertest.
 
@@ -85,6 +91,24 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - [ ] Semantische Suche, Medienbibliothek, Wissensgraph und optionale Projektintegrationen.
 - Akzeptanz: lokale Verarbeitung, erklärbare Vorschläge, keine Pflicht-Cloud.
 - Tests: pro abgeschlossener Funktion; bislang keine Implementierungsbehauptung.
+
+## AUTO-001 – Gruppenvorschläge für viele Chats (Backlog, Idee des Nutzers)
+- Priorität: P3; Status: Offen – nur festgehalten, kein Umsetzungsauftrag.
+- Anlass: ca. 700–800 Chats; Ollama-Vorschläge pro Chat (Titel + 6000 Zeichen) sind
+  dafür zu langsam und müssen einzeln ausgelöst werden; keine große GPU vorhanden.
+- Ansatz (gestuft, alles lokal über Ollama auf 127.0.0.1, keine neuen Python-Pakete):
+  1. Ohne Neuentwicklung: Regeln (Titel/Inhalt/Projekt) und ChatGPT-Projekte nutzen.
+  2. Embeddings aus Titel + erster Nutzerfrage (z. B. kleines Embedding-Modell), einmalig
+     berechnen und lokal speichern; Nutzer ordnet wenige Beispiele je Gruppe zu, übrige
+     Chats erhalten Ähnlichkeitsvorschläge mit Sicherheitswert.
+  3. Optional nur unsichere Fälle per kleinem LLM (Titel + erste Frage + Gruppenliste) klassifizieren.
+- Keine Volltext-Zusammenfassungen zum Einsortieren (zu teuer, kaum Mehrwert).
+- Vorschläge landen im Posteingang; Übernahme nur nach Bestätigung, Sammelbestätigung je
+  Gruppe mit Rückfrage. Hintergrundjob mit Fortschritt und gemessener Dauer.
+- Akzeptanz: keine autonome Zuordnung, erklärbarer Vorschlag (ähnlichste Beispiele),
+  bestehende Zuordnungen bleiben unverändert, Laufzeit auf Durchschnitts-Hardware gemessen.
+- Tests: synthetische Embeddings/Mock-Ollama, Schwellenwerte, Bestätigung, Reimport-Stabilität.
+- Abhängigkeiten: KNOW-001 (lokale Embeddings), Phase 3 der ROADMAP.
 
 ## DATA-002 – Explizite Versions-/Zweig- und Duplikatrekonstruktion
 - Priorität: P1; Status: Offen.

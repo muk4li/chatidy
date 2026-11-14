@@ -26,7 +26,8 @@ mit deinem echten Export bleibt davon getrennt.
 
    Der Ordner wird angelegt. Verwende denselben Datenbankpfad bei jedem Start;
    ohne die Variable wird stattdessen `data/chatidy.sqlite3` im Projekt genutzt.
-4. Öffne im Browser `http://127.0.0.1:8877`. Wähle **Datei auswählen** und deinen
+4. Öffne im Browser `http://127.0.0.1:8877` und links **Import** (bei leerer Bibliothek
+   automatisch geöffnet). Wähle **Datei auswählen** und deinen
    vollständigen offiziellen ChatGPT-Export als ZIP. Die Originaldatei wird nur
    gelesen; Chatidy speichert eine private lokale Kopie im Jobverzeichnis.
 5. Warte auf **Import-Vorschau**, prüfe Segmente, Gesprächszahl und Warnungen

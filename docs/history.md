@@ -3,6 +3,28 @@
 Historische Durchläufe; damalige Grenzen und nächste Schritte sind keine aktuelle
 Priorisierung. Aktueller Überblick: [aktuellerStand.md](../aktuellerStand.md).
 
+## Durchlauf – Größere Navigationssymbole (2026-11-14)
+
+Ausgangscommit: `2f2436f` auf main (PR #12 gemergt). Branch: `feat/ui-larger-icons`.
+Nur `web/`: größere Symbole für Ansichten/Ordner, Auf-/Zuklapp-Pfeile als per CSS
+gezeichnete, gleich große Dreiecke statt kleiner, schriftabhängiger Zeichen.
+
+## Durchlauf – Verstellbare Seitenleisten und Zähler (2026-11-14)
+
+Ausgangscommit: `00c4287` auf main (PR #11 gemergt). Branch: `feat/ui-sidebar-resize`.
+Einklappbare Navigationsbereiche, per Ziehen/Pfeiltasten verstellbare Navigation und
+Leseansicht, Zähler für Archiviert/Ohne Gruppe/Themencluster; `stats()` um `archived`
+und `unfiled` ergänzt (mit Regressionstest gegen die jeweiligen Listenansichten).
+
+## Durchlauf – Dreigeteilte Oberfläche (2026-11-14)
+
+Ausgangscommit: `8fe4da2` auf main. Branch: `feat/ui-three-pane`. Nur `web/` und
+`tests/browser_smoke.cjs`: Navigation | Chat-Liste | Leseansicht, Import/Jobverwaltung
+auf eigener Seite, einklappbarer Ordnerbaum, Tag-Filter, Codeblöcke als Text.
+Bugfix: veraltete Importstatus-Antworten werden verworfen. Browsertest: drei
+asynchrone `waitForFunction`-Bedingungen durch echtes Polling ersetzt.
+Vorheriger Stand (FOCUS-001, Basis `8e19e78`): PR #9 inzwischen gemergt.
+
 ## Durchlauf – Verweis auf übergreifende Architektur (2026-11-14)
 
 Ausgangscommit: `81665a899afb93b52587cfe65b19ccb2dda78efc` auf main. Branch:

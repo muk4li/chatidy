@@ -68,6 +68,14 @@ class DatabaseTests(unittest.TestCase):
         upsert(self.db,self.chats)
         self.assertIn(folder,chat_detail(self.db,"test-1")["folders"])
         self.assertEqual(stats(self.db)["messages"],2)
+    def test_stats_count_archived_and_unfiled_like_their_views(self):
+        upsert(self.db,[{**parse_chat(sample()[0]),"id":"test-2","archived":True}])
+        self.assertEqual(stats(self.db)["archived"],len(list_chats(self.db,mode="archived")))
+        self.assertEqual(stats(self.db)["archived"],1)
+        self.assertEqual(stats(self.db)["unfiled"],len(list_chats(self.db,mode="unfiled")))
+        self.assertEqual(stats(self.db)["unfiled"],2)
+        assign(self.db,"test-2",[create_folder(self.db,"Archivgruppe")])
+        self.assertEqual(stats(self.db)["unfiled"],1)
     def test_reviews_stay_across_reimport(self):
         folder=create_folder(self.db,"Favorites")
         assign(self.db,"test-1",[folder])
