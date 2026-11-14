@@ -35,6 +35,8 @@ const {spawn,spawnSync}=require('node:child_process');
     await page.locator('#file-input').setInputFiles({name:'synthetic.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(chats))});
     await page.locator('#confirm-batch').waitFor();
     assert.equal((await (await fetch(base+'/api/stats')).json()).chats,0,'Preview must not import chats');
+    const readyJob=await page.evaluate(()=>localStorage.getItem('chatidy-import-job'));
+    assert.equal((await (await fetch(base+'/api/import/jobs/'+readyJob)).json()).active,false,'Confirmation waits for the analyzer lease to close');
     assert.match(await page.locator('#import-preview').textContent(),/2 erkannte Gespräche/);
     await page.locator('#confirm-batch').click();
     await page.waitForFunction(()=>document.getElementById('stat-chats').textContent==='2');

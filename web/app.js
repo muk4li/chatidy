@@ -292,7 +292,7 @@ $('refresh-jobs').onclick=loadJobs;
 $('job-management').ontoggle=()=>{if($('job-management').open)loadJobs()};
 loadJobs();
 function renderImportPreview(job){
-  const root=$('import-preview');root.hidden=job.state!=='awaiting_confirmation';
+  const root=$('import-preview');root.hidden=job.state!=='awaiting_confirmation'||Boolean(job.active);
   if(root.hidden)return;
   root.replaceChildren();const plan=job.preview;if(!plan)return;
   root.append(element('h2','','Import-Vorschau'));

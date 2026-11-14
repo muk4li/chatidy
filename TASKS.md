@@ -1,7 +1,7 @@
 # Operatives Backlog
 
 ## EXP-001 – Offizielle Segmentarchive erkennen
-- Priorität: P0; Status: Teilweise implementiert (lokale Regressionen erfolgreich; aktuelle Windows-CI ausstehend).
+- Priorität: P0; Status: Abgeschlossen – implementiert und unter Linux/Windows getestet (CI 43561857600).
 - Komponenten: Importer, Archivinventar, Jobvorschau. Abhängigkeiten: keine.
 - [x] conversations.json und numerisch sortierte conversations-NNN.json auswählen.
 - [x] Fehlende/doppelte/beschädigte erforderliche Segmente kontrolliert ablehnen.
@@ -14,7 +14,7 @@
   Größenlimits, Mehrdeutigkeit und doppelte Konversations-IDs.
 
 ## DATA-001 – Nachrichtenidentität pro Gespräch
-- Priorität: P0; Status: Teilweise implementiert (Code und lokale Regressionen erfolgreich; aktuelle Windows-CI ausstehend).
+- Priorität: P0; Status: Abgeschlossen – implementiert und unter Linux/Windows getestet (CI 43561857600).
 - Komponenten: SQLite, Migrationen, upsert, Details/Export, FTS5. Abhängigkeiten: keine.
 - [x] Globale Kollisionsursache synthetisch reproduzieren.
 - [x] Bestehende IDs/Metadaten/Reihenfolge verlustfrei per Migration erhalten.
@@ -23,7 +23,7 @@
 - Tests: Migration von Schema 3, Rollback, FKs, FTS, Tags/Review/Ordner und Reimport.
 
 ## IMP-001 – Vorschau, Bestätigung und Batch-Konflikte
-- Priorität: P0; Status: Teilweise implementiert (lokale HTTP-/Browsertests erfolgreich; aktuelle Windows-CI ausstehend).
+- Priorität: P0; Status: Abgeschlossen – implementiert, HTTP-/Browsertest und Linux-/Windows-CI erfolgreich (43561857600).
 - Komponenten: Jobs, HTTP, UI. Abhängigkeiten: EXP-001, DATA-001.
 - [x] Analyse/Staging von Änderungen an der Hauptbibliothek trennen.
 - [x] Inventar, Gesprächszahl, Konfliktklassen, Warnungen und grobe Speicherprognose zeigen.
@@ -73,3 +73,12 @@
 - Akzeptanz: keine automatische unklare Zusammenführung. Bis dahin doppelte
   Gesprächs-IDs ablehnen, Zweige ggf. vollständig unverändert lassen.
 - Tests: überlappende Segment-Snapshots, widersprüchliche Inhalte, Metadaten und Rollback.
+
+## DELIV-001 – PR und Merge der Exportkorrekturen
+- Priorität: P1; Status: Blockiert (GitHub-API-Schreibzugriff liefert Forbidden).
+- Komponenten: GitHub/CI. Abhängigkeiten: EXP-001, DATA-001, IMP-001.
+- [x] Feature-Branch und sechs erfolgreiche CI-Jobs gegen die Implementierung.
+- [ ] Tatsächlich erstellten PR und ggf. Merge bestätigen; keine Erfolgsaussage ohne Nachweis.
+- Akzeptanz: PR gegen aktuellen main, grüne CI, geklärte Risiken, kein Force-Push.
+- Tests: Commit-/Branch-Zuordnung und CI-Matrix prüfen. Manueller PR-Link:
+  https://github.com/muk4li/chatidy/pull/new/feature/segmented-export-preview

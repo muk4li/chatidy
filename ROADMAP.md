@@ -6,20 +6,23 @@ Durchlaufs werden erst nach ihren Tests hochgestuft; private Exportdaten bleiben
 
 ## Phase 1 – Exportkompatibilität und Datenintegrität
 
-- Teilweise implementiert: klassische und segmentierte offizielle ZIP-Exporte;
-  synthetisch geprüft, aktuelle Windows-CI ausstehend.
-- Teilweise implementiert (P0): nummerierte Dateien und Archivklassifizierung lokal
-  erfolgreich geprüft; kein ungeprüftes Zusatzschema als unterstützt ausgegeben.
-- Teilweise implementiert (P0): Schema-4-ID-Migration, gemeinsame Konfliktprüfung und
-  lokale Regressionen erfolgreich; aktuelle Windows-CI steht noch aus.
-- Teilweise implementiert (P0): Import-Vorschau, einmalig bestätigte Segment-Batches
-  und klassenbezogenes unverändert Lassen; lokale Tests erfolgreich, Windows-CI ausstehend.
-- Teilweise implementiert: große Exporte (Streaming/Jobs; 200/350-MB-Limits,
+- **Implementiert und getestet:** klassische und nummerierte offizielle
+  Konversationsdateien, explizite Archivklassifizierung, gemeinsame Segment-Batches.
+- **Implementiert und getestet:** Schema-4-Migration auf gesprächsbezogene
+  Nachrichtenidentität; IDs/Bestandsdaten/Reihenfolge bleiben erhalten.
+- **Implementiert und getestet:** schreibfreie Import-Vorschau, einmalige
+  Batch-Bestätigung, automatische idempotente Fälle und getrennte nicht destruktive
+  Entscheidungen für ältere bzw. abweichende/unvollständige Versionen.
+- **Implementiert und getestet:** Graphprüfung, atomare Transaktionen, konservativer
+  Reimport-Schutz, lokales Staging/Wiederaufnahme sowie Windows-/Linux-Backend.
+  Neue Implementierung: CI 43561857600 mit Python 3.10/3.11/3.13 auf beiden Hosts.
+- **Teilweise implementiert:** große Exporte (Streaming/Jobs; 200/350-MB-Limits,
   Einzelobjekte benötigen RAM; keine unbegrenzte Skalierbarkeit).
-- Implementiert und getestet: Graphprüfung, atomare Transaktionen, konservativer
-  Reimport-Schutz, lokales Staging/Wiederaufnahme, Windows-/Linux-Backend und CI.
-- Teilweise implementiert: Zusatzressourcen und Manifest-Interpretation; keine
-  behauptete Kenntnis noch ungeprüfter offizieller 2026-Metadatenschemas.
+- **Teilweise implementiert:** Zusatzressourcen/Manifeste werden inventarisiert;
+  ihre noch ungeprüften Schemas werden nicht als unterstützt behauptet.
+- **Offen:** validierte Manifest-Gesamtzahlen, komplexe Mehrversions-/Zweigrekonstruktion
+  und überlappende Gesprächs-Snapshots. Fehlende letzte Segmente sind ohne
+  vertrauenswürdige Gesamtzahl nicht nachweisbar. Details: TASKS.md.
 
 ## Phase 2 – Organisation und UX
 

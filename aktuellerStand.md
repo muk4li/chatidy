@@ -32,15 +32,37 @@ beim Prüfen keine offenen PRs; der vorherige main-CI-Lauf 43520240796 war erfol
   ggf. neue Vorschau. Atomicität und Wiederaufnahme bleiben erhalten. Die gemeinsame
   Identitätsprüfung schützt auch die kompatiblen explizit mutierenden Legacy-APIs.
 
-### Aktueller Nachweis vor Push
+### Tatsächlich geprüfter Stand
 
 105 Tests entdeckt: 95 erfolgreich ausgeführt und zehn native Windows-Tests hier
 übersprungen. Echter Chromium-Browsertest erfolgreich: Vorschau ohne Datenübernahme,
 Einzeldatei danach Gesamt-ZIP, Reimport, klassenbezogener älterer Batch, unveränderte
 Bestandsdaten sowie bisherige Jobverwaltung/Organisation und mobile Ansicht.
-Neue Windows-/Linux-CI für diese Änderungen ist noch ausstehend und wird nicht
-als bestanden behauptet. Nach bestätigter CI werden Roadmap/Backlog entsprechend
-hochgestuft. Geprüfte Commits: Planung `4f4d681`, Identität `7682250`, Layout `607f3ce`.
+Die Bestätigung wird erst nach Ende der aktiven Analyse angezeigt, sodass eine
+späte Statusabfrage keine bereits gewählten Klassenentscheidungen zurücksetzt.
+
+[CI 43561857600](https://github.com/muk4li/chatidy/actions/runs/43561857600) bestätigt
+Implementierungscommit `fd62bc4` mit sechs erfolgreichen Jobs:
+
+| Host | Python 3.10 | Python 3.11 | Python 3.13 |
+| --- | --- | --- | --- |
+| ubuntu-latest | erfolgreich | erfolgreich | erfolgreich |
+| windows-latest | erfolgreich | erfolgreich | erfolgreich |
+
+Alle neuen generischen Export-/Migrations-/Vorschautests laufen damit auch nativ
+auf Windows. Ein manueller Windows-11-Test mit dem privaten Originalexport wurde
+nicht durchgeführt. Ausgangsbestand und Features sind getrennt von diesem Nachweis.
+
+Commits: Planung `4f4d681`, Identität `7682250`, Layout `607f3ce`, Vorschau/Batch
+`fd62bc4`. Ein nachfolgender UI-/Dokumentationsabschluss ändert nicht die geprüfte
+Python-Implementierung. Dateiliste/Inhalte und gängige Secret-Muster vor jedem
+Commit geprüft, ausschließlich synthetische Daten. Python-3.10-Grammatik und
+JavaScript-Syntax zusätzlich geprüft.
+
+PR-Erstellung wurde konkret versucht; die API antwortet weiter mit Forbidden.
+Kein PR-/Merge-Erfolg wird behauptet. Der Branch ist gepusht, main bleibt
+unverändert. ROADMAP.md und TASKS.md markieren EXP-001/DATA-001/IMP-001 anhand
+obenstehender Akzeptanz und CI als implementiert/getestet; DELIV-001 bleibt blockiert.
 
 ### Grenzen und Backlog
 
