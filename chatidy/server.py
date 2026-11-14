@@ -7,7 +7,7 @@ import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlsplit
-from .db import (connect, list_chats, list_folders, chat_detail, upsert, stats,
+from .db import (DEFAULT_DATABASE, connect, list_chats, list_folders, chat_detail, upsert, stats,
                  create_folder, change_folder, assign, create_rule, validate_folder)
 from .importer import parse_export, MAX_UPLOAD
 from .topics import topics
@@ -252,6 +252,8 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
 def main():
+    # Give existing job/storage consumers the same project-relative default.
+    os.environ.setdefault("CHATIDY_DB", str(DEFAULT_DATABASE))
     host="127.0.0.1"
     port=int(os.getenv("CHATIDY_PORT","8877"))
     print(f"Chatidy läuft lokal unter http://{host}:{port}")

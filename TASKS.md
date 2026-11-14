@@ -1,5 +1,26 @@
 # Operatives Backlog
 
+Aktueller Fokus: Nutzbarkeit und Verständlichkeit. Weitere Import-/Storage-Härtung
+und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs beheben.
+
+## REAL-001 – Manueller Echttest durch Nutzer
+- Priorität: P0; Status: Offen – nur lokal durch den Nutzer ausführbar.
+- Komponenten: Windows-11-Bedienablauf; Abhängigkeiten: EXP-001, DATA-001, IMP-001.
+- [ ] Analyse, Vorschau, bestätigten Import und Stichproben mit echtem Export prüfen.
+- [ ] Identischen Reimport ohne Duplikate und mit erhaltenen Zuordnungen prüfen.
+- Akzeptanz: Nutzer bestätigt Ergebnis anhand der [Checkliste](docs/manueller-echttest.md);
+  ausschließlich geschwärzte technische Angaben zurückmelden, keine privaten Daten.
+- Tests: manueller lokaler Windows-11-Durchlauf; kein Ersatz durch synthetische CI.
+
+## FOCUS-001 – Nutzbarkeit und Dokumentation aufräumen
+- Priorität: P0; Status: Implementiert; Verifikation siehe aktuellerStand.md.
+- Komponenten: DB-Startwerte, Server-Startkonfiguration, Dokumentation.
+- [x] Acht passende Kategorien nur für neue Datenbanken; Bestand unverändert.
+- [x] Projektbezogener Standardpfad, CHATIDY_DB und explizite Pfade vorrangig.
+- [x] Kurze README, Importdetails, ausgelagerte Historie und Echttest-Checkliste.
+- Akzeptanz: keine Schema-/Import-/Storage-Änderungen oder neuen Abhängigkeiten.
+- Tests: neue/bestehende/leere Ordnerbestände, Pfadwahl und Serverstart; vollständige Suite.
+
 ## EXP-001 – Offizielle Segmentarchive erkennen
 - Priorität: P0; Status: Abgeschlossen – implementiert und unter Linux/Windows getestet (CI 43561857600).
 - Komponenten: Importer, Archivinventar, Jobvorschau. Abhängigkeiten: keine.

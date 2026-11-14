@@ -1,8 +1,14 @@
 # Chatidy – Produkt-Roadmap
 
-Stand: Ausgangspunkt main `c7702a6`. Legende: **Implementiert und getestet**,
+Stand: Nutzbarkeitsdurchlauf auf main `8e19e78` (2026-11-14). Legende: **Implementiert und getestet**,
 **Teilweise implementiert**, **Offen**, **Blockiert**. Neue Funktionen dieses
 Durchlaufs werden erst nach ihren Tests hochgestuft; private Exportdaten bleiben lokal.
+
+Aktueller Fokus: Nutzbarkeit und Verständlichkeit. Passende Startkategorien und
+kompakte Dokumentation sind umgesetzt (FOCUS-001). Nächster Nachweis ist der
+lokale manuelle Echttest durch den Nutzer (REAL-001); dieser bleibt offen.
+Weitere Import-/Storage-Härtung und neue Plattformfälle nur auf ausdrücklichen Auftrag.
+Die folgenden offenen Themen sind Backlog, keine automatisch folgenden Aufträge.
 
 ## Phase 1 – Exportkompatibilität und Datenintegrität
 

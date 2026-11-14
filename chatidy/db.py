@@ -6,13 +6,13 @@ from .conflicts import classify_chat, _import_timestamp
 import sqlite3
 from pathlib import Path
 
-DEFAULT_CATEGORIES = ["Tech & KI", "Programmieren", "Gaming", "Memes & Humor",
-                      "Musik", "Wissen & Bildung", "Favoriten", "Fitness & Sport",
-                      "Design & Kunst", "Lifestyle", "Inspiration", "Rezepte",
-                      "Anime", "Filme und Serien"]
+DEFAULT_DATABASE = Path(__file__).resolve().parent.parent / "data" / "chatidy.sqlite3"
+DEFAULT_CATEGORIES = ["Programmieren", "Infrastruktur & DevOps", "Lernen",
+                      "Schreiben & Texte", "Recherche", "Projekte",
+                      "Persönliches", "Favoriten"]
 
 def connect(path=None):
-    path = Path(path or os.getenv("CHATIDY_DB", "data/chatidy.sqlite3"))
+    path = Path(path or os.getenv("CHATIDY_DB", DEFAULT_DATABASE))
     path.parent.mkdir(parents=True, exist_ok=True)
     db = sqlite3.connect(path, timeout=20)
     db.row_factory = sqlite3.Row
@@ -24,6 +24,7 @@ def connect(path=None):
     db.execute("PRAGMA foreign_keys=ON")
     db.execute("PRAGMA busy_timeout=20000")
     db.execute("PRAGMA journal_mode=WAL")
+    new_database = not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='folders'").fetchone()
     db.executescript("""
       CREATE TABLE IF NOT EXISTS conversations(
         id TEXT PRIMARY KEY, title TEXT NOT NULL, created REAL, updated REAL,
@@ -65,11 +66,9 @@ def connect(path=None):
     except Exception:
         db.close()
         raise
-    for name in ("ChatGPT", "Projekte", "Wissen", "Privat", "Favoriten"):
-        db.execute("INSERT OR IGNORE INTO folders(name,parent_id) VALUES(?,NULL)", (name,))
-    group = db.execute("SELECT id FROM folders WHERE name='Wissen' AND parent_id IS NULL").fetchone()[0]
-    for name in DEFAULT_CATEGORIES:
-        db.execute("INSERT OR IGNORE INTO folders(name,parent_id) VALUES(?,?)", (name, group))
+    if new_database:
+        for name in DEFAULT_CATEGORIES:
+            db.execute("INSERT OR IGNORE INTO folders(name,parent_id) VALUES(?,NULL)", (name,))
     db.commit()
     return db
 
