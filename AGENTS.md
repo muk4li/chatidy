@@ -26,3 +26,14 @@
 - README, aktuellerStand.md, ROADMAP.md und TASKS.md nach jedem abgeschlossenen
   Schritt aktualisieren. Bericht: Ausgangscommit, Änderung, Tests, Datenschutz,
   Commit/Push/PR/CI/Merge und verbleibende Grenzen. Geplantes nicht als fertig markieren.
+
+# Übergreifende Architektur
+
+- [Centrality](https://github.com/muk4li/centrality) besitzt die Gesamtarchitektur,
+  die globale Reihenfolge und die Verträge zwischen den Repositories. Bei Änderungen
+  mit Wirkung auf andere Repos (Hub-Anbindung, Remote-Auth, Netzwerkbindung, Packaging,
+  Deployment) zuerst dessen `docs/START-HERE.md`, `DECISIONS.md` und `CURRENT-STATE.md`
+  lesen. Code, Tests und die Regeln dieser Datei bleiben für Chatidy maßgeblich.
+- Ist Centrality nicht erreichbar, die Lücke melden und keine grenzverändernden
+  Entscheidungen treffen. Keine privaten Centrality-Inhalte in dieses öffentliche
+  Repository kopieren.
