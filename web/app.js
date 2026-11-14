@@ -84,14 +84,14 @@ function renderSidebar(){
     for(const f of folders.filter(x=>x.parent_id===parent)){
       if(seen.has(f.id))continue;
       const row=element('div','folderrow');row.style.paddingLeft=(depth*12)+'px';
-      const twisty=element('button','twisty'+(hasChildren(f.id)?'':' leafpad'),'▸');twisty.type='button';
       const open=!collapsed.has(f.id);
+      const twisty=element('button','twisty'+(hasChildren(f.id)?'':' leafpad'));twisty.type='button';
       if(hasChildren(f.id)){twisty.setAttribute('aria-expanded',String(open));twisty.setAttribute('aria-label',(open?'Zuklappen: ':'Aufklappen: ')+f.name);
         twisty.onclick=()=>{open?collapsed.add(f.id):collapsed.delete(f.id);store.set('chatidy-collapsed-folders',[...collapsed]);renderSidebar()}}
       else{twisty.tabIndex=-1;twisty.setAttribute('aria-hidden','true')}
       const b=button('',()=>setView('all',f.id),'folderbtn'+(library&&folder===f.id?' active':''));
-      const name=element('span','','▤ '+f.name);
-      const count=element('small','',String(f.item_count));b.append(name,count);b.title='Ordner öffnen: '+f.name;
+      const name=element('span','',' '+f.name);
+      const count=element('small','',String(f.item_count));b.append(element('span','ficon','▤'),name,count);b.title='Ordner öffnen: '+f.name;
       b.ondragover=e=>{if(e.dataTransfer.types.includes('application/x-chatidy-ids')){e.preventDefault();b.classList.add('drop-target')}};
       b.ondragleave=()=>b.classList.remove('drop-target');
       b.ondrop=e=>{e.preventDefault();b.classList.remove('drop-target');try{const ids=JSON.parse(e.dataTransfer.getData('application/x-chatidy-ids'));if(Array.isArray(ids)&&ids.length&&ids.length<=500)assignChats(ids,f.id)}catch(error){message('Ungültige Drag-and-drop-Auswahl.',true)}};
@@ -103,7 +103,8 @@ function renderSidebar(){
   const smartNav=$('smart-folders');smartNav.replaceChildren();
   for(const f of smartFolders){
     const row=element('div','smart-row');
-    row.append(button('◇ '+f.name,()=>setSmart(f.id),'folderbtn'+(library&&smart===f.id?' active':'')),
+    const smartButton=button('',()=>setSmart(f.id),'folderbtn'+(library&&smart===f.id?' active':''));smartButton.append(element('span','ficon','◇'),element('span','',' '+f.name));
+    row.append(smartButton,
       button('×',async()=>{if(!confirm('Intelligenten Ordner löschen? Chats bleiben erhalten.'))return;try{await post('/api/smart-folders/delete',{id:f.id});if(smart===f.id)setView('all');await loadOrganisation()}catch(e){message(e.message,true)}},'textbtn'));
     smartNav.append(row);
   }

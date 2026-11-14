@@ -3,6 +3,12 @@
 Historische Durchläufe; damalige Grenzen und nächste Schritte sind keine aktuelle
 Priorisierung. Aktueller Überblick: [aktuellerStand.md](../aktuellerStand.md).
 
+## Durchlauf – Größere Navigationssymbole (2026-11-14)
+
+Ausgangscommit: `2f2436f` auf main (PR #12 gemergt). Branch: `feat/ui-larger-icons`.
+Nur `web/`: größere Symbole für Ansichten/Ordner, Auf-/Zuklapp-Pfeile als per CSS
+gezeichnete, gleich große Dreiecke statt kleiner, schriftabhängiger Zeichen.
+
 ## Durchlauf – Verstellbare Seitenleisten und Zähler (2026-11-14)
 
 Ausgangscommit: `00c4287` auf main (PR #11 gemergt). Branch: `feat/ui-sidebar-resize`.
