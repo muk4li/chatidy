@@ -10,10 +10,11 @@ import time
 import uuid
 from pathlib import Path
 from .db import connect, upsert
-from .importer import MAX_UPLOAD, iter_export
+from .importer import MAX_UPLOAD, iter_export, inspect_export
+from . import import_plan
 from . import job_storage as storage
 
-STATES = frozenset(('uploading', 'uploaded', 'validating', 'committing', 'done', 'error', 'interrupted'))
+STATES = frozenset(('uploading', 'uploaded', 'validating', 'committing', 'done', 'error', 'interrupted', 'awaiting_confirmation'))
 
 
 def database_path():
@@ -96,7 +97,7 @@ def status(job_id):
 def public_status(job_id):
     value = status(job_id)
     return {key: value.get(key) for key in ('id', 'state', 'validated', 'total_bytes', 'imported',
-            'error', 'created', 'storage_bytes', 'active', 'can_resume', 'can_delete')}
+            'error', 'created', 'storage_bytes', 'active', 'can_resume', 'can_delete', 'preview', 'result')}
 
 
 def listing():
@@ -116,7 +117,7 @@ def listing():
                 job = storage.Job(root_fd, name)
                 value = _inspect(job, job_id, name.startswith('.deleting-'))
                 results.append({key: value.get(key) for key in ('id', 'state', 'validated', 'total_bytes',
-                    'imported', 'error', 'created', 'storage_bytes', 'active', 'can_resume', 'can_delete')})
+                    'imported', 'error', 'created', 'storage_bytes', 'active', 'can_resume', 'can_delete', 'preview', 'result')})
             except (OSError, ValueError, UnicodeError):
                 results.append({'id': job_id, 'state': 'blocked', 'can_resume': False,
                                 'can_delete': False, 'storage_bytes': 0,
@@ -155,7 +156,7 @@ def _lease(job_id):
         raise ValueError('Importjob fehlt oder enthält unsichere Dateien.') from exc
 
 
-def create(source, size, name):
+def create(source, size, name, confirmation_required=False):
     if not 0 < size <= MAX_UPLOAD:
         raise ValueError('Ungültige Dateigröße (maximal 200 MB).')
     suffix = Path(name).suffix.lower()
@@ -167,7 +168,8 @@ def create(source, size, name):
         job = storage.Job(root_fd, job_id)
         lease = job.acquire()
         state = {'id': job_id, 'state': 'uploading', 'validated': 0, 'total_bytes': size,
-                 'sha256': None, 'suffix': suffix, 'created': time.time(), 'error': None}
+                 'sha256': None, 'suffix': suffix, 'created': time.time(), 'error': None,
+                 'confirmation_required': bool(confirmation_required), 'approval': None}
         try:
             job.write('status.json', state)
         except BaseException:
@@ -224,6 +226,7 @@ def _run(job, job_id):
             if digest.hexdigest() != state['sha256']:
                 raise ValueError('Lokale Quelldatei wurde verändert. Bitte neu hochladen.')
             source.seek(0)
+            inventory = inspect_export(source, 'source'+state['suffix'])
             count = 0
             for count, chat in enumerate(iter_export(source, 'source'+state['suffix']), 1):
                 payload = json.dumps(chat, ensure_ascii=False)
@@ -240,17 +243,37 @@ def _run(job, job_id):
             staging.commit()
         if staging.execute('SELECT count(*) FROM chats').fetchone()[0] != count:
             raise ValueError('Staging unvollständig oder inkonsistent. Bitte neu hochladen.')
+        if state.get('confirmation_required'):
+            state.update(validated=count, preview=import_plan.preview(database_path(), staging, inventory))
+            approval = state.get('approval')
+            conflicts = state['preview']['classes']
+            if approval and (conflicts['identity'] or any(conflicts[kind] and approval['policies'][kind] != 'skip' for kind in ('older','branch'))):
+                state['approval'] = None
+            if not state.get('approval'):
+                state['state'] = 'awaiting_confirmation'
+                storage.worker_write(job, 'status.json', state)
+                return
         state.update(state='committing', validated=count)
         storage.worker_write(job, 'status.json', state)
-        db = connect(database_path())
-        try:
-            with closing(staging.execute('SELECT payload FROM chats ORDER BY sequence')) as rows:
-                imported = upsert(db, (json.loads(row[0]) for row in rows))
-        finally:
-            db.close()
+        if state.get('confirmation_required'):
+            approval = state['approval']
+            if approval.get('source_sha256') != state['sha256']:
+                raise ValueError('Bestätigung passt nicht zur geprüften Quelle.')
+            result = import_plan.apply(database_path(), staging, approval['policies'])
+            state['result'] = result
+            imported = result['imported']
+        else:
+            db = connect(database_path())
+            try:
+                with closing(staging.execute('SELECT payload FROM chats ORDER BY sequence')) as rows:
+                    imported = upsert(db, (json.loads(row[0]) for row in rows))
+            finally:
+                db.close()
         state.update(state='done', imported=imported)
         storage.worker_write(job, 'status.json', state)
     except Exception as exc:
+        if state.get('confirmation_required'):
+            state['approval'] = None
         if staging:
             staging.rollback()
         state.update(state='error', error=str(exc) if isinstance(exc, ValueError)
@@ -278,6 +301,35 @@ def start(job_id):
         if public_status(job_id).get('active'):
             return  # Compatible idempotent resume while a worker is already active.
         raise
+    return _launch(job_id, job, lease)
+
+
+def confirm(job_id, confirmed=False, policies=None):
+    if confirmed is not True:
+        raise ValueError('Import des gesamten Batches muss ausdrücklich bestätigt werden.')
+    policies = import_plan.validate_policies({} if policies is None else policies)
+    job, lease = _lease(job_id)
+    try:
+        state = _read(job, job_id)
+        if not state.get('confirmation_required') or state['state'] != 'awaiting_confirmation':
+            raise ValueError('Zuerst Analyse vollständig abschließen und Vorschau prüfen.')
+        plan = state.get('preview', {})
+        if not plan.get('can_confirm'):
+            raise ValueError('Unklare Identität verhindert den Import. Kein Fehler-ignorieren möglich.')
+        for kind in ('older', 'branch'):
+            if plan['classes'][kind] and policies[kind] != 'skip':
+                raise ValueError('Konfliktklasse muss ausdrücklich unverändert gelassen oder der Import abgebrochen werden.')
+        state['approval'] = {'source_sha256':state['sha256'], 'policies':policies}
+        state['state'] = 'uploaded'
+        storage.worker_write(job, 'status.json', state)
+    except BaseException:
+        os.close(lease)
+        job.close()
+        raise
+    return _launch(job_id, job, lease)
+
+
+def _launch(job_id, job, lease):
     try:
         state = _read(job, job_id)
     except BaseException:

@@ -13,8 +13,9 @@ def classify(archive, max_entries, max_json_bytes):
     if len(entries) > max_entries:
         raise ValueError('ZIP enthält zu viele Dateien.')
     json_entries = [x for x in entries if not x.is_dir() and x.filename.lower().endswith('.json')]
-    if sum(x.file_size for x in json_entries) > max_json_bytes:
-        raise ValueError('ZIP enthält zu große JSON-Dateien.')
+    json_bytes = sum(x.file_size for x in json_entries)
+    if json_bytes > max_json_bytes:
+        raise ValueError(f'ZIP-JSONs umfassen entpackt {json_bytes / 1048576:.1f} MB; Limit {max_json_bytes / 1048576:.1f} MB. Keine Gespräche übernommen.')
     if any(x.flag_bits & 1 for x in entries):
         raise ValueError('Verschlüsselte ZIP-Archive werden nicht unterstützt.')
     if len({x.filename.casefold() for x in entries}) != len(entries):
@@ -23,6 +24,9 @@ def classify(archive, max_entries, max_json_bytes):
                            'supported_resource', 'unknown'), 0)
     classic, numbered, candidates = [], [], []
     manifests, sensitive = 0, 0
+    manifest_paths = []
+    roles = dict.fromkeys(('codex','advertising','account','settings','library','asset_names','shared','sectioned','root_manifest','site_manifest','other_manifest'), 0)
+    role_names = {'codex.json':'codex','ads.json':'advertising','user.json':'account','user_settings.json':'settings','library_files.json':'library','conversation_asset_file_names.json':'asset_names','shared_conversations.json':'shared','sectioned_conversations.json':'sectioned'}
     for item in entries:
         if item.is_dir():
             continue
@@ -35,8 +39,10 @@ def classify(archive, max_entries, max_json_bytes):
         elif name == 'export_manifest.json':
             counts['metadata'] += 1
             manifests += 1
+            manifest_paths.append(path)
         elif name in METADATA:
             counts['metadata'] += 1
+            roles[role_names[name]] += 1
             sensitive += name in ('user.json', 'user_settings.json', 'ads.json')
         elif path.suffix.lower() in ('.dat', '.png', '.jpg', '.jpeg', '.webp', '.mp3', '.mp4', '.pdf'):
             counts['attachment'] += 1
@@ -69,6 +75,10 @@ def classify(archive, max_entries, max_json_bytes):
     else:
         selected = []
         format_name = 'structured_json_archive'
+    root_folder = PurePosixPath(selected[0].filename.replace('\\','/')).parent if selected else None
+    for manifest in manifest_paths:
+        role = 'root_manifest' if manifest.parent == root_folder else 'site_manifest' if manifest.parent.name.casefold() == 'sites' else 'other_manifest'
+        roles[role] += 1
     if manifests:
         warnings.append('Manifeste nur inventarisiert; keine Felder ungeprüft als Spezifikation verwendet.')
     if counts['metadata']:
@@ -76,4 +86,4 @@ def classify(archive, max_entries, max_json_bytes):
     if counts['unknown']:
         warnings.append('Unbekannte Zusatzressourcen werden nicht ausgeführt oder extrahiert.')
     return selected, candidates, {'format': format_name, 'counts': counts, 'manifests': manifests,
-        'manifests_validated': False, 'sensitive_metadata_files': sensitive, 'warnings': warnings}
+        'manifests_validated': False, 'metadata_roles': roles, 'sensitive_metadata_files': sensitive, 'warnings': warnings}

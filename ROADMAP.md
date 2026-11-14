@@ -12,7 +12,8 @@ Durchlaufs werden erst nach ihren Tests hochgestuft; private Exportdaten bleiben
   erfolgreich geprüft; kein ungeprüftes Zusatzschema als unterstützt ausgegeben.
 - Teilweise implementiert (P0): Schema-4-ID-Migration, gemeinsame Konfliktprüfung und
   lokale Regressionen erfolgreich; aktuelle Windows-CI steht noch aus.
-- Offen (P0): Import-Vorschau und bestätigte sichere Segment-Batches.
+- Teilweise implementiert (P0): Import-Vorschau, einmalig bestätigte Segment-Batches
+  und klassenbezogenes unverändert Lassen; lokale Tests erfolgreich, Windows-CI ausstehend.
 - Teilweise implementiert: große Exporte (Streaming/Jobs; 200/350-MB-Limits,
   Einzelobjekte benötigen RAM; keine unbegrenzte Skalierbarkeit).
 - Implementiert und getestet: Graphprüfung, atomare Transaktionen, konservativer

@@ -248,7 +248,7 @@ function exportChats(ids=null){
 async function refresh(){await Promise.all([loadFolders(),loadStats(),loadOrganisation()]);await loadChats()}
 let importJob=localStorage.getItem('chatidy-import-job'), importPoll=null;
 let jobListEpoch=0;
-const jobLabels={uploading:'Wird hochgeladen',uploaded:'Hochgeladen',validating:'In Prüfung',committing:'Wird übernommen',done:'Erfolgreich',error:'Fehlgeschlagen',interrupted:'Unterbrochen',cleanup_pending:'Bereinigung unterbrochen',blocked:'Jobdaten gesperrt'};
+const jobLabels={uploading:'Wird hochgeladen',uploaded:'Hochgeladen',validating:'In Prüfung',committing:'Wird übernommen',done:'Erfolgreich',error:'Fehlgeschlagen',interrupted:'Unterbrochen',awaiting_confirmation:'Vorschau bereit – Bestätigung erforderlich',cleanup_pending:'Bereinigung unterbrochen',blocked:'Jobdaten gesperrt'};
 function jobSize(bytes){return new Intl.NumberFormat('de-DE',{maximumFractionDigits:1}).format(Number(bytes||0)/1048576)+' MB'}
 async function loadJobs(){
   const epoch=++jobListEpoch;
@@ -268,7 +268,8 @@ async function loadJobs(){
       if(job.state==='interrupted')row.append(element('p','muted',job.can_resume?'Nach Prozessunterbrechung wiederaufnehmbar.':'Upload unvollständig; bitte erneut hochladen.'));
       if(job.state==='cleanup_pending')row.append(element('p','muted','Ein Teil der Jobdaten wurde bereits entfernt. Zum Abschließen Löschung erneut bestätigen.'));
       const actions=element('div','job-actions');
-      if(job.can_resume)actions.append(button('Fortsetzen',async()=>{
+      if(job.state==='awaiting_confirmation')actions.append(button('Vorschau öffnen',async()=>{importJob=job.id;localStorage.setItem('chatidy-import-job',job.id);await pollImport();$('import-preview').scrollIntoView({block:'start'})}));
+      if(job.can_resume&&job.state!=='awaiting_confirmation')actions.append(button('Fortsetzen',async()=>{
         try{await post('/api/import/jobs/'+job.id+'/resume',{});importJob=job.id;localStorage.setItem('chatidy-import-job',job.id);clearTimeout(importPoll);pollImport();await loadJobs()}
         catch(e){message(e.message,true)}
       }));
@@ -277,7 +278,7 @@ async function loadJobs(){
         if(!confirm(detail+' Lokale Jobdaten ('+jobSize(job.storage_bytes)+') wirklich löschen? Importierte Chats und die ursprüngliche Exportdatei bleiben erhalten.'))return;
         try{
           await post('/api/import/jobs/'+job.id+'/delete',{confirm:true});
-          if(importJob===job.id){importJob=null;clearTimeout(importPoll);localStorage.removeItem('chatidy-import-job');$('import-status').hidden=true}
+          if(importJob===job.id){importJob=null;clearTimeout(importPoll);localStorage.removeItem('chatidy-import-job');$('import-status').hidden=true;$('import-preview').hidden=true}
           await loadJobs();message('Lokale Jobdaten gelöscht. Importierte Chats bleiben erhalten.');
         }catch(e){message(e.message,true);await loadJobs()}
       });
@@ -290,14 +291,52 @@ async function loadJobs(){
 $('refresh-jobs').onclick=loadJobs;
 $('job-management').ontoggle=()=>{if($('job-management').open)loadJobs()};
 loadJobs();
+function renderImportPreview(job){
+  const root=$('import-preview');root.hidden=job.state!=='awaiting_confirmation';
+  if(root.hidden)return;
+  root.replaceChildren();const plan=job.preview;if(!plan)return;
+  root.append(element('h2','','Import-Vorschau'));
+  const layout=plan.inventory;
+  const format={official_segments:'Nummerierter offizieller Export',official_classic:'Klassischer offizieller Export',structured_json_archive:'Strukturiertes JSON-Archiv',single_json:'Einzelne JSON-Datei'}[layout.format]||'JSON-Export';
+  root.append(element('p','muted',format+' · '+layout.segment_count+' Konversationsdateien · '+plan.conversations+' erkannte Gespräche'));
+  const resources=element('ul');const labels={conversation_segment:'Konversationsdateien',metadata:'Zusätzliche JSON-Metadaten',attachment:'Anhang-/Binärressourcen',html_viewer:'HTML-Darstellung',supported_resource:'Begleitdateien',unknown:'Unbekannte Zusatzdateien'};
+  for(const [kind,count] of Object.entries(layout.counts||{}))resources.append(element('li','',String(count)+' '+(labels[kind]||kind)));
+  const roles=layout.metadata_roles||{};
+  if(layout.manifests||roles.codex||layout.sensitive_metadata_files)root.append(element('p','muted',(layout.manifests||0)+' Manifeste · '+(roles.codex||0)+' Codex-Dateien · '+(layout.sensitive_metadata_files||0)+' sensible Konto-/Werbe-/Einstellungsdateien: nur inventarisiert.'));
+  root.append(resources,element('p','muted','Grob geschätzter zusätzlicher Speicher: '+jobSize(plan.estimated_additional_bytes)+'. '+plan.estimate_note));
+  const kinds={new:'Neu',identical:'Bereits identisch vorhanden – bleibt unverändert',newer:'Neuere vollständige Version',complete:'Vollständige Ergänzung',older:'Älter oder ohne erforderlichen Änderungszeitpunkt',branch:'Abweichender/unvollständiger Gesprächszweig',identity:'Unklare Nachrichten-/Versionsidentität'};
+  const decisions={};
+  for(const [kind,count] of Object.entries(plan.classes)){
+    if(!count)continue;
+    root.append(element('p','',count+' · '+kinds[kind]));
+    if(kind==='older'||kind==='branch'){
+      const choice=select('Entscheidung für alle Fälle dieser Klasse in diesem Import',[
+        ['abort','Import bei dieser Klasse abbrechen'],['skip','Diese Gespräche vollständig unverändert lassen']]);
+      decisions[kind]=choice.input;root.append(choice.wrapper);
+    }
+  }
+  for(const warning of plan.warnings||[])root.append(element('p','muted',warning));
+  if(!plan.can_confirm)root.append(element('p','','Unklare Identitäten blockieren diesen Batch. Es gibt kein pauschales Fehler-Ignorieren.'));
+  const confirm=button('Diesen Batch importieren',async()=>{
+    confirm.disabled=true;
+    try{
+      await post('/api/import/jobs/'+job.id+'/confirm',{confirm:true,policies:Object.fromEntries(Object.entries(decisions).map(([kind,input])=>[kind,input.value]))});
+      importJob=job.id;localStorage.setItem('chatidy-import-job',job.id);clearTimeout(importPoll);pollImport();
+    }catch(e){message(e.message,true);updateConfirm()}
+  },'primary');confirm.id='confirm-batch';
+  function updateConfirm(){confirm.disabled=!plan.can_confirm||Object.values(decisions).some(input=>input.value!=='skip')}
+  for(const input of Object.values(decisions))input.onchange=updateConfirm;
+  updateConfirm();root.append(confirm,element('p','muted','Eine Bestätigung gilt nur für diesen Batch. Bis dahin wurden keine Chats übernommen. Alle Entscheidungen werden beim Übernehmen erneut geprüft.'));
+}
 async function pollImport(){
   if(!importJob)return;
   $('import-status').hidden=false;
   try{
     const result=await api('/api/import/jobs/'+importJob);
     const labels=jobLabels;
-    $('import-status-text').textContent=(labels[result.state]||result.state)+' · '+(result.validated||0)+' Chats geprüft'+(result.error?' · '+result.error:'');
-    $('resume-import').hidden=!result.can_resume;
+    renderImportPreview(result);
+    $('import-status-text').textContent=(labels[result.state]||result.state)+' · '+(result.validated||0)+' Chats geprüft'+(result.error?' · '+result.error:'')+(result.result?' · '+result.result.imported+' übernommen, '+result.result.unchanged+' unverändert':'');
+    $('resume-import').hidden=!result.can_resume||result.state==='awaiting_confirmation';
     if(result.state==='done'){
       clearTimeout(importPoll);localStorage.removeItem('chatidy-import-job');importJob=null;
       $('pick-file').disabled=false;await Promise.all([refresh(),loadJobs()]);return;
@@ -321,7 +360,7 @@ async function importFile(file){
   if(file.size>200*1024*1024){message('Datei zu groß (maximal 200 MB).',true);return}
   $('pick-file').disabled=true;message('Upload läuft lokal …');
   try{
-    const result=await api('/api/import/jobs',{method:'POST',headers:{'Content-Type':'application/octet-stream','X-Filename':file.name.replace(/[^a-zA-Z0-9_.-]/g,'_')},body:file});
+    const result=await api('/api/import/analyze',{method:'POST',headers:{'Content-Type':'application/octet-stream','X-Filename':file.name.replace(/[^a-zA-Z0-9_.-]/g,'_')},body:file});
     importJob=result.id;localStorage.setItem('chatidy-import-job',importJob);clearTimeout(importPoll);pollImport();
   }catch(e){message('Import fehlgeschlagen: '+e.message,true)}finally{$('pick-file').disabled=false}
 }

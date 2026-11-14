@@ -8,6 +8,8 @@
 - [x] Metadaten, DAT, HTML, Manifeste und unbekannte Extras separat inventarisieren.
 - [x] Zusatzdateien weder ausführen noch ungeprüft als Chats parsen.
 - Akzeptanz: ein gemeinsamer Batch für 000–007 unabhängig von ZIP-Reihenfolge.
+  Interne Lücken werden erkannt; fehlende Endsegmente ohne validiertes Manifest
+  bleiben eine ausdrücklich dokumentierte Grenze.
 - Tests: klassische/segmentierte/Extractor-Archive, Extras, Lücken, CRC/JSON,
   Größenlimits, Mehrdeutigkeit und doppelte Konversations-IDs.
 
@@ -21,12 +23,12 @@
 - Tests: Migration von Schema 3, Rollback, FKs, FTS, Tags/Review/Ordner und Reimport.
 
 ## IMP-001 – Vorschau, Bestätigung und Batch-Konflikte
-- Priorität: P0; Status: Offen.
+- Priorität: P0; Status: Teilweise implementiert (lokale HTTP-/Browsertests erfolgreich; aktuelle Windows-CI ausstehend).
 - Komponenten: Jobs, HTTP, UI. Abhängigkeiten: EXP-001, DATA-001.
-- [ ] Analyse/Staging von Änderungen an der Hauptbibliothek trennen.
-- [ ] Inventar, Gesprächszahl, Konfliktklassen, Warnungen und grobe Speicherprognose zeigen.
-- [ ] Eine Bestätigung pro Batch; keine globale Fehler-ignorieren-Option.
-- [ ] Identische/neuere vollständige Chats sicher behandeln; ältere oder abweichende
+- [x] Analyse/Staging von Änderungen an der Hauptbibliothek trennen.
+- [x] Inventar, Gesprächszahl, Konfliktklassen, Warnungen und grobe Speicherprognose zeigen.
+- [x] Eine Bestätigung pro Batch; keine globale Fehler-ignorieren-Option.
+- [x] Identische/neuere vollständige Chats sicher behandeln; ältere oder abweichende
   Chats nur nach eindeutiger klassenbezogener Wahl unverändert lassen oder abbrechen.
 - Akzeptanz: ohne Bestätigung kein Chatimport; atomarer Batch mit Wiederaufnahme.
 - Tests: HTTP/Browser, Vorschau ohne Bibliotheksänderung, Konfliktentscheidung,
@@ -62,3 +64,12 @@
 - [ ] Semantische Suche, Medienbibliothek, Wissensgraph und optionale Projektintegrationen.
 - Akzeptanz: lokale Verarbeitung, erklärbare Vorschläge, keine Pflicht-Cloud.
 - Tests: pro abgeschlossener Funktion; bislang keine Implementierungsbehauptung.
+
+## DATA-002 – Explizite Versions-/Zweig- und Duplikatrekonstruktion
+- Priorität: P1; Status: Offen.
+- Komponenten: Konfliktmodell, Importer, Versionsdaten. Abhängigkeiten: DATA-001, IMP-001.
+- [ ] Mehrere Snapshots derselben Gesprächs-ID im Batch nach definierter Regel behandeln.
+- [ ] Legacy-Fallback-IDs und alternative Zweige ohne heuristisches Überschreiben rekonstruieren.
+- Akzeptanz: keine automatische unklare Zusammenführung. Bis dahin doppelte
+  Gesprächs-IDs ablehnen, Zweige ggf. vollständig unverändert lassen.
+- Tests: überlappende Segment-Snapshots, widersprüchliche Inhalte, Metadaten und Rollback.

@@ -1,33 +1,67 @@
 # Aktueller Stand von Chatidy
 
-## Laufender Durchlauf – segmentierte offizielle Exporte
+## Durchlauf – offizielle segmentierte Exporte und Datenintegrität
 
-Ausgangspunkt main `c7702a6`; Branch `feature/segmented-export-preview`.
-ROADMAP.md, AGENTS.md und TASKS.md legen Produktplan, Entwicklungsregeln und
-prüfbare P0-Arbeitspakete fest. Ausgangssuite: 84 Tests, 74 bestanden, zehn native
-Windows-Tests hier übersprungen. Globale Nachrichten-IDs und ungefilterte JSON-
-Auswahl im ZIP sind im Code reproduzierbare Ursachen; das private Originalarchiv
-wird nicht angefordert, untersucht oder in der Cloud gespeichert. Noch keine
-Behauptung zur Vollständigkeit der ungeprüften offiziellen Zusatzschemas.
+Ausgangscommit: `c7702a670cad54bfe8265bdd49f6dad322ece2ef` auf main.
+Branch: `feature/segmented-export-preview`. Die öffentliche PR-Liste enthielt
+beim Prüfen keine offenen PRs; der vorherige main-CI-Lauf 43520240796 war erfolgreich.
 
-Schritt DATA-001: Schema 4 kopiert Nachrichten verlustfrei auf den Schlüssel
-(conversation_id,id). Die ursprüngliche ID wird nicht umgeschrieben. Gleiche IDs
-in unterschiedlichen Chats überschreiben sich nicht; doppelte IDs im selben
-Chat sowie unklare gleichalte Textänderungen bleiben blockiert. Die gemeinsame
-Konfliktprüfung schützt auch Legacy-Importpfade. Migration/Row-Erhalt/FTS/Tags/
-Review/Rollback sind synthetisch geprüft. Der gesamte Arbeitsstand besteht lokal
-104 Tests (94 ausgeführt, zehn Windows-Skips); neue Windows-CI folgt nach Push.
+### Umgesetzt und lokal geprüft
 
-Schritt EXP-001: zentrale Archivklassifizierung erkennt klassische und numerische
-Segmente und sortiert 000–007 auch bei unsortierter ZIP-Reihenfolge korrekt.
-Metadaten, DAT, HTML, Manifeste und unbekannte Ressourcen werden separat gezählt,
-keine Ressourcen extrahiert/ausgeführt. Interne Segmentlücken und fehlerhafte
-Pflichtsegmente blockieren den Batch. Ein fehlender letzter Teil bleibt ohne
-validiertes Manifest prinzipiell unerkennbar. Die bekannte Form mit 18 JSONs,
-227 synthetischen DAT-Ressourcen, HTML und Begleittext ist nachgebildet.
-104 lokale Tests erfolgreich (zehn native Windows-Skips); zusätzlicher Browser-
-Workflow für Vorschau, Einzeldatei→Gesamtarchiv, Reimport und ältere Fälle läuft
-bereits erfolgreich im Arbeitsstand. Noch keine neue Windows-CI-Behauptung.
+- Schema 4 kopiert Nachrichten auf `(conversation_id,id)`; ursprüngliche IDs,
+  Positionen, Metadaten, Ordner, Tags, Review und FTS bleiben erhalten. Gleiche IDs
+  in verschiedenen Chats sind unabhängig; doppelte IDs im selben Chat bleiben
+  Fehler. Der Schema-3-Umbau und ein absichtlich fehlgeschlagener Umbau sind geprüft.
+- Archivklassifizierung vor dem Parsen: klassische und nummerierte Segmente,
+  Metadatenrollen, Anhänge, HTML, Begleitdateien und unbekannte Ressourcen.
+  000–007 werden numerisch und gemeinsam verarbeitet, selbst bei umgekehrter
+  ZIP-Reihenfolge. Interne Lücken, doppelte Nummern, defekte Pflichtsegmente und
+  mehrdeutige Dateivarianten brechen den Import ab.
+- Eine vollständig synthetische Form mit 18 JSON-Dateien, 227 DAT-Ressourcen,
+  HTML und Begleittext ist getestet. Kontodaten, Werbung, Codex, Bibliotheks-/
+  Assetzuordnungen und beide Manifestrollen werden nicht als Chats interpretiert.
+  Kein privater Originalexport oder dessen Inhalte/IDs wurde angefordert oder verwendet.
+- Neue Weboberfläche: Analyse → Vorschau → eine Batch-Bestätigung. Vorher keine
+  Gesprächsübernahme oder Migration durch den Analysepfad. Inventar, Gesprächszahl,
+  Konflikte, Warnungen und grobe Speicherprognose sind sichtbar. Identisches bleibt
+  unverändert; sichere neuere Versionen/Ergänzungen werden automatisch behandelt.
+- Ältere und abweichende/unvollständige Chats können je klar definierter Klasse
+  ausdrücklich vollständig unverändert bleiben. Unklare Identitäten sind nicht
+  ignorierbar. Entscheidungen bleiben auf denselben Job und Quellenhash begrenzt.
+- Beim Commit erneute Konfliktprüfung unter Schreibsperre; bei geänderter Bibliothek
+  ggf. neue Vorschau. Atomicität und Wiederaufnahme bleiben erhalten. Die gemeinsame
+  Identitätsprüfung schützt auch die kompatiblen explizit mutierenden Legacy-APIs.
+
+### Aktueller Nachweis vor Push
+
+105 Tests entdeckt: 95 erfolgreich ausgeführt und zehn native Windows-Tests hier
+übersprungen. Echter Chromium-Browsertest erfolgreich: Vorschau ohne Datenübernahme,
+Einzeldatei danach Gesamt-ZIP, Reimport, klassenbezogener älterer Batch, unveränderte
+Bestandsdaten sowie bisherige Jobverwaltung/Organisation und mobile Ansicht.
+Neue Windows-/Linux-CI für diese Änderungen ist noch ausstehend und wird nicht
+als bestanden behauptet. Nach bestätigter CI werden Roadmap/Backlog entsprechend
+hochgestuft. Geprüfte Commits: Planung `4f4d681`, Identität `7682250`, Layout `607f3ce`.
+
+### Grenzen und Backlog
+
+Manifeste und zusätzliche JSON-Schemas bleiben absichtlich ungeprüft und werden
+nur inventarisiert. Ein fehlendes letztes Segment ist ohne vertrauenswürdig
+validierte Gesamtzahl nicht erkennbar. Im mehrdeutigen Extractor-ZIP-Fallback bleibt
+beschädigtes JSON ein Fehler. Doppelte Gesprächs-IDs in einem Batch werden nicht
+still dedupliziert oder zusammengeführt. Es gibt keinen destruktiven Ersetzungsmodus.
+Die private Uploadkopie enthält bis zur bestätigten Bereinigung weiterhin das ganze
+Archiv; die Bibliothek erhält nur ausgewählte Gesprächsdaten. DAT bleibt Inventar/
+Referenz, ohne Medienextraktion. Speicherprognose ist grob, keine Quota.
+
+Upload-/JSON-Limits bleiben 200/350 MB; ein großes Einzelobjekt benötigt RAM.
+Kein automatisches Hochsetzen aufgrund der komprimierten Archivgröße. Native
+Windows-NTFS- und Linux-Sicherheitsgrenzen bleiben erhalten. Der private echte
+Export und ein manueller Windows-11-Durchlauf mit ihm wurden nicht geprüft.
+
+ROADMAP.md enthält die fünf Produktphasen, AGENTS.md praktische Entwicklungsregeln,
+TASKS.md die P0-Arbeitspakete mit Akzeptanz/Tests und die offenen P1–P3-Themen.
+META-001, SCALE-001 und DATA-002 bleiben ausdrücklich offen/teilweise: Schemas,
+Speicherbudgets und komplexe Versions-/Zweigrekonstruktion sind nicht als fertig markiert.
 
 ---
 

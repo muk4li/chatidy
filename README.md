@@ -43,7 +43,9 @@ mit deinem echten Export bleibt davon getrennt.
 4. Öffne im Browser `http://127.0.0.1:8877`. Wähle **Datei auswählen** und deinen
    vollständigen offiziellen ChatGPT-Export als ZIP. Die Originaldatei wird nur
    gelesen; Chatidy speichert eine private lokale Kopie im Jobverzeichnis.
-5. Verfolge den Status im Importbereich bzw. unter **Lokale Importjobs verwalten**.
+5. Warte auf **Import-Vorschau**, prüfe Segmente, Gesprächszahl und Warnungen
+   und bestätige den gesamten Batch mit **Diesen Batch importieren**. Ältere oder
+   abweichende Chats kannst du je Konfliktklasse vollständig unverändert lassen.
    Erst **Erfolgreich** bestätigt die atomare Übernahme. Prüfe danach die Anzahl
    der Chats/Nachrichten und suche nach einem bekannten Begriff.
 6. Ein vollständiger Upload kann nach einem Prozessabbruch über **Fortsetzen**
@@ -103,10 +105,13 @@ Chats enthalten. Verkürzte Exporte, leere Verläufe und Gesprächszweigwechsel,
 bei denen gespeicherte Nachrichten entfallen würden, werden abgelehnt. Es werden
 keine Zweige automatisch zusammengeführt oder Nachrichten stillschweigend gelöscht.
 
-Ist ein Änderungszeitpunkt gespeichert, muss der Reimport einen gültigen,
+Für eine tatsächliche Aktualisierung muss der Reimport bei gespeichertem
+Änderungszeitpunkt einen gültigen,
 mindestens ebenso aktuellen Änderungszeitpunkt enthalten. Fehlt dieser oder ist
-der Export älter, bricht der gesamte Dateiimport ab; auch vorher in diesem Import
-verarbeitete Chats bleiben unverändert. Verwende dann einen aktuellen,
+der Export älter, bricht der Dateiimport ohne ausdrücklich gewählte Batch-Regel ab. In der
+Vorschau kann diese Klasse vollständig unverändert gelassen werden, während
+andere sichere Chats atomar übernommen werden. Bereits verarbeitete Änderungen
+werden bei einem Fehler des Batches vollständig zurückgerollt. Verwende dann einen aktuellen,
 vollständigen Export desselben Gesprächszweigs. Ohne Änderungszeitpunkte auf
 beiden Seiten ist nur die Prüfung der Nachrichten-IDs möglich. Geänderte Inhalte derselben IDs benötigen eine nachweislich neuere vollständige
 Version. Unklare Änderungen ohne neueren Zeitstempel werden auch über die
@@ -160,6 +165,49 @@ weiterhin den ursprünglichen Archivinhalt. Es wurde kein privater Originalexpor
 für Entwicklung oder CI hochgeladen. Neue unbekannte Zusatzschemas gelten nicht
 allein aufgrund ihres Dateinamens als unterstützt.
 
+## Analyse, Import-Vorschau und Batch-Bestätigung
+
+**Datei auswählen** startet in der Weboberfläche zunächst nur eine Analyse.
+Die Gespräche werden lokal geprüft und gestaged, aber nicht in die Hauptbibliothek
+übernommen. Auch eine bestehende Schema-3-Bibliothek wird durch den Analysepfad
+nicht migriert. Die Vorschau zeigt Archivtyp, Segment-/Ressourcenzahlen, erkannte
+Gespräche, Manifest-/Codex-/Kontodatenrollen, Konfliktklassen, Warnungen und eine
+**grobe Speicherschätzung**. Sie ist keine Quota oder Zusage über freien Speicher;
+eine Datenbankmigration kann zusätzlich temporären Platz benötigen.
+
+Mit **Diesen Batch importieren** bestätigst du alle erkannten Gesprächssegmente
+zusammen. Identische vorhandene Gespräche bleiben automatisch unverändert;
+neuere vollständige Versionen und nachweislich nicht destruktive Ergänzungen
+werden übernommen. Es gibt keine einzelne Nachfrage für jede Nachricht.
+
+Für ältere Exporte bzw. fehlende erforderliche Änderungszeitpunkte und für
+abweichende/unvollständige Zweige gibt es jeweils eine getrennte Klassenentscheidung:
+**abbrechen** oder **diese Gespräche vollständig unverändert lassen**. Diese Wahl
+gilt nur für den jeweiligen Job. Unklare Identitäten oder widersprüchliche
+Nachrichten derselben Version sind nicht pauschal ignorierbar. Ein destruktiver
+„trotzdem überschreiben“-Modus ist nicht implementiert.
+
+Vor dem Commit werden alle Konflikte innerhalb einer SQLite-Schreibtransaktion
+erneut gegen den aktuellen Bestand geprüft. Ist seit der Vorschau eine neue
+Entscheidung erforderlich, wird erneut eine Vorschau angezeigt; kein alter
+Analysebefund autorisiert ein stilles Überschreiben. Ordner, Tags, Review,
+Nachrichtenreihenfolge und Metadaten bleiben erhalten. Alle übernommenen Chats
+bilden eine Transaktion; ein später Fehler hinterlässt keinen halben Batch.
+
+Nach einem Abbruch ist Staging wiederaufnehmbar. Eine bereits bestätigte,
+unveränderte Quelle behält ihre Entscheidung nur in demselben Job; Änderungen
+an der Quelle oder behandelte Fehler heben die Zustimmung auf. Ein neuer Job
+übernimmt keine früheren Entscheidungen. Das Ergebnis zeigt die tatsächlich
+übernommenen und unverändert gelassenen Gespräche.
+
+Der neue Endpunkt `POST /api/import/analyze` erzeugt diese Vorschau;
+`POST /api/import/jobs/<id>/confirm` verlangt `{"confirm":true,"policies":{}}`.
+Optionale Policies sind ausschließlich `older` und `branch` mit `abort` oder
+`skip`. Die bestehenden explizit mutierenden Legacy-Endpunkte `/api/import` und
+`/api/import/jobs` bleiben für bisherige API-Clients kompatibel; sie umgehen
+weder ID-, Reimport- noch Transaktionsschutz. Die normale Weboberfläche benutzt
+immer den neuen zweistufigen Ablauf.
+
 ## Große Exporte und wiederaufnehmbare Importjobs
 
 Die Weboberfläche lädt die Datei in einen lokalen Importjob (weiterhin maximal
@@ -169,7 +217,8 @@ weiterhin Speicher für das ganze Objekt. Nach vollständiger Prüfung wird atom
 in SQLite übernommen. Der bisherige synchrone `/api/import` bleibt kompatibel.
 
 Der Status zeigt die Prüfphase und die Zahl geprüfter Chats. Nach Browser- oder
-Serverneustart kann der letzte Job mit **Import fortsetzen** weiterlaufen. Die
+Serverneustart kann ein Job mit **Import fortsetzen** weiterlaufen; eine wartende
+Vorschau lässt sich in der Jobverwaltung wieder öffnen. Die
 Quelle wird dabei ab Byte null erneut geprüft; bereits gespeicherte Checkpoints
 werden verifiziert und wiederverwendet. Ein unvollständiger Upload muss erneut
 hochgeladen werden. Ein Prozessabbruch während des SQLite-Commits wird durch die
@@ -191,6 +240,7 @@ Serverneustart. Sie umfasst alle Jobs, nicht nur den zuletzt im Browser geöffne
 | --- | --- |
 | Hochgeladen | Lokal gespeichert; kann gestartet bzw. fortgesetzt werden. |
 | In Prüfung / Wird übernommen | Prozessübergreifend gesperrt; Löschen und doppelter Start sind ausgeschlossen. |
+| Vorschau bereit | Keine Übernahme ohne ausdrückliche Batch-Bestätigung. |
 | Erfolgreich | Chats übernommen; lokale Jobkopien können bestätigt gelöscht werden. |
 | Fehlgeschlagen | Fehler anzeigen; bei vollständiger Quelle ist ein erneuter Versuch möglich. |
 | Unterbrochen | Keine aktive Sperre nach Prozessabbruch; vollständige Uploads sind wiederaufnehmbar. |

@@ -45,6 +45,9 @@ class SegmentedExportTests(unittest.TestCase):
         self.assertEqual(inventory['counts']['unknown'], 2)
         self.assertEqual(inventory['manifests'], 2)
         self.assertFalse(inventory['manifests_validated'])
+        self.assertEqual(inventory['metadata_roles']['root_manifest'], 1)
+        self.assertEqual(inventory['metadata_roles']['site_manifest'], 1)
+        self.assertEqual(inventory['metadata_roles']['codex'], 1)
         self.assertEqual(inventory['sensitive_metadata_files'], 3)
 
     def test_reported_archive_shape_is_supported_without_metadata_schema_claims(self):
