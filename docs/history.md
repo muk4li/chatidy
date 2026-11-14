@@ -3,6 +3,15 @@
 Historische Durchläufe; damalige Grenzen und nächste Schritte sind keine aktuelle
 Priorisierung. Aktueller Überblick: [aktuellerStand.md](../aktuellerStand.md).
 
+## Durchlauf – Dreigeteilte Oberfläche (2026-11-14)
+
+Ausgangscommit: `8fe4da2` auf main. Branch: `feat/ui-three-pane`. Nur `web/` und
+`tests/browser_smoke.cjs`: Navigation | Chat-Liste | Leseansicht, Import/Jobverwaltung
+auf eigener Seite, einklappbarer Ordnerbaum, Tag-Filter, Codeblöcke als Text.
+Bugfix: veraltete Importstatus-Antworten werden verworfen. Browsertest: drei
+asynchrone `waitForFunction`-Bedingungen durch echtes Polling ersetzt.
+Vorheriger Stand (FOCUS-001, Basis `8e19e78`): PR #9 inzwischen gemergt.
+
 ## Durchlauf – Verweis auf übergreifende Architektur (2026-11-14)
 
 Ausgangscommit: `81665a899afb93b52587cfe65b19ccb2dda78efc` auf main. Branch:

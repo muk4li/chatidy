@@ -24,7 +24,8 @@ $env:CHATIDY_DB = Join-Path $env:LOCALAPPDATA "Chatidy\chatidy.sqlite3"
 py -3.13 -m chatidy
 ```
 
-Browser öffnen → **Datei auswählen** → vollständiges Export-ZIP oder
+Browser öffnen → links **Import** (öffnet sich bei leerer Bibliothek automatisch) →
+**Datei auswählen** → vollständiges Export-ZIP oder
 `conversations.json` auswählen → **Import-Vorschau** prüfen →
 **Diesen Batch importieren** → auf **Erfolgreich** warten.
 Für den ersten echten Export: [Windows-Checkliste](docs/manueller-echttest.md).
@@ -39,6 +40,10 @@ setzen; Chatidy verschiebt oder sucht diese Dateien nicht automatisch.
 
 ## Funktionen
 
+- Dreigeteilte Oberfläche: links Ansichten, einklappbarer Ordnerbaum, intelligente
+  Ordner und Tags (Klick filtert) samt Kennzahlen; Mitte Chat-Liste als Tabelle;
+  rechts Leseansicht mit aufklappbaren Bereichen (Gruppen & Tags, Metadaten) und
+  abgesetzten Codeblöcken. Import, Vorschau und Jobverwaltung auf eigener Seite.
 - Offizielle klassische und nummerierte Segment-ZIPs sowie Extractor-JSON;
   Analyse, Vorschau, Batch-Bestätigung und wiederaufnehmbare lokale Jobs.
 - Volltextsuche in Titeln/Nachrichten, Ordner mit Mehrfachzuordnung, Tags,

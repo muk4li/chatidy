@@ -75,7 +75,10 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - Priorität: P2; Status: Teilweise implementiert.
 - Komponenten: UI, Suche. Abhängigkeiten: stabile P0-Importbasis.
 - [x] Ordner, Tags, Review, Regeln, Mehrfachauswahl und zusätzliche Drag-Zuordnung.
-- [ ] Favoriten, fortgeschrittene Filter, sichere Markdown-/Code-Darstellung.
+- [x] UI-Layout: Navigation | Chat-Liste | Leseansicht, Import auf eigener Seite,
+  einklappbarer Ordnerbaum, Tag-Liste als Filter, Kennzahlen in der Navigation.
+- [x] Codeblöcke (```) im Verlauf abgesetzt, ausschließlich als Text (kein HTML).
+- [ ] Favoriten, fortgeschrittene Filter, weitere Markdown-Darstellung.
 - Akzeptanz: Rückwärtskompatibilität, Tastatur-/Mobile-Bedienung und kein XSS.
 - Tests: API-, DOM- und echter Browsertest.
 

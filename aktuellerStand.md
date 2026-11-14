@@ -1,25 +1,20 @@
 # Aktueller Stand von Chatidy
 
-**Stand:** 2026-11-14 · **Basis-Commit:** `8e19e783def2045bb08798478973918ba2ec6ea7` auf `main`
+**Stand:** 2026-11-14 · **Basis-Commit:** `8fe4da2` auf `main` (Branch `feat/ui-three-pane`)
 
 - **Läuft:** Lokaler Import mit Vorschau/Batch-Bestätigung, SQLite/FTS5, Ordner,
-  Tags, Regeln, Review und JSON-Export. FOCUS-001 auf `chore/focus-usability`:
-  acht Startkategorien nur für neue DBs; Standardpfad im Projektordner, beim
-  Serverstart auch für bestehende Job-APIs; CHATIDY_DB bleibt vorrangig.
-  Kein neues Schema, keine Änderungen an Import-/Job-Storage-/Windows-Code.
-  README von 415 auf 120 Zeilen gekürzt; [Importdetails](docs/import-details.md)
-  und [Durchlauf-Historie](docs/history.md) ausgelagert. Tests: 112 entdeckt,
-  102 bestanden, zehn native Windows-Tests lokal übersprungen.
-  Chromium-Browsertest erfolgreich (Import, Reimport, Organisation, Jobs, Mobil).
-  [CI für Implementierungscommit 5d3ce49](https://github.com/muk4li/chatidy/actions/runs/43595514082)
-  prüft Linux/Windows × Python 3.10/3.11/3.13. Nur synthetische Daten.
-- **Offen:** PR-Erstellung konkret versucht, GitHub-GraphQL-API liefert `Forbidden`.
-  Branch gepusht, kein Merge. [PR anlegen](https://github.com/muk4li/chatidy/pull/new/chore/focus-usability).
-  REAL-001, manueller Echttest durch Nutzer. META-001, SCALE-001,
-  UX-001, KNOW-001 und DATA-002 bleiben Backlog (TASKS.md), kein automatischer
-  Folgeauftrag. Nur Loopback; kein Remote-Login (Centrality F-02).
-  Kein manueller Windows-11-Test mit echtem Export erfolgt.
-- **Nächster Schritt:** Diesen Nutzbarkeits-PR prüfen, danach lokal die
-  [Echttest-Checkliste](docs/manueller-echttest.md) durchführen; ausschließlich
-  geschwärzte technische Ergebnisse zurückmelden. Fokus auf Verständlichkeit;
-  weitere Import-/Storage-Härtung nur auf ausdrücklichen Nutzerauftrag.
+  Tags, Regeln, Review und JSON-Export (FOCUS-001 mit PR #9 gemergt). Neu auf diesem
+  Branch: dreigeteilte Oberfläche (Navigation | Chat-Liste | Leseansicht), Import
+  und Jobverwaltung auf eigener Seite, einklappbarer Ordnerbaum, Tag-Filter in der
+  Navigation, abgesetzte Codeblöcke (nur Text). Behoben: eine veraltete
+  Importstatus-Abfrage konnte die ID eines neu gestarteten Imports löschen.
+  Browsertest korrigiert (asynchrone `waitForFunction`-Bedingungen warteten nicht).
+  Tests lokal: 112 entdeckt, 102 bestanden, 10 native Windows-Tests übersprungen;
+  Chromium-Browsertest 12/12 erfolgreich. Nur synthetische Daten. Keine Änderungen an
+  Import-, Job-Storage-, Datenbank- oder Servercode.
+- **Offen:** PR-Review und CI für diesen Branch. REAL-001 (manueller Echttest durch
+  Nutzer). META-001, SCALE-001, UX-001 (Rest), KNOW-001, DATA-002 bleiben Backlog.
+  Nur Loopback; kein Remote-Login (Centrality F-02). Kein manueller Windows-11-Test
+  der neuen Oberfläche.
+- **Nächster Schritt:** Oberfläche lokal ausprobieren und Rückmeldung geben; danach
+  REAL-001 nach der [Echttest-Checkliste](docs/manueller-echttest.md).
