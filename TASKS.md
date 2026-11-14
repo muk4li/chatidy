@@ -92,6 +92,24 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - Akzeptanz: lokale Verarbeitung, erklärbare Vorschläge, keine Pflicht-Cloud.
 - Tests: pro abgeschlossener Funktion; bislang keine Implementierungsbehauptung.
 
+## AUTO-001 – Gruppenvorschläge für viele Chats (Backlog, Idee des Nutzers)
+- Priorität: P3; Status: Offen – nur festgehalten, kein Umsetzungsauftrag.
+- Anlass: ca. 700–800 Chats; Ollama-Vorschläge pro Chat (Titel + 6000 Zeichen) sind
+  dafür zu langsam und müssen einzeln ausgelöst werden; keine große GPU vorhanden.
+- Ansatz (gestuft, alles lokal über Ollama auf 127.0.0.1, keine neuen Python-Pakete):
+  1. Ohne Neuentwicklung: Regeln (Titel/Inhalt/Projekt) und ChatGPT-Projekte nutzen.
+  2. Embeddings aus Titel + erster Nutzerfrage (z. B. kleines Embedding-Modell), einmalig
+     berechnen und lokal speichern; Nutzer ordnet wenige Beispiele je Gruppe zu, übrige
+     Chats erhalten Ähnlichkeitsvorschläge mit Sicherheitswert.
+  3. Optional nur unsichere Fälle per kleinem LLM (Titel + erste Frage + Gruppenliste) klassifizieren.
+- Keine Volltext-Zusammenfassungen zum Einsortieren (zu teuer, kaum Mehrwert).
+- Vorschläge landen im Posteingang; Übernahme nur nach Bestätigung, Sammelbestätigung je
+  Gruppe mit Rückfrage. Hintergrundjob mit Fortschritt und gemessener Dauer.
+- Akzeptanz: keine autonome Zuordnung, erklärbarer Vorschlag (ähnlichste Beispiele),
+  bestehende Zuordnungen bleiben unverändert, Laufzeit auf Durchschnitts-Hardware gemessen.
+- Tests: synthetische Embeddings/Mock-Ollama, Schwellenwerte, Bestätigung, Reimport-Stabilität.
+- Abhängigkeiten: KNOW-001 (lokale Embeddings), Phase 3 der ROADMAP.
+
 ## DATA-002 – Explizite Versions-/Zweig- und Duplikatrekonstruktion
 - Priorität: P1; Status: Offen.
 - Komponenten: Konfliktmodell, Importer, Versionsdaten. Abhängigkeiten: DATA-001, IMP-001.
