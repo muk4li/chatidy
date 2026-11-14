@@ -46,6 +46,7 @@ Die folgenden offenen Themen sind Backlog, keine automatisch folgenden Aufträge
 - Teilweise implementiert: explizite Ollama-Vorschläge und deterministische Themencluster.
 - Offen: semantische Suche, lokale Embeddings, erklärbare Kategorisierungsvorschläge,
   Konfidenzwerte und Feedback-Lernen. Keine autonome Klassifikation ohne Sicherheitsgrenzen.
+  Konkreter Backlog-Ansatz für viele Chats (Embeddings + Beispiele, LLM nur für unsichere Fälle): AUTO-001.
 
 ## Phase 4 – Knowledge Management
 
