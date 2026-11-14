@@ -11,8 +11,11 @@
   und [Durchlauf-Historie](docs/history.md) ausgelagert. Tests: 112 entdeckt,
   102 bestanden, zehn native Windows-Tests lokal übersprungen.
   Chromium-Browsertest erfolgreich (Import, Reimport, Organisation, Jobs, Mobil).
-  CI-/PR-Nachweis nach Push prüfen. Nur synthetische Daten.
-- **Offen:** REAL-001, manueller Echttest durch Nutzer. META-001, SCALE-001,
+  [CI für Implementierungscommit 5d3ce49](https://github.com/muk4li/chatidy/actions/runs/43595514082)
+  prüft Linux/Windows × Python 3.10/3.11/3.13. Nur synthetische Daten.
+- **Offen:** PR-Erstellung konkret versucht, GitHub-GraphQL-API liefert `Forbidden`.
+  Branch gepusht, kein Merge. [PR anlegen](https://github.com/muk4li/chatidy/pull/new/chore/focus-usability).
+  REAL-001, manueller Echttest durch Nutzer. META-001, SCALE-001,
   UX-001, KNOW-001 und DATA-002 bleiben Backlog (TASKS.md), kein automatischer
   Folgeauftrag. Nur Loopback; kein Remote-Login (Centrality F-02).
   Kein manueller Windows-11-Test mit echtem Export erfolgt.
