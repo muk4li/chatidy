@@ -19,25 +19,26 @@
     <nav id="views" class="views" aria-label="Ansichten">
       <button class="navitem active" data-view="all"><span class="ico">◈</span>Alle Chats<b id="count-all"></b></button>
       <button class="navitem" data-view="inbox"><span class="ico">⌑</span>Posteingang<b id="count-inbox"></b></button>
-      <button class="navitem" data-view="archived"><span class="ico">▣</span>Archiviert</button>
-      <button class="navitem" data-view="unfiled"><span class="ico">◇</span>Ohne Gruppe</button>
-      <button class="navitem" data-view="topics"><span class="ico">✧</span>Themencluster</button>
+      <button class="navitem" data-view="archived"><span class="ico">▣</span>Archiviert<b id="count-archived"></b></button>
+      <button class="navitem" data-view="unfiled"><span class="ico">◇</span>Ohne Gruppe<b id="count-unfiled"></b></button>
+      <button class="navitem" data-view="topics"><span class="ico">✧</span>Themencluster<b id="count-topics"></b></button>
       <button class="navitem" data-page="import"><span class="ico">↥</span>Import</button>
     </nav>
-    <section class="navsection">
-      <div class="navhead"><h2>Ordner &amp; Gruppen</h2><button class="iconbtn" id="new-folder" title="Ordner erstellen" aria-label="Ordner erstellen">＋</button></div>
+    <section class="navsection" data-section="folders">
+      <div class="navhead"><button class="sectiontoggle" aria-expanded="true" aria-controls="folders">Ordner &amp; Gruppen</button><button class="iconbtn" id="new-folder" title="Ordner erstellen" aria-label="Ordner erstellen">＋</button></div>
       <nav id="folders" class="folder-tree" aria-label="Ordner"></nav>
     </section>
-    <section class="navsection">
-      <div class="navhead"><h2>Intelligente Ordner</h2></div>
+    <section class="navsection" data-section="smart">
+      <div class="navhead"><button class="sectiontoggle" aria-expanded="true" aria-controls="smart-folders">Intelligente Ordner</button></div>
       <nav id="smart-folders" aria-label="Intelligente Ordner"></nav>
     </section>
-    <section class="navsection">
-      <div class="navhead"><h2>Tags</h2></div>
+    <section class="navsection" data-section="tags">
+      <div class="navhead"><button class="sectiontoggle" aria-expanded="true" aria-controls="tag-list">Tags</button></div>
       <nav id="tag-list" class="tag-list" aria-label="Tags"></nav>
     </section>
     <p class="local-note">Lokal &amp; geschützt: Chatverläufe bleiben auf diesem Computer. KI-Vorschläge nur auf Wunsch über lokales Ollama.</p>
   </aside>
+  <div class="resizer" id="resize-nav" role="separator" aria-orientation="vertical" aria-label="Breite der Navigation ändern" tabindex="0" title="Ziehen zum Anpassen · Doppelklick setzt zurück"></div>
 
   <main class="center">
     <div class="notice" id="notice" role="status" hidden></div>
@@ -89,6 +90,7 @@
   </main>
 
   <aside class="reader" id="reader" aria-label="Leseansicht">
+    <div class="resizer" id="resize-reader" role="separator" aria-orientation="vertical" aria-label="Breite der Leseansicht ändern" tabindex="0" title="Ziehen zum Anpassen · Doppelklick setzt zurück"></div>
     <div class="readerbar"><span>Leseansicht</span><button class="iconbtn" id="close-reader" aria-label="Leseansicht schließen" title="Schließen">×</button></div>
     <div class="detailpane" id="detail">
       <div class="empty detail-empty"><div class="empty-icon">✳</div><strong>Kein Chat geöffnet</strong><p>Wähle in der Liste einen Chat, um Verlauf, Gruppen und Tags zu sehen.</p></div>

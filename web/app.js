@@ -115,7 +115,14 @@ function renderSidebar(){
   }
   if(!tags.length)tagNav.append(element('p','muted','Noch keine Tags.'));
 }
-async function loadStats(){const stats=await api('/api/stats');for(const key of ['chats','messages','folders','inbox'])$('stat-'+key).textContent=Number(stats[key]||0).toLocaleString('de-DE');$('count-all').textContent=stats.chats;$('count-inbox').textContent=stats.inbox}
+async function loadStats(){
+  const stats=await api('/api/stats');const n=v=>Number(v||0).toLocaleString('de-DE');
+  for(const key of ['chats','messages','folders','inbox'])$('stat-'+key).textContent=n(stats[key]);
+  $('count-all').textContent=n(stats.chats);$('count-inbox').textContent=n(stats.inbox);
+  $('count-archived').textContent=n(stats.archived);$('count-unfiled').textContent=n(stats.unfiled);
+  // Topic views are computed from titles; only their number is shown here.
+  try{$('count-topics').textContent=n((await api('/api/topics')).length)}catch{$('count-topics').textContent=''}
+}
 function date(value){if(!value)return 'Ohne Datum';const number=Number(value);const d=new Date(number<1e11?number*1000:number);return isNaN(d)?'Ohne Datum':d.toLocaleDateString('de-DE')}
 async function loadChats(append=false){
   if(append&&loading)return;
@@ -433,4 +440,38 @@ $('pick-file').onclick=()=>$('file-input').click();$('file-input').onchange=e=>i
 const drop=$('dropzone');for(const type of ['dragenter','dragover'])drop.addEventListener(type,e=>{e.preventDefault();drop.classList.add('drag')});
 for(const type of ['dragleave','drop'])drop.addEventListener(type,e=>{e.preventDefault();drop.classList.remove('drag')});
 drop.addEventListener('drop',e=>importFile(e.dataTransfer.files[0]));
+// Collapsible sidebar sections (state is a per-browser convenience only).
+const closedSections=new Set(store.get('chatidy-closed-sections',[]));
+document.querySelectorAll('.navsection').forEach(section=>{
+  const toggle=section.querySelector('.sectiontoggle'),body=$(toggle.getAttribute('aria-controls'));
+  const apply=()=>{const open=!closedSections.has(section.dataset.section);toggle.setAttribute('aria-expanded',String(open));body.hidden=!open};
+  toggle.onclick=()=>{closedSections.has(section.dataset.section)?closedSections.delete(section.dataset.section):closedSections.add(section.dataset.section);store.set('chatidy-closed-sections',[...closedSections]);apply()};
+  apply();
+});
+// Resizable navigation and reader. Widths are clamped so the chat list keeps its minimum width.
+const sizes=store.get('chatidy-pane-widths',{});
+const CENTER_MIN=340,NAV_MIN=180,NAV_MAX=480,READER_MIN=320;
+function navWidth(){return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav'))||244}
+function applySizes(){
+  const root=document.documentElement.style;
+  if(sizes.nav)root.setProperty('--nav',Math.round(Math.min(NAV_MAX,Math.max(NAV_MIN,sizes.nav)))+'px');else root.removeProperty('--nav');
+  if(sizes.reader){const max=Math.max(READER_MIN,innerWidth-navWidth()-CENTER_MIN);root.setProperty('--reader',Math.round(Math.min(max,Math.max(READER_MIN,sizes.reader)))+'px')}else root.removeProperty('--reader');
+  for(const [id,key] of [['resize-nav','nav'],['resize-reader','reader']]){const w=key==='nav'?navWidth():$('reader').getBoundingClientRect().width;$(id).setAttribute('aria-valuenow',String(Math.round(w)))}
+}
+function setSize(key,value){sizes[key]=value;applySizes();store.set('chatidy-pane-widths',sizes)}
+for(const [id,key] of [['resize-nav','nav'],['resize-reader','reader']]){
+  const handle=$(id);handle.setAttribute('aria-valuemin',String(key==='nav'?NAV_MIN:READER_MIN));
+  handle.onpointerdown=e=>{
+    e.preventDefault();handle.setPointerCapture(e.pointerId);handle.classList.add('dragging');document.body.classList.add('resizing');
+    handle.onpointermove=m=>setSize(key,key==='nav'?m.clientX:innerWidth-m.clientX);
+    handle.onpointerup=handle.onpointercancel=()=>{handle.onpointermove=null;handle.classList.remove('dragging');document.body.classList.remove('resizing')};
+  };
+  handle.ondblclick=()=>{delete sizes[key];applySizes();store.set('chatidy-pane-widths',sizes)};
+  handle.onkeydown=e=>{
+    const step=e.shiftKey?64:16,current=key==='nav'?navWidth():$('reader').getBoundingClientRect().width;
+    const grow=key==='nav'?{ArrowRight:1,ArrowLeft:-1}:{ArrowLeft:1,ArrowRight:-1};
+    if(e.key in grow){e.preventDefault();setSize(key,current+grow[e.key]*step)}
+  };
+}
+addEventListener('resize',applySizes);applySizes();
 refresh().then(async()=>{if(!importJob&&Number((await api('/api/stats')).chats||0)===0)showPage('import')}).catch(e=>message('Startfehler: '+e.message,true));

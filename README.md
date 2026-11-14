@@ -40,10 +40,12 @@ setzen; Chatidy verschiebt oder sucht diese Dateien nicht automatisch.
 
 ## Funktionen
 
-- Dreigeteilte Oberfläche: links Ansichten, einklappbarer Ordnerbaum, intelligente
-  Ordner und Tags (Klick filtert) samt Kennzahlen; Mitte Chat-Liste als Tabelle;
-  rechts Leseansicht mit aufklappbaren Bereichen (Gruppen & Tags, Metadaten) und
-  abgesetzten Codeblöcken. Import, Vorschau und Jobverwaltung auf eigener Seite.
+- Dreigeteilte Oberfläche: links Ansichten mit Anzahl (Alle, Posteingang, Archiviert,
+  Ohne Gruppe, Themencluster), einklappbare Bereiche Ordner & Gruppen (mit Ordnerbaum),
+  intelligente Ordner und Tags (Klick filtert) samt Kennzahlen; Mitte Chat-Liste als
+  Tabelle; rechts Leseansicht mit aufklappbaren Bereichen und abgesetzten Codeblöcken.
+  Navigation und Leseansicht per Ziehen (oder Pfeiltasten) in der Breite verstellbar,
+  Doppelklick setzt zurück. Import, Vorschau und Jobverwaltung auf eigener Seite.
 - Offizielle klassische und nummerierte Segment-ZIPs sowie Extractor-JSON;
   Analyse, Vorschau, Batch-Bestätigung und wiederaufnehmbare lokale Jobs.
 - Volltextsuche in Titeln/Nachrichten, Ordner mit Mehrfachzuordnung, Tags,

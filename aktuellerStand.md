@@ -1,17 +1,17 @@
 # Aktueller Stand von Chatidy
 
-**Stand:** 2026-11-14 · **Basis-Commit:** `8fe4da2` auf `main` (Branch `feat/ui-three-pane`)
+**Stand:** 2026-11-14 · **Basis-Commit:** `00c4287` auf `main` (Branch `feat/ui-sidebar-resize`)
 
 - **Läuft:** Lokaler Import mit Vorschau/Batch-Bestätigung, SQLite/FTS5, Ordner,
-  Tags, Regeln, Review und JSON-Export (FOCUS-001 mit PR #9 gemergt). Neu auf diesem
-  Branch: dreigeteilte Oberfläche (Navigation | Chat-Liste | Leseansicht), Import
-  und Jobverwaltung auf eigener Seite, einklappbarer Ordnerbaum, Tag-Filter in der
-  Navigation, abgesetzte Codeblöcke (nur Text). Behoben: eine veraltete
-  Importstatus-Abfrage konnte die ID eines neu gestarteten Imports löschen.
-  Browsertest korrigiert (asynchrone `waitForFunction`-Bedingungen warteten nicht).
-  Tests lokal: 112 entdeckt, 102 bestanden, 10 native Windows-Tests übersprungen;
-  Chromium-Browsertest 12/12 erfolgreich. Nur synthetische Daten. Keine Änderungen an
-  Import-, Job-Storage-, Datenbank- oder Servercode.
+  Tags, Regeln, Review und JSON-Export. Dreigeteilte Oberfläche (PR #11 gemergt).
+  Neu auf diesem Branch: Bereiche „Ordner & Gruppen“, „Intelligente Ordner“ und
+  „Tags“ einklappbar; Navigation und Leseansicht per Ziehen/Pfeiltasten verstellbar
+  (Doppelklick setzt zurück, Breiten nur im Browser gespeichert); Anzahl hinter
+  Archiviert, Ohne Gruppe und Themencluster. `/api/stats` liefert zusätzlich
+  `archived` und `unfiled` (additiv, bestehende Felder unverändert).
+  Tests lokal: 113 entdeckt, 103 bestanden, 10 native Windows-Tests übersprungen;
+  Chromium-Browsertest 5/5 erfolgreich. Nur synthetische Daten. Keine Änderungen
+  an Import-, Job-Storage-, Migrations- oder Schemacode.
 - **Offen:** PR-Review und CI für diesen Branch. REAL-001 (manueller Echttest durch
   Nutzer). META-001, SCALE-001, UX-001 (Rest), KNOW-001, DATA-002 bleiben Backlog.
   Nur Loopback; kein Remote-Login (Centrality F-02). Kein manueller Windows-11-Test

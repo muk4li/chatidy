@@ -78,6 +78,8 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - [x] UI-Layout: Navigation | Chat-Liste | Leseansicht, Import auf eigener Seite,
   einklappbarer Ordnerbaum, Tag-Liste als Filter, Kennzahlen in der Navigation.
 - [x] Codeblöcke (```) im Verlauf abgesetzt, ausschließlich als Text (kein HTML).
+- [x] Einklappbare Navigationsbereiche, verstellbare Breite von Navigation und
+  Leseansicht, Anzahl für Archiviert/Ohne Gruppe/Themencluster (`/api/stats` additiv).
 - [ ] Favoriten, fortgeschrittene Filter, weitere Markdown-Darstellung.
 - Akzeptanz: Rückwärtskompatibilität, Tastatur-/Mobile-Bedienung und kein XSS.
 - Tests: API-, DOM- und echter Browsertest.
