@@ -1,5 +1,13 @@
 # Aktueller Stand von Chatidy
 
+## Durchlauf – Verweis auf übergreifende Architektur (2026-11-14)
+
+Ausgangscommit: `81665a899afb93b52587cfe65b19ccb2dda78efc` auf main. Branch:
+`docs/centrality-reference`. Nur Dokumentation: `AGENTS.md` verweist jetzt auf
+Centrality als Owner der Gesamtarchitektur und der Verträge zwischen den Repos.
+Kein Code, keine Tests oder Datenformate geändert; vollständige Testsuite lokal
+ausgeführt.
+
 ## Durchlauf – offizielle segmentierte Exporte und Datenintegrität
 
 Ausgangscommit: `c7702a670cad54bfe8265bdd49f6dad322ece2ef` auf main.
