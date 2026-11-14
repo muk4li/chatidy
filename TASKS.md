@@ -80,6 +80,7 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - [x] Codeblöcke (```) im Verlauf abgesetzt, ausschließlich als Text (kein HTML).
 - [x] Einklappbare Navigationsbereiche, verstellbare Breite von Navigation und
   Leseansicht, Anzahl für Archiviert/Ohne Gruppe/Themencluster (`/api/stats` additiv).
+- [x] Größere Navigationssymbole; Auf-/Zuklapp-Pfeile als gleich große CSS-Dreiecke (▶/▼).
 - [ ] Favoriten, fortgeschrittene Filter, weitere Markdown-Darstellung.
 - Akzeptanz: Rückwärtskompatibilität, Tastatur-/Mobile-Bedienung und kein XSS.
 - Tests: API-, DOM- und echter Browsertest.
