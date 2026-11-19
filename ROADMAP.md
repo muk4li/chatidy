@@ -60,6 +60,75 @@ Die folgenden offenen Themen sind Backlog, keine automatisch folgenden Aufträge
 - Offen: optionale Anbindung an instakram, chat-organizer-extension,
   chatgpt-cost-dashboard und personal-platform; keine verpflichtende Kopplung.
 
+## Phase 6 – Mehrere Chat-Anbieter (geplant)
+
+Status: **Offen – nur geplant, kein Umsetzungsauftrag.** Backlog: PROV-001 bis PROV-003 in TASKS.md.
+
+Ziel: Neben ChatGPT auch Claude-Exporte (claude.ai, Settings › Privacy › Export data)
+verlustfrei importieren; jeder Chat trägt sichtbar und filterbar seinen Anbieter.
+Die Architektur soll außerdem auf Formatänderungen der Anbieter, weitere Cloud-Anbieter
+und lokale Oberflächen (z. B. Open WebUI) reagieren können, falls Bedarf entsteht –
+ohne dafür jetzt schon Adapter zu bauen.
+
+Bekannter Claude-Export (öffentliche Beschreibungen, nicht mit echtem Export verifiziert):
+ZIP mit `conversations.json`, `projects.json`, `memories.json`, `users.json`; große
+Konten erhalten ein Manifest mit mehreren Batch-ZIPs. Gespräch: `uuid`, `name`,
+`summary`, ISO-Zeitstempel, `chat_messages[]` mit `uuid`, `sender` (`human`/`assistant`),
+`text`, `content[]`-Blöcken (u. a. `text`, `thinking`, `tool_use`, `tool_result`),
+`attachments[]` (mit `extracted_content`) und `files[]` (nur Namen).
+
+### Lösungsentscheidungen
+
+- **E1 – Ein Adapter pro Exportformat.** Jedes Format (ChatGPT offiziell, Extractor,
+  Claude, später weitere) erkennt seine Struktur und liefert das bestehende normalisierte
+  Chat-Modell. Konfliktprüfung, Jobs, Staging, FTS5, Organisation und UI arbeiten nur mit
+  diesem Modell und bleiben anbieterneutral. Bewusst einfach: feste Adapterliste im Code,
+  kein Plugin-Loader, keine neuen Abhängigkeiten.
+- **E2 – Erkennung über Struktur, eindeutig oder Abbruch.** Formate werden an ihren
+  Schlüsseln erkannt (z. B. `mapping`, `chat_messages`), nicht am Dateinamen – beide
+  Anbieter liefern `conversations.json`. Passt kein oder mehr als ein Adapter, bricht der
+  Import mit verständlicher Meldung ab; der heutige „sonst Extractor“-Fallback wird dafür
+  durch eine ausdrückliche Extractor-Erkennung ersetzt.
+- **E3 – Herkunft als feste Spalte `provider`.** Versionierte Migration fügt
+  `conversations.provider` hinzu (Bestand: `chatgpt`). Kein Tag, weil Tags umbenannt oder
+  gelöscht werden können. Exportformat und Adapterversion zusätzlich in `metadata.source`.
+- **E4 – Konversations-IDs mit Anbieterpräfix für neue Anbieter.** Neue Anbieter
+  speichern `<provider>:<original-id>`; bestehende ChatGPT-IDs bleiben unverändert
+  (keine ID-Migration). Original-ID bleibt in den Metadaten erhalten.
+- **E5 – Rohdaten vollständig bewahren.** Wie beim ChatGPT-Import landen Gesprächs- und
+  Nachrichtenrohdaten in `metadata`. Anzeige-/Suchtext entsteht aus den Textblöcken;
+  Thinking, Tool-Aufrufe, Artifacts und Anhangstexte gehen nicht verloren. Unbekannte
+  Blocktypen erscheinen als Platzhalter mit Typname, werden nie stillschweigend verworfen.
+- **E6 – Formatänderungen: bewahren statt raten.** Unbekannte Felder werden gespeichert,
+  aber nicht interpretiert. Fehlen Pflichtfelder eines Adapters, zeigt die Vorschau den
+  Fehler, statt teilweise zu importieren. Jede bekannte Formatvariante erhält eine
+  synthetische Test-Fixture.
+- **E7 – Lokale Anbieter nur über Dateiexport.** Open WebUI o. Ä. würden über ihren
+  JSON-Export als weiterer Adapter angebunden – kein Zugriff auf fremde Datenbanken oder
+  APIs, keine Netzwerkverbindung (local-first). Baumartige Verläufe nutzen die vorhandene
+  Graph-/Zweiglogik.
+- **E8 – Oberfläche ist nicht ableitbar.** Weder ChatGPT- noch Claude-Exporte enthalten,
+  ob ein Chat im Web, in der Desktop- oder Mobil-App geführt wurde. Pflichtfeld ist daher
+  nur der Anbieter; die Oberfläche kann bei Bedarf manuell per Tag gepflegt werden.
+- **E9 – Zusatzdateien nur inventarisieren.** `projects.json`, `memories.json` und
+  `users.json` werden als Metadaten erkannt, nicht als Chats importiert; `memories.json`
+  und `users.json` gelten als sensibel. Projekte erst zuordnen, wenn der Export eine
+  Gespräch-Projekt-Verknüpfung enthält (derzeit nicht).
+
+### Risiken und Gegenmaßnahmen
+
+| Risiko | Gegenmaßnahme |
+|---|---|
+| Anbieterformate sind undokumentiert und ändern sich (z. B. `text` vs. `content[]`, Schlüsselvarianten) | E5/E6; Fixtures je Variante; Strukturabgleich mit echtem Export nur über Schlüssellisten, nie Inhalte |
+| Datenverlust bei Thinking/Tools/Artifacts/Anhängen | Rohdaten in `metadata`, Platzhalter statt Verwerfen; Binäranhänge sind im Export nicht enthalten (Exportgrenze, dokumentieren) |
+| Fehlerkennung eines Formats: Claude-Varianten mit `messages` statt `chat_messages` landen im heutigen Extractor-Fallback (alles ohne `mapping`). Derzeit bricht der Import nur ab, weil Claude `uuid` statt `id` nutzt – ein zufälliger Schutz. Hätte eine Variante `id`, würde sie still falsch gelesen: `sender` ignoriert (Rolle `unknown`), `content[]`-Blöcke und Feld `text` nicht übernommen, Nachrichten verworfen | E2: positive Merkmale je Format (Extractor: `id` + `messages[].role`; Claude: `uuid` + `sender`), genau ein Treffer oder Abbruch; gilt auch für die Strukturerkennung in ZIPs ohne offizielle Dateinamen; Regressionstest in PROV-001/PROV-002 |
+| ID-Kollision zwischen Anbietern | E4 |
+| Zweige im Claude-Export: vermutlich linear, nicht verifiziert | Vor Umsetzung echten Export auf Elternverweise prüfen; falls vorhanden, Graphlogik nutzen |
+| Große Claude-Konten: Manifest mit mehreren Batch-ZIPs | Zunächst jedes ZIP einzeln importieren; erst nach Prüfung als unterstützt bezeichnen (vgl. SCALE-001/META-001) |
+| Sensible Zusatzdaten (Memories, Konto) | E9; nicht persistieren, in Vorschau kennzeichnen |
+| Große `extracted_content`-Texte belasten Speicher/Limits | bestehende Limits gelten; ggf. SCALE-001 |
+| Über-Engineering für hypothetische Anbieter | Nur Claude konkret planen; weitere Adapter erst bei echtem Bedarf (PROV-003) |
+
 ## Verifikationsgrenzen
 
 Synthetische und CI-Ergebnisse sind kein Test mit dem privaten Originalexport.
