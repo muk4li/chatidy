@@ -136,6 +136,8 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - [ ] Anbieter-Badge pro Chat und Anbieterfilter in der Navigation.
 - Akzeptanz: Bestandsdaten, IDs, Zuordnungen und Reimport-Verhalten unverändert; mehrdeutige Formate brechen ab.
 - Tests: Migration von Schema 4, Erkennung/Mehrdeutigkeit, Reimport, API/DOM/Browser.
+  Pflicht-Regressionstest: Objekt mit `messages` ohne Extractor-Merkmale (z. B. `sender` statt `role`)
+  wird nicht als Extractor gelesen – weder als Einzel-JSON noch über die ZIP-Strukturerkennung.
 
 ## PROV-002 – Claude-Export importieren
 - Priorität: P2; Status: Offen – geplant, kein Umsetzungsauftrag. Abhängigkeiten: PROV-001.
@@ -145,7 +147,9 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - [ ] IDs `claude:<uuid>` (E4); Rohdaten inkl. Thinking/Tools/`extracted_content` in `metadata`.
 - [ ] `projects.json`, `memories.json`, `users.json` als Metadaten inventarisieren, sensible markieren (E9).
 - Akzeptanz: kein stiller Inhaltsverlust; gemischte ChatGPT-/Claude-Bibliothek; idempotenter Reimport.
-- Tests: synthetische Claude-Fixtures (nur `text`, nur `content[]`, unbekannte Blocktypen, Anhänge),
+- Tests: synthetische Claude-Fixtures (nur `text`, nur `content[]`, unbekannte Blocktypen, Anhänge,
+  Variante mit `messages` statt `chat_messages` – auch mit zusätzlichem `id`: wird als Claude erkannt
+  oder kontrolliert abgelehnt, nie als Extractor gelesen),
   gemischter Bestand, Reimport/Konflikte. Grenze: Batch-ZIPs großer Konten ungeprüft.
 
 ## PROV-003 – Weitere Anbieter und lokale Oberflächen (Backlog)

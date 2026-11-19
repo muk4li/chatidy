@@ -121,7 +121,7 @@ Konten erhalten ein Manifest mit mehreren Batch-ZIPs. Gespräch: `uuid`, `name`,
 |---|---|
 | Anbieterformate sind undokumentiert und ändern sich (z. B. `text` vs. `content[]`, Schlüsselvarianten) | E5/E6; Fixtures je Variante; Strukturabgleich mit echtem Export nur über Schlüssellisten, nie Inhalte |
 | Datenverlust bei Thinking/Tools/Artifacts/Anhängen | Rohdaten in `metadata`, Platzhalter statt Verwerfen; Binäranhänge sind im Export nicht enthalten (Exportgrenze, dokumentieren) |
-| Fehlerkennung eines Formats (Claude-Variante als Extractor geparst) | E2: eindeutige Erkennung, Mehrdeutigkeit = Abbruch |
+| Fehlerkennung eines Formats: Claude-Varianten mit `messages` statt `chat_messages` landen im heutigen Extractor-Fallback (alles ohne `mapping`). Derzeit bricht der Import nur ab, weil Claude `uuid` statt `id` nutzt – ein zufälliger Schutz. Hätte eine Variante `id`, würde sie still falsch gelesen: `sender` ignoriert (Rolle `unknown`), `content[]`-Blöcke und Feld `text` nicht übernommen, Nachrichten verworfen | E2: positive Merkmale je Format (Extractor: `id` + `messages[].role`; Claude: `uuid` + `sender`), genau ein Treffer oder Abbruch; gilt auch für die Strukturerkennung in ZIPs ohne offizielle Dateinamen; Regressionstest in PROV-001/PROV-002 |
 | ID-Kollision zwischen Anbietern | E4 |
 | Zweige im Claude-Export: vermutlich linear, nicht verifiziert | Vor Umsetzung echten Export auf Elternverweise prüfen; falls vorhanden, Graphlogik nutzen |
 | Große Claude-Konten: Manifest mit mehreren Batch-ZIPs | Zunächst jedes ZIP einzeln importieren; erst nach Prüfung als unterstützt bezeichnen (vgl. SCALE-001/META-001) |
