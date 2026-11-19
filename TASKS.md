@@ -127,3 +127,30 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - Akzeptanz: PR gegen aktuellen main, grüne CI, geklärte Risiken, kein Force-Push.
 - Tests: Commit-/Branch-Zuordnung und CI-Matrix prüfen. Manueller PR-Link:
   https://github.com/muk4li/chatidy/pull/new/feature/segmented-export-preview
+
+## PROV-001 – Anbieterneutrale Importbasis (Planung)
+- Priorität: P2; Status: Offen – geplant, kein Umsetzungsauftrag. Entscheidungen/Risiken: ROADMAP Phase 6.
+- Komponenten: Importer, Archivinventar, Migrationen, UI. Abhängigkeiten: EXP-001, DATA-001, IMP-001.
+- [ ] Bestehende Formate (ChatGPT offiziell, Extractor) als Adapter mit ausdrücklicher Erkennung (E1/E2).
+- [ ] Migration: `conversations.provider`, Bestand `chatgpt`; Format/Adapterversion in `metadata.source` (E3).
+- [ ] Anbieter-Badge pro Chat und Anbieterfilter in der Navigation.
+- Akzeptanz: Bestandsdaten, IDs, Zuordnungen und Reimport-Verhalten unverändert; mehrdeutige Formate brechen ab.
+- Tests: Migration von Schema 4, Erkennung/Mehrdeutigkeit, Reimport, API/DOM/Browser.
+
+## PROV-002 – Claude-Export importieren
+- Priorität: P2; Status: Offen – geplant, kein Umsetzungsauftrag. Abhängigkeiten: PROV-001.
+- Komponenten: Claude-Adapter, Archivinventar, Themencluster-Stoppwörter.
+- [ ] Vorab: Nutzer prüft echten Export lokal auf Elternverweise und `content`-Blocktypen (nur Schlüssel melden).
+- [ ] `chat_messages` → normalisiertes Modell; `human`→`user`; Text aus Textblöcken, Fallback `text` (E5).
+- [ ] IDs `claude:<uuid>` (E4); Rohdaten inkl. Thinking/Tools/`extracted_content` in `metadata`.
+- [ ] `projects.json`, `memories.json`, `users.json` als Metadaten inventarisieren, sensible markieren (E9).
+- Akzeptanz: kein stiller Inhaltsverlust; gemischte ChatGPT-/Claude-Bibliothek; idempotenter Reimport.
+- Tests: synthetische Claude-Fixtures (nur `text`, nur `content[]`, unbekannte Blocktypen, Anhänge),
+  gemischter Bestand, Reimport/Konflikte. Grenze: Batch-ZIPs großer Konten ungeprüft.
+
+## PROV-003 – Weitere Anbieter und lokale Oberflächen (Backlog)
+- Priorität: P3; Status: Offen – nur bei echtem Bedarf.
+- Komponenten: zusätzliche Adapter (z. B. Open WebUI, weitere Cloud-Anbieter). Abhängigkeiten: PROV-001.
+- [ ] Je Anbieter: Exportstruktur dokumentieren, Adapter + synthetische Fixtures, keine API-/DB-Zugriffe (E7).
+- Akzeptanz: Kernmodule bleiben unverändert; neuer Anbieter = neuer Adapter + Tests.
+- Tests: pro Adapter; Formatänderungen bekannter Anbieter als neue Fixture-Variante.

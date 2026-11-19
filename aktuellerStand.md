@@ -18,7 +18,8 @@
   an Import-, Job-Storage-, Migrations- oder Schemacode.
 - **Offen:** REAL-001 (manueller Echttest durch
   Nutzer). META-001, SCALE-001, UX-001 (Rest), KNOW-001, AUTO-001 (Gruppenvorschläge
-  für viele Chats), DATA-002 bleiben Backlog.
+  für viele Chats), DATA-002 bleiben Backlog. Neu geplant (nur Doku, kein Code):
+  Mehrere Chat-Anbieter inkl. Claude-Export, ROADMAP Phase 6 / PROV-001 bis PROV-003.
   Nur Loopback; kein Remote-Login (Centrality F-02). Kein manueller Windows-11-Test
   der neuen Oberfläche.
 - **Nächster Schritt:** Oberfläche lokal ausprobieren und Rückmeldung geben; danach
