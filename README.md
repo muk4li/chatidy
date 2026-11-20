@@ -155,3 +155,11 @@ verifiziert werden. Das Kommando trägt ausschließlich eine Benutzeridentität
 in Schema 7 ein, **keine Chats**. Kein Anmelde- oder Registrierungssystem;
 öffentliche Bereitstellung weiterhin verboten. Private Kennungen nicht in
 Tickets, Logs oder GitHub ablegen.
+
+### Getrennte Bibliotheken (interne Vorbereitung)
+
+Ein serverseitig gebundener Konto-Kontext wählt eigene SQLite-Dateien unter
+`accounts/<interne-id>/chatidy.sqlite3` und getrennte Importjob-Wurzeln.
+Noch keine HTTP-/Login-Anbindung: ohne Kontext bleibt die lokale Bestandsbibliothek
+an ihrem ursprünglichen Pfad. Das ist kein Zugriffsschutz für einen öffentlichen
+Server. Eine Migration vorhandener Daten findet ausdrücklich nicht statt.
