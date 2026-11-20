@@ -192,7 +192,7 @@ def upsert(db, chats):
             count+=1
     return count
 
-def list_chats(db, q="", folder=None, mode="all", limit=250, offset=0, tag=None, project=None, provider=None):
+def list_chats(db, q="", folder=None, mode="all", limit=250, offset=0, tag=None, project=None, provider=None, source=None, date_from=None, date_to=None, undated=False, sort="newest"):
     # message_count: readable messages only (thinking/tool-only nodes are shown as compact blocks).
     sql="""SELECT c.*, (SELECT COUNT(*) FROM messages m WHERE m.conversation_id=c.id AND m.content!=?)
              AS message_count,
@@ -215,13 +215,47 @@ def list_chats(db, q="", folder=None, mode="all", limit=250, offset=0, tag=None,
     if provider:
         sql+=" AND c.provider=?"
         args.append(str(provider))
+    # Source is a subtype of provider, not a substitute for it. Codex belongs
+    # to ChatGPT but must also be independently filterable.
+    allowed_sources = {"chatgpt", "claude", "codex", "extractor", "claude_code"}
+    if source:
+        if source not in allowed_sources:
+            raise ValueError("Unbekannte Quelle.")
+        sql += " AND json_extract(c.metadata, '$.source')=?"
+        args.append(source)
+    if sort not in ("newest", "oldest"):
+        raise ValueError("Ungültige Sortierung.")
+    if undated and (date_from or date_to):
+        raise ValueError("Ohne Datum kann nicht mit einem Datumsbereich kombiniert werden.")
+    if undated:
+        sql += " AND COALESCE(c.updated,c.created) IS NULL"
+    else:
+        from datetime import date as _date, datetime as _datetime, timedelta as _timedelta, timezone as _timezone
+        def boundary(value):
+            if not isinstance(value,str):
+                raise ValueError("Ungültiger Datumswert.")
+            try:
+                parsed=_date.fromisoformat(value)
+                if parsed.isoformat()!=value:
+                    raise ValueError()
+                return _datetime(parsed.year,parsed.month,parsed.day,tzinfo=_timezone.utc).timestamp()
+            except (ValueError,OverflowError) as exc:
+                raise ValueError("Datum muss JJJJ-MM-TT sein.") from exc
+        if date_from:
+            sql+=" AND COALESCE(c.updated,c.created) >= ?"
+            args.append(boundary(date_from))
+        if date_to:
+            sql+=" AND COALESCE(c.updated,c.created) < ?"
+            args.append(( _datetime.fromtimestamp(boundary(date_to),_timezone.utc) + _timedelta(days=1)).timestamp())
+        if date_from and date_to and date_from>date_to:
+            raise ValueError("Startdatum liegt nach Enddatum.")
     if mode=="inbox":
         sql+=" AND c.reviewed=0"
     elif mode=="archived":
         sql+=" AND c.archived=1"
     elif mode=="unfiled":
         sql+=" AND NOT EXISTS(SELECT 1 FROM memberships g WHERE g.conversation_id=c.id)"
-    sql+=" ORDER BY COALESCE(c.updated,c.created,0) DESC,c.id LIMIT ? OFFSET ?"
+    sql+=" ORDER BY COALESCE(c.updated,c.created,0) "+("ASC" if sort=="oldest" else "DESC")+",c.id LIMIT ? OFFSET ?"
     args.extend([min(max(int(limit),1),500),max(int(offset),0)])
     return [dict(x) for x in db.execute(sql,args)]
 
