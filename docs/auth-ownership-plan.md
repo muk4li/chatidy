@@ -80,3 +80,25 @@ dessen L1 ist nach aktuellem Stand noch kein implementierter, freigegebener Vert
 - Abhängigkeiten/Offenpunkte nachvollziehbar; DESIGN ist nicht DONE.
 - Nach RepoPilot-Pilot und ausdrücklichem Review in konkrete kleine
   Implementierungspakete zerlegen.
+
+## Implementierungsvariante im Review – je Konto eigene SQLite-Datei
+
+**Noch keine akzeptierte Architekturentscheidung.** Ein getrennter Draft-PR
+[AUTH-005 / #32](https://github.com/muk4li/chatidy/pull/32) erprobt
+eine alternative Isolation: Die globale lokale Datenbank verwaltet in
+Schema 7 nur ausdrücklich eingeschriebene OIDC-Konten; jedes Konto
+hat zusätzlich eine eigene, vom Server anhand der vertrauenswürdigen
+internen ID bestimmte SQLite-Bibliothek und Importjob-Wurzel.
+
+Vorteile: Bestehende Konversations-IDs und SQLite-Fremdschlüssel bleiben
+innerhalb der Bibliotheken unverändert; zwei Konten können dieselbe
+Original-Chat-ID haben. Die historische lokale Bibliothek wird nicht
+automatisch einem Konto zugeordnet.
+
+Zu prüfen vor Freigabe: sichere Windows-/POSIX-Dateizugriffe und Backups
+aller Kontobibliotheken, Importjob-Kontext in Worker-Threads, die
+Entscheidung zwischen physischer Datenbanktrennung und
+`user_id`/zusammengesetzten Schlüsseln in einer Datenbank sowie die
+vollständige serverseitige API-Berechtigung. **Die physische Trennung
+allein ist keine Authentifizierung.** Ohne echte OIDC-Session und
+geschützte HTTP-Routen bleibt Chatidy nur lokal verwendbar.
