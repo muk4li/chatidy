@@ -12,6 +12,8 @@ class LandingCopyTests(unittest.TestCase):
         self.assertNotIn("noch ohne Benutzeranmeldung",content)
         self.assertNotIn("Eine künftige Version mit Anmeldung",content)
         self.assertNotIn("Lokale Bibliothek öffnen",content)
-        self.assertIn("erfundenen Beispieldaten",content)
+        self.assertNotIn('class="preview-section',content)
+        self.assertNotIn('class="fake-row',content)
+        self.assertNotIn("DEMO",content)
 
 if __name__=="__main__":unittest.main()
