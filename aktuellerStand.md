@@ -1,10 +1,9 @@
-## AUTH-002 – Schema 7 (Draft-PR)
+## AUTH-006 – HTTP-Routenvertrag (Draft-PR)
 
-Additive Tabelle `users` für späteren authentik-OIDC-Bezug (`iss`+`sub`),
-Rolle/Status und Anzeigenamen. Keine automatische Benutzeranlage oder
-Eigentümerzuordnung. Sämtliche bisherigen Daten/API-Pfade bleiben im lokalen
-Einzelnutzermodus unverändert; **nicht** für öffentlichen Betrieb geeignet.
-Synthetische Migrations-/Rollbacktests ergänzt; tatsächlicher CI-Status siehe PR.
+Testbarer Vertrag für öffentliches `/`/Login/Callback und privates `/app`
+sowie alle `/api/*`-Routen. Noch **keine** Integration in den HTTP-Handler;
+der lokale Server bleibt unauthentifiziert. Erst OIDC + Session + vollständig
+isolierte Ressourcen machen diesen Vertrag zur wirksamen Zugriffskontrolle.
 
 ---
 

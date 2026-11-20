@@ -206,11 +206,9 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - Akzeptanz: Kernmodule bleiben unverändert; neuer Anbieter = neuer Adapter + Tests.
 - Tests: pro Adapter; Formatänderungen bekannter Anbieter als neue Fixture-Variante.
 
-## AUTH-002 – Additive Benutzeridentitätsbasis (Schema 7)
-- Priorität: P1; Status: Implementierung auf Draft-Branch, CI/Review ausstehend.
-- [x] `users`-Schema mit internem Schlüssel, eindeutiger OIDC-Issuer/Subjekt-
-  Kombination, Anzeigeattributen, Rolle und Sperrstatus.
-- [x] Keine Kontenanlage, automatische Eigentümerzuordnung, API-/Login-Änderung.
-- [x] Synthetische Migration-, Reopen-, Eindeutigkeits- und Rollbacktests.
-- [ ] Nach RepoPilot-Modellfreigabe Besitzmodell, Datenzugriffe und Jobs isolieren.
-- Akzeptanz: alte Daten bleiben unverändert, keinerlei Remote-Freigabe.
+## AUTH-006 – HTTP-Routenvertrag vor OIDC (noch kein Schutz)
+- Priorität: P1; Status: implementierte reine Prüflogik auf Draft-Branch.
+- [x] Allowlist für künftige öffentliche Seiten, Privatregel für `/app` und `/api/*`.
+- [x] Synthetische Negativtests inkl. URL-Encoding, GET-/POST-Unterpfade.
+- [ ] Mit verifizierter Sitzung und vollständig isoliertem Speicher in den
+  HTTP-Handler einbauen; **bis dahin kein Sicherheits-Gate**.

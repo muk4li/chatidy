@@ -195,6 +195,5 @@ ChatGPT-Export – Strukturbefund (2026-11-20, aktueller echter Export vom 2026-
 Synthetische und CI-Ergebnisse sind kein Test mit dem privaten Originalexport.
 Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md lesen.
 
-- **AUTH-002 (Schema 7, Draft-PR):** leere OIDC-Benutzertabelle als
-  additive Migrationsbasis. Bestehende Bibliothek bleibt ohne Benutzerzuordnung;
-  Authentifizierung und API-Berechtigungen sind weiterhin **nicht implementiert**.
+- **AUTH-006 (Draft):** künftige private HTTP-Routen und öffentliche Allowlist
+  als reine Test- und Planungsregel. Noch nicht wirksam; kein Live-Login.

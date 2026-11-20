@@ -155,3 +155,9 @@ Temporäre synthetische Daten; `CHROMIUM_PATH` überschreibt `/usr/bin/chromium`
 `KEEP_TEST_ARTIFACTS=1` erhält Testartefakte/Screenshots, sonst werden sie entfernt.
 Nachweise: [aktuellerStand.md](aktuellerStand.md), frühere Durchläufe:
 [Historie](docs/history.md). Entwicklungsregeln: [AGENTS.md](AGENTS.md).
+
+### Geplanter privater Zugriff (noch kein Login)
+
+Ein reiner, noch nicht aktivierter Routenvertrag (`chatidy/access_policy.py`)
+definiert für die spätere Authentifizierung `/app` und sämtliche `/api/*`
+als geschützt. Das ersetzt **keinen** realen Zugriffsschutz. Weiterhin nur lokal.
