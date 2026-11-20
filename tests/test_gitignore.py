@@ -47,6 +47,7 @@ class GitIgnorePrivacyTests(unittest.TestCase):
             "chatidy/importer.py",
             "tests/test_core.py",
             "web/app.js",
+            "web/reading.js",
             "README.md",
             ".github/workflows/tests.yml",
             ".env.example",

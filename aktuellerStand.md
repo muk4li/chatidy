@@ -16,6 +16,11 @@
   Tests lokal: 113 entdeckt, 103 bestanden, 10 native Windows-Tests übersprungen;
   Chromium-Browsertest 3/3 erfolgreich. Nur synthetische Daten. Keine Änderungen
   an Import-, Job-Storage-, Migrations- oder Schemacode.
+- **CGPT-001 (2026-11-20):** ChatGPT-Denkprozesse erscheinen in der Leseansicht als eingeklappter
+  Block statt „[Nicht-textueller Inhalt]“. Nur Anzeige (`web/reading.js`), keine Import-, Schema- oder
+  Indexänderung. Tests: Node-Logiktest (über `tests/test_reading_view.py`, ohne Node übersprungen),
+  Metadaten-/Reimport-Test, HTTP-Auslieferung; Playwright-Browsertest mit Chrome in der Cloud-Session
+  bestanden (synthetisch). Offen: Sichtprüfung mit echtem Export durch den Nutzer.
 - **Offen:** REAL-001 (manueller Echttest durch
   Nutzer). META-001, SCALE-001, UX-001 (Rest), KNOW-001, AUTO-001 (Gruppenvorschläge
   für viele Chats), DATA-002 bleiben Backlog. Neu geplant (nur Doku, kein Code):
