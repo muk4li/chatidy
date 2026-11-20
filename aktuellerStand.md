@@ -1,3 +1,10 @@
+## AUTH-014 – Negative Zwei-Konten-HTTP-Tests (Draft)
+
+Synthetische Prüfung von Detail-/Listen-/Such-/Export-/Mutationspfaden,
+anonymem Zugriff und 404 bei fremdem Review; ohne echte Exporte.
+
+---
+
 ## AUTH-013 – Kontostatus und Abmelden (Draft)
 
 Angemeldete Benutzer sehen ihren Anzeigenamen und können die Sitzung

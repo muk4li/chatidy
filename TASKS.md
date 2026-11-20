@@ -276,3 +276,9 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - [x] Kontoaktionen im lokalen Standardmodus ausgeblendet.
 - [x] Synthetische HTTP-Tests für Kontoanzeige und Widerruf.
 - [ ] Browser- und authentik-Liveprüfung vor Remote-Freigabe.
+
+## AUTH-014 – Negative HTTP-Mehrbenutzertests (Draft)
+- [x] Serverseitige Isolationsprüfung für Detail, Suche, Ordner,
+  Export, Review sowie anonyme API-Requests mit synthetischen Konten.
+- [x] Fremder Gesprächs-Review erhält 404 und verändert keine Daten.
+- [ ] Native Provider-/Proxy-/Backuptests und Migration bleiben Release-Gates.

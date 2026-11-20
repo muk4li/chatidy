@@ -332,7 +332,9 @@ class Handler(BaseHTTPRequestHandler):
                     cid=str(value["conversation_id"])
                     status=int(bool(value.get("reviewed",True)))
                     with db:
-                        db.execute("UPDATE conversations SET reviewed=? WHERE id=?",(status,cid))
+                        changed=db.execute("UPDATE conversations SET reviewed=? WHERE id=?",(status,cid))
+                        if changed.rowcount==0:
+                            return self.send(404,{"error":"Chat nicht gefunden"})
                     return self.send(200,{"ok":True})
                 if path=="/api/rules":
                     rid=create_rule(db,value["field"],value["needle"],int(value["folder_id"]))

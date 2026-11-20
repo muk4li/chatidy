@@ -224,3 +224,6 @@ Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md 
 
 - **AUTH-013 (Draft):** sichtbarer Login-Status/Logout im Auth-Modus;
   unveränderte lokale Bedienung ohne Login.
+
+- **AUTH-014 (Draft):** negative Mehrbenutzer-HTTP-Tests und explizites
+  404 bei fehlendem/fremdem Chat-Review.

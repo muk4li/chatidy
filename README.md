@@ -204,3 +204,9 @@ Ziel oder Backup wird nicht überschrieben.
 Im Auth-Modus zeigt `/app` den Kontostatus nur nach erfolgreicher
 serverseitiger `/api/session`-Prüfung und bietet „Abmelden“ an. Ohne Login
 bleibt der Bereich ausgeblendet; die lokale Bibliothek funktioniert unverändert.
+
+### AUTH-014: HTTP-Isolationsregression
+
+Synthetische Mehrbenutzerprüfungen decken Chats, Suchergebnisse, Ordner,
+Exports und Schreibzugriffe ab. Ein fremder Gesprächs-Identifier liefert
+beim Review 404 statt eines stillen Erfolgs; Daten bleiben kontogetrennt.
