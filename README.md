@@ -261,3 +261,11 @@ Der Authentifizierungsmodus verwendet `__Host-chatidy_oidc` und
 `Path=/`, ohne `Domain`. Moderne Browser erzwingen bei `__Host-`-Cookies
 diese Hostbindung und verhindern so überschreibende Domain-Cookies von
 benachbarten Subdomains. Das ersetzt keinen echten HTTPS-/Authentik-Test.
+
+### Signierte OIDC-Tokens bis zur HTTP-Session prüfen
+
+Der synthetische Callback-Integrationstest aus PR #45 ist zusätzlich in
+die Hauptkette übernommen. Er testet die echte RS256-Signaturprüfung und
+OIDC-Claims bis zur Erstellung des `__Host-`-Sitzungscookies sowie Replay,
+unbekanntes Konto und ungültige Signaturen. Keine privaten Schlüssel oder
+Provider-Verbindungen werden dafür benötigt.

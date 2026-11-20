@@ -1,3 +1,11 @@
+## AUTH-022 – OIDC-Callback-Integrationsprüfung (Draft-PR)
+
+Der bereits auf PR #45 getestete synthetische RS256-Callbackablauf ist
+mit hostgebundenen Cookies für die L2-Hauptkette integriert. PR #45 ist
+parallel und darf nicht zusätzlich dieselben Tests einbringen.
+
+---
+
 ## AUTH-021 – `__Host-`-Cookies (Draft-PR)
 
 OIDC-Bindung und Sitzungen verwenden das Hostpräfix; Cookie-Flags

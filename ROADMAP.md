@@ -246,3 +246,6 @@ Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md 
 
 - **AUTH-021 (Draft):** Hostgebundene OIDC- und Session-Cookies gegen
   Domain-Shadows; echte HTTPS-/Browserprüfung bleibt Release-Gate.
+
+- **AUTH-022 (Draft):** parallelen signierten OIDC-Callbacktest in die
+  gestapelte L2-Integrationskette einbinden, ohne Testcode zu duplizieren.

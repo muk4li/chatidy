@@ -326,3 +326,12 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - [x] Serverseitiges Lesen, Löschen, OIDC-Callback und Tests abgestimmt.
 - [x] HTTP-Tests prüfen die Attribute und das Fehlen von `Domain=`.
 - [ ] Echter HTTPS-Browser-/Proxy-Test und Sicherheitsfreigabe ausstehend.
+
+## AUTH-022 – Signierte OIDC-Callbacktests in der Integrationskette
+- Status: Gestapelter Draft-PR, CI ausstehend.
+- [x] Synthetischen End-to-End-Callbacktest aus dem parallelen PR #45
+  auf aktuelle `__Host-`-Cookie-Namen übertragen.
+- [x] Erlaubte und ungültige Signaturen, Issuer, Audience, Nonce, Ablauf,
+  unbekannte Benutzer und State-Replay bis in die HTTP-Session abdecken.
+- [ ] Reviewer sollen PR #45 und #49 nicht doppelt mergen; nach Prüfung
+  den parallelen Test-PR schließen oder integrieren.
