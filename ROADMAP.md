@@ -206,3 +206,6 @@ Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md 
 - **AUTH-004 (Draft, gestapelt auf AUTH-003):** administrativ bestätigte
   lokale Kontoeinschreibung. Kein Browser-/Login-/Import-Zugriff und keine
   automatische Bestandsübernahme.
+
+- **AUTH-008 (gestapelt, Draft):** SQLite-Sitzungs- und Challenge-Tabellen
+  mit Replay-Schutz. Kein Browser-Login, kein Netzwerk-/API-Schutz.

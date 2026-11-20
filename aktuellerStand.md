@@ -1,3 +1,12 @@
+## AUTH-008 – OIDC-State und Sessions (Draft-PR)
+
+Schema 8 speichert browsergebundene kurzlebige Login-Challenges und
+widerrufbare Sitzungen mit SHA-256-Tokenhashes. Helper sind noch nicht
+in HTTP oder authentik eingebunden, keine Konto-/Chat-Zuordnung. CI und
+Sicherheitstests zum isolierten Baustein; Loopback-only weiterhin Pflicht.
+
+---
+
 ## AUTH-004 – Explizite OIDC-Kontoeinschreibung (Draft-PR)
 
 Lokales CLI für vom Administrator vorher verifizierte OIDC-Issuer/Subjekt-

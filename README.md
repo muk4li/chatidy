@@ -155,3 +155,10 @@ verifiziert werden. Das Kommando trägt ausschließlich eine Benutzeridentität
 in Schema 7 ein, **keine Chats**. Kein Anmelde- oder Registrierungssystem;
 öffentliche Bereitstellung weiterhin verboten. Private Kennungen nicht in
 Tickets, Logs oder GitHub ablegen.
+
+### Serverbasierte Sitzungen (noch kein Login)
+
+Ein vorbereiteter, noch nicht in den HTTP-Handler eingebundener Session-Speicher
+verwaltet einmalige, browsergebundene OIDC-States und widerrufbare Sitzungen.
+Nur Hashes von State-/Session-Token werden gespeichert. Noch **keine**
+Authentik-Anbindung, Cookies, Login- oder API-Zugriffssperre.
