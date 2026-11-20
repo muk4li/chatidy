@@ -2,9 +2,13 @@
 import io
 import json
 import unittest
-from chatidy.oidc import OIDCSettings, OIDCError
-from chatidy.oidc_exchange import (configured_settings, exchange_code,
-                                   load_trusted_jwks)
+try:
+    from chatidy.oidc import OIDCSettings, OIDCError
+    from chatidy.oidc_exchange import (configured_settings, exchange_code,
+                                       load_trusted_jwks)
+    AUTH_AVAILABLE = True
+except ImportError:
+    AUTH_AVAILABLE = False
 
 class Reply:
     status = 200
@@ -22,6 +26,7 @@ class FakeTransport:
         self.requests.append((request.full_url,request.get_method(),timeout))
         return Reply(self.payload)
 
+@unittest.skipUnless(AUTH_AVAILABLE, "Optional OIDC dependencies not installed")
 class ExchangeTests(unittest.TestCase):
     def setUp(self):
         self.settings=OIDCSettings(
