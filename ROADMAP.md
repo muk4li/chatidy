@@ -230,3 +230,6 @@ Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md 
 
 - **AUTH-015 (Draft):** Startverweigerung bei ungeschützter öffentlicher
   Konfiguration und dokumentierter Service-/Deployment-Freigabeplan.
+
+- **AUTH-016 (Draft):** Produkttexte für localhost und späteren OIDC-
+  Serverbetrieb konsistent; keine neue öffentliche Freigabe.

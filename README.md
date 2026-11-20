@@ -218,3 +218,11 @@ wenn Auth nicht exakt aktiviert und vollständig konfiguriert ist.
 Der verbindliche Prüf- und Servicevertrag steht in `SERVICE.md`.
 Das ist **kein Ersatz** für Live-authentik-, Proxy-, Backup-/Restore-
 und Freigabetests; öffentliche Veröffentlichung ist weiterhin blockiert.
+
+### AUTH-016 – Landingpage nach Login-Umstellung
+
+Die öffentliche Produktseite beschreibt sowohl den bestehenden lokalen
+Modus als auch einen künftig freigegebenen selbst betriebenen Server,
+ohne einen öffentlichen Dienst oder bereits erfolgte Sicherheitsfreigabe
+vorzutäuschen. Der allgemeine Einstieg führt zu `/app`, das im Auth-Modus
+serverseitig zur Anmeldung weiterleitet.

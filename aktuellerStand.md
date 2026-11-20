@@ -1,3 +1,10 @@
+## AUTH-016 – Landingpage mit Login-Zielarchitektur (Draft)
+
+Texte sind nun für lokalen Betrieb und geplanten selbst betriebenen
+Anmeldemodus zutreffend. Weiterhin keine Produktionsfreigabe.
+
+---
+
 ## AUTH-015 – Öffentliche Betriebsfreigabe (Draft)
 
 Server-Start verweigert offensichtlich unsichere Konfiguration und fehlende

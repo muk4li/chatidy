@@ -293,3 +293,8 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 
 - AUTH-015 Zusatzprüfung: CI auf Linux/Windows Python 3.11 auch ohne
   `requirements-auth.txt`; optionale OIDC-Tests werden dann übersprungen.
+
+## AUTH-016 – Landingpage-Texte für beide Betriebsarten
+- [x] Neutrale CTA „Bibliothek öffnen“ auf `/app`.
+- [x] Datenschutz-/Betriebstexte ohne falsche Zusage, dass Login fehlt.
+- [x] Statischer Regressionstest nur mit synthetischen UI-Beispielen.
