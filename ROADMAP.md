@@ -194,3 +194,7 @@ ChatGPT-Export – Strukturbefund (2026-11-20, aktueller echter Export vom 2026-
 
 Synthetische und CI-Ergebnisse sind kein Test mit dem privaten Originalexport.
 Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md lesen.
+
+- **UX-002 (Feature-Branch, noch nicht gemergt):** kleine, einklappbare
+  Import-Hilfe für ChatGPT, Claude und Extractor in der bestehenden UI.
+  Keine Änderung an Erkennung oder Datenbank.

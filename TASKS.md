@@ -205,3 +205,12 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - Nicht im Umfang: Messenger-Exporte (z. B. Instagram-DMs) – keine KI-Chats, enthalten Daten Dritter.
 - Akzeptanz: Kernmodule bleiben unverändert; neuer Anbieter = neuer Adapter + Tests.
 - Tests: pro Adapter; Formatänderungen bekannter Anbieter als neue Fixture-Variante.
+
+## UX-002 – Anbieterübergreifende Import-Hilfe
+- Priorität: P2; Status: Auf Feature-Branch umgesetzt, Review/CI offen.
+- [x] Neutrale Überschrift statt „ChatGPT-Export importieren“.
+- [x] Einklappbare Hinweise für ChatGPT, Claude und Extractor; Beschränkungen
+  für Claude-Kategorie-ZIPs und Codex-Aufgaben erklären.
+- [x] Rein statische Änderung, keine Änderung an Import-/Identitätslogik oder Storage.
+- Akzeptanz: bestehender Import-Workflow bleibt unverändert; Hinweis
+  mit Tastatur erreichbar und in synthetischem Browser-/HTTP-Test erfasst.

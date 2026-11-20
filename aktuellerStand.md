@@ -1,3 +1,14 @@
+## UX-002 – Import-Hilfe für mehrere Anbieter (Feature-Branch)
+
+Basis: `af9e8a45cbc4c74091681a042bc30ca2f9d0ed9e` auf `main`.
+Die Importseite nennt ChatGPT, Claude und Extractor ausdrücklich und erklärt
+welche Claude-Kategorie-ZIPs importierbar sind. Die Hilfe ist per nativer
+`details`-Komponente einklappbar. Keine neue Abhängigkeit oder Änderung am
+Import-Workflow, Datenmodell, Speicherort und Netzwerk. Tests im PR/CI prüfen;
+manueller Echttest bleibt ausstehend.
+
+---
+
 # Aktueller Stand von Chatidy
 
 **Nachprüfung GitHub 2026-11-14:** Der unten als offen beschriebene Fokus-PR ist inzwischen **PR #9, gemergt**; aktueller `main`-HEAD `8fe4da20f4ca`. GitHub-Actions-Workflow „Tests“ auf diesem Commit erfolgreich. Die damalige GraphQL-Fehlermeldung bleibt als historischer Verlauf stehen. Weiterhin offen: manueller Echttest REAL-001 und die bestehenden Backlog-/Remote-Grenzen.
