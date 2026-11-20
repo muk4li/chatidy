@@ -247,8 +247,17 @@ async function loadChats(append=false){
     if($('tag-filter').value)params.set('tag',$('tag-filter').value);
     if(smart===null&&providerFilter)params.set('provider',providerFilter);
     if(smart===null&&sourceFilter)params.set('source',sourceFilter);
-    if($('date-from').value&&!$('undated').checked)params.set('date_from',$('date-from').value);
-    if($('date-to').value&&!$('undated').checked)params.set('date_to',$('date-to').value);
+    if($('date-from').value&&!$('undated').checked){
+      const start=new Date($('date-from').value+'T00:00:00');
+      params.set('date_from',$('date-from').value);
+      params.set('date_from_offset',String(start.getTimezoneOffset()))
+    }
+    if($('date-to').value&&!$('undated').checked){
+      const end=new Date($('date-to').value+'T00:00:00');
+      end.setDate(end.getDate()+1);
+      params.set('date_to',$('date-to').value);
+      params.set('date_to_offset',String(end.getTimezoneOffset()))
+    }
     if($('undated').checked)params.set('undated','1');
     params.set('sort',$('date-sort').value);
     params.set('limit',PAGE);params.set('offset',append?offset:0);

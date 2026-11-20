@@ -407,7 +407,7 @@ Codex-Chats in der Datumssortierung am Ende. Eine nicht erkannte `codex.json` wi
 - Der Quellenfilter zeigt ChatGPT, Codex, Claude und ggf. Extractor separat.
   Claude Code erscheint nur mit einer explizit zuverlässig nachweisbaren
   Quelle `claude_code`, nicht aufgrund von Vermutungen aus Titel oder Datum.
-- Datum: optionaler UTC-basierter Bereich (`JJJJ-MM-TT`, einschließlich
+- Datum: optionaler Bereich in der lokalen Browser-Zeitzone (`JJJJ-MM-TT`, einschließlich
   Endtag), Sortierung und `Ohne Datum`. „Ohne Datum“ ist von Datumsbereichen
   zu trennen.
 - Direkte `/app/...`-URLs unterstützen Aktualisieren, Lesezeichen und

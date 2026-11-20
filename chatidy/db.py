@@ -192,7 +192,7 @@ def upsert(db, chats):
             count+=1
     return count
 
-def list_chats(db, q="", folder=None, mode="all", limit=250, offset=0, tag=None, project=None, provider=None, source=None, date_from=None, date_to=None, undated=False, sort="newest"):
+def list_chats(db, q="", folder=None, mode="all", limit=250, offset=0, tag=None, project=None, provider=None, source=None, date_from=None, date_to=None, undated=False, sort="newest", date_from_offset=0, date_to_offset=0):
     # message_count: readable messages only (thinking/tool-only nodes are shown as compact blocks).
     sql="""SELECT c.*, (SELECT COUNT(*) FROM messages m WHERE m.conversation_id=c.id AND m.content!=?)
              AS message_count,
@@ -231,6 +231,16 @@ def list_chats(db, q="", folder=None, mode="all", limit=250, offset=0, tag=None,
         sql += " AND COALESCE(c.updated,c.created) IS NULL"
     else:
         from datetime import date as _date, datetime as _datetime, timedelta as _timedelta, timezone as _timezone
+        def checked_offset(value):
+            try:
+                minute=int(value)
+                if isinstance(value,str) and str(minute)!=value:
+                    raise ValueError()
+                if minute < -840 or minute > 840:
+                    raise ValueError()
+                return minute*60
+            except (ValueError,TypeError,OverflowError) as exc:
+                raise ValueError("Ungültiger Zeitzonenoffset.") from exc
         def boundary(value):
             if not isinstance(value,str):
                 raise ValueError("Ungültiger Datumswert.")
@@ -243,10 +253,11 @@ def list_chats(db, q="", folder=None, mode="all", limit=250, offset=0, tag=None,
                 raise ValueError("Datum muss JJJJ-MM-TT sein.") from exc
         if date_from:
             sql+=" AND COALESCE(c.updated,c.created) >= ?"
-            args.append(boundary(date_from))
+            args.append(boundary(date_from)+checked_offset(date_from_offset))
         if date_to:
             sql+=" AND COALESCE(c.updated,c.created) < ?"
-            args.append(( _datetime.fromtimestamp(boundary(date_to),_timezone.utc) + _timedelta(days=1)).timestamp())
+            args.append((_datetime.fromtimestamp(boundary(date_to),_timezone.utc) + _timedelta(days=1)).timestamp()
+                        +checked_offset(date_to_offset))
         if date_from and date_to and date_from>date_to:
             raise ValueError("Startdatum liegt nach Enddatum.")
     if mode=="inbox":

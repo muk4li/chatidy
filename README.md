@@ -105,7 +105,8 @@ Details und Sicherheits-Gates: [SERVICE.md](SERVICE.md).
   vom Anbieterfilter kombinierbar. Claude Code wird nur separat gezeigt,
   wenn das Importformat eine **zuverlässige** explizite Kennzeichnung enthält;
   gewöhnliche Claude-Chats werden nicht automatisch zu Claude Code erklärt.
-- Datumsbereich mit Start/Ende, älteste/neueste zuerst und „Ohne Datum“
+- Datumsbereich passend zur lokalen Browser-Zeitzone mit Start/Ende,
+  älteste/neueste zuerst und „Ohne Datum“
   (insbesondere für Codex-Aufgaben ohne Zeitstempel).
 - Mehrere ZIP-/JSON-Dateien in **einer Auswahl**, pro Datei eigener
   Uploadstatus, Importjob, Vorschau und bewusste Bestätigung. Eine
