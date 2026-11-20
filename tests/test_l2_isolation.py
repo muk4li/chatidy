@@ -60,7 +60,7 @@ class CrossAccountTests(unittest.TestCase):
 
     def request(self,path,token=None,payload=None):
         headers={"Host":"app.example.invalid"}
-        if token:headers["Cookie"]="chatidy_session="+token
+        if token:headers["Cookie"]="__Host-chatidy_session="+token
         method="POST" if payload is not None else "GET"
         data=json.dumps(payload).encode() if payload is not None else None
         if data is not None:
