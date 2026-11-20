@@ -233,3 +233,21 @@ dialog::backdrop{background:#03060ad0}
 .format-help code{color:var(--accent);font-family:ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere}
 .format-help p{font-size:12px;color:var(--muted);margin:9px 0 3px;line-height:1.6}
 .format-help summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+
+/* F-001/F-003/F-007: accessible logo, responsive date filters and multi-import states. */
+a.brand{display:flex;align-items:center;gap:7px;text-decoration:none;color:inherit;cursor:pointer}
+a.brand:hover{color:var(--accent)}
+a.brand:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+.toolbar{flex-wrap:wrap;align-items:center}
+.filter-field{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);white-space:nowrap}
+.filter-field input[type=date]{min-width:126px;width:138px;padding:7px}
+.filter-check{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;font-size:12px;color:var(--muted);cursor:pointer}
+.filter-check input{accent-color:var(--accent)}
+#date-sort{min-width:130px}
+.multi-upload-status{display:grid;gap:8px;margin:12px 0}
+.multi-upload-row{border:1px solid var(--stroke);border-radius:10px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.multi-upload-row strong{overflow-wrap:anywhere;flex:1;min-width:140px}
+.multi-upload-row .muted{font-size:12px}
+.multi-upload-actions{margin-left:auto}
+@media(max-width:700px){.filter-field input[type=date]{width:126px}.toolbar #search{min-width:100%}}
