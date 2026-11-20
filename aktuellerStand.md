@@ -1,3 +1,12 @@
+## AUTH-023 – Confidential-Client-Integration (Draft)
+
+OIDC-Code-Exchange benutzt zusätzlich zum PKCE-Verifier den nur serverseitig
+konfigurierten Confidential-Client-Secret per HTTP Basic. Ohne Secret wird
+Auth-Start abgelehnt. Nur synthetische Test-Credentials; Provider-Livetest
+und Secret-Infrastruktur offen.
+
+---
+
 ## AUTH-022 – OIDC-Callback-Integrationsprüfung (Draft-PR)
 
 Der bereits auf PR #45 getestete synthetische RS256-Callbackablauf ist

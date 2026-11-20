@@ -39,3 +39,13 @@ ADR-008 und CE-103. Private Vertragsunterlagen werden nicht übernommen.
    Sperren/Löschen des Kontos klären.
 
 **Bis dahin: local-first nur Loopback, keine öffentliche Netzfreigabe.**
+
+## OIDC Confidential Client (AUTH-023)
+
+Zusätzlich zum bisherigen HTTPS-Issuer, Autorisierungs-/Token-/JWKS-Endpoint,
+Client-ID und Redirect-URI muss `CHATIDY_OIDC_CLIENT_SECRET` ausschließlich
+serverseitig verfügbar sein. Der Token-Exchange verwendet
+`client_secret_basic` **und** PKCE-S256; keine browserseitigen Client-Secrets.
+Der tatsächliche authentik-Provider muss mit entsprechendem Client-
+Authentication-Method konfiguriert und getestet werden. Vor dieser Prüfung
+bleibt öffentliche Betriebsfreigabe gesperrt.

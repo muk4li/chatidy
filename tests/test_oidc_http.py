@@ -30,7 +30,8 @@ class BrowserOIDCTests(unittest.TestCase):
             "CHATIDY_OIDC_AUTHORIZE":"https://idp.example.invalid/authorize",
             "CHATIDY_OIDC_TOKEN":"https://idp.example.invalid/token",
             "CHATIDY_OIDC_JWKS":"https://idp.example.invalid/jwks",
-            "CHATIDY_OIDC_CLIENT_ID":"synthetic-client"})
+            "CHATIDY_OIDC_CLIENT_ID":"synthetic-client",
+            "CHATIDY_OIDC_CLIENT_SECRET":"synthetic-only-client-secret-42"})
         self.env.start()
         self.srv=ThreadingHTTPServer(("127.0.0.1",0),Handler)
         self.t=threading.Thread(target=self.srv.serve_forever,daemon=True)

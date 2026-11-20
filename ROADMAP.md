@@ -249,3 +249,7 @@ Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md 
 
 - **AUTH-022 (Draft):** parallelen signierten OIDC-Callbacktest in die
   gestapelte L2-Integrationskette einbinden, ohne Testcode zu duplizieren.
+
+- **AUTH-023 (Draft):** Token-Endpunkt authentifiziert Confidential Client
+  mittels `client_secret_basic` (Centrality ADR-007), PKCE bleibt aktiv.
+  Authentik-Livetest und Secret-Provisionierung vor Freigabe nötig.

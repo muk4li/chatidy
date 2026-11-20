@@ -335,3 +335,12 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
   unbekannte Benutzer und State-Replay bis in die HTTP-Session abdecken.
 - [ ] Reviewer sollen PR #45 und #49 nicht doppelt mergen; nach Prüfung
   den parallelen Test-PR schließen oder integrieren.
+
+## AUTH-023 – OIDC Confidential Client nach Centrality ADR-007
+- Status: Gestapelter Draft-PR, CI/Review offen.
+- [x] Server-only `CHATIDY_OIDC_CLIENT_SECRET` zwingend im Auth-Modus.
+- [x] Authorization-Code-Token-Exchange via OAuth `client_secret_basic` + PKCE.
+- [x] Secret nicht in Logs, repr, URLs oder Request-Body; nur Header.
+- [x] Synthetische Tests für Basic-Header und fehlendes Secret.
+- [ ] Verifikation des Client-Auth-Formats mit echter authentik-Application;
+  Secret nur in privater Serverumgebung, nicht im Repository.

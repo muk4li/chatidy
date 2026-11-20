@@ -269,3 +269,12 @@ die Hauptkette übernommen. Er testet die echte RS256-Signaturprüfung und
 OIDC-Claims bis zur Erstellung des `__Host-`-Sitzungscookies sowie Replay,
 unbekanntes Konto und ungültige Signaturen. Keine privaten Schlüssel oder
 Provider-Verbindungen werden dafür benötigt.
+
+### OIDC Confidential Client
+
+Im authentifizierten Betriebsmodus ist nun zusätzlich
+`CHATIDY_OIDC_CLIENT_SECRET` aus einer privaten Server-Umgebungsdatei
+verpflichtend. Chatidy authentifiziert den Token-Austausch mit HTTP Basic
+(`client_secret_basic`) und verwendet weiterhin PKCE; das Secret gelangt
+nicht in URLs, die Browser-Oberfläche oder API-Antworten. Ohne Secret wird
+der Auth-Modus vor dem Start abgelehnt. Das Secret niemals in Git ablegen.

@@ -417,7 +417,8 @@ def main():
         # Validate required variables *before* importing optional auth packages.
         required=("CHATIDY_OIDC_ISSUER","CHATIDY_OIDC_AUTHORIZE",
                   "CHATIDY_OIDC_TOKEN","CHATIDY_OIDC_JWKS",
-                  "CHATIDY_OIDC_CLIENT_ID","CHATIDY_PUBLIC_ORIGIN")
+                  "CHATIDY_OIDC_CLIENT_ID","CHATIDY_OIDC_CLIENT_SECRET",
+                  "CHATIDY_PUBLIC_ORIGIN")
         if any(not os.getenv(name) for name in required):
             raise ValueError("Authentifizierung ist nicht vollständig konfiguriert.")
         try:

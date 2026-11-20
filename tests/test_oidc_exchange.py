@@ -1,5 +1,7 @@
 """Synthetic fixed HTTPS endpoints; no live provider or credentials."""
 import io
+import base64
+import urllib.parse
 import json
 import unittest
 try:
@@ -24,6 +26,7 @@ class FakeTransport:
         self.requests=[]
     def open(self, request, timeout=None):
         self.requests.append((request.full_url,request.get_method(),timeout))
+        self.last_request=request
         return Reply(self.payload)
 
 @unittest.skipUnless(AUTH_AVAILABLE, "Optional OIDC dependencies not installed")
@@ -35,7 +38,8 @@ class ExchangeTests(unittest.TestCase):
             "https://idp.example.invalid/token",
             "https://idp.example.invalid/jwks",
             "synthetic-client",
-            "https://chat.example.invalid/auth/callback")
+            "https://chat.example.invalid/auth/callback",
+            client_secret="synthetic-only-secret-for-tests")
 
     def test_fixed_endpoint_and_pkce_payload(self):
         transport=FakeTransport(json.dumps({"id_token":"synthetic-token"}).encode())
@@ -43,11 +47,23 @@ class ExchangeTests(unittest.TestCase):
                             trusted_jwks=None,opener=transport)
         self.assertEqual(token,"synthetic-token")
         self.assertEqual(transport.requests,[("https://idp.example.invalid/token","POST",12)])
+        request=transport.last_request
+        basic=request.get_header("Authorization")
+        self.assertTrue(basic.startswith("Basic "))
+        decoded=base64.b64decode(basic.removeprefix("Basic ")).decode()
+        self.assertEqual(decoded,"synthetic-client:synthetic-only-secret-for-tests")
+        body=urllib.parse.parse_qs(request.data.decode())
+        self.assertEqual(body["code_verifier"],["v"*48])
+        self.assertNotIn("client_secret",body)
+        self.assertNotIn("synthetic-only-secret",request.full_url)
+        self.assertNotIn("synthetic-only-secret",repr(self.settings))
+
 
     def test_untrusted_endpoint_rejected_before_request(self):
         wrong=OIDCSettings(self.settings.issuer,
             self.settings.authorization_endpoint,"https://other.invalid/token",
-            self.settings.jwks_uri,self.settings.client_id,self.settings.redirect_uri)
+            self.settings.jwks_uri,self.settings.client_id,self.settings.redirect_uri,
+            client_secret=self.settings.client_secret)
         transport=FakeTransport(b"{}")
         with self.assertRaises(OIDCError):
             exchange_code(wrong,"synthetic","v"*48,trusted_jwks=None,opener=transport)
@@ -74,8 +90,16 @@ class ExchangeTests(unittest.TestCase):
             "CHATIDY_OIDC_TOKEN":self.settings.token_endpoint,
             "CHATIDY_OIDC_JWKS":self.settings.jwks_uri,
             "CHATIDY_OIDC_CLIENT_ID":self.settings.client_id,
+            "CHATIDY_OIDC_CLIENT_SECRET":self.settings.client_secret,
             "CHATIDY_PUBLIC_ORIGIN":"https://chat.example.invalid"
         }
         self.assertEqual(configured_settings(config),self.settings)
+        missing=dict(config)
+        missing.pop("CHATIDY_OIDC_CLIENT_SECRET")
+        with self.assertRaises(OIDCError):
+            configured_settings(missing)
+        missing["CHATIDY_OIDC_CLIENT_SECRET"]=""
+        with self.assertRaises(OIDCError):
+            configured_settings(missing)
 
 if __name__=="__main__":unittest.main()

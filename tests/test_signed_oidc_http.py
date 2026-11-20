@@ -42,7 +42,8 @@ class SignedCallbackTests(unittest.TestCase):
             "CHATIDY_OIDC_AUTHORIZE":"https://idp.example.invalid/authorize",
             "CHATIDY_OIDC_TOKEN":"https://idp.example.invalid/token",
             "CHATIDY_OIDC_JWKS":"https://idp.example.invalid/jwks",
-            "CHATIDY_OIDC_CLIENT_ID":"synthetic-client"})
+            "CHATIDY_OIDC_CLIENT_ID":"synthetic-client",
+            "CHATIDY_OIDC_CLIENT_SECRET":"synthetic-only-client-secret-42"})
         self.env.start()
         with closing(connect(self.registry)) as db:
             with db:db.execute("INSERT INTO users(oidc_issuer,oidc_sub) VALUES(?,?)",
