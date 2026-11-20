@@ -1,3 +1,14 @@
+## LAND-001 – Produkt-Landingpage (Feature-Branch, noch nicht gemergt)
+
+Basis: `af9e8a45cbc4c74091681a042bc30ca2f9d0ed9e` auf main.
+Statische Produktseite unter `/`, bestehende Bibliothek unter `/app`.
+Kein Login, keine API-Sperre, keine Änderung an DB/Importer/Jobs oder Bind-Adresse.
+Nur für lokale Verwendung; PR, CI und Review stehen aus. Testnachweise sind
+im zugehörigen PR festzuhalten. Centrality ADR-007/008 bleiben für die
+zukünftige Authentifizierung und Benutzertrennung maßgeblich.
+
+---
+
 # Aktueller Stand von Chatidy
 
 **Nachprüfung GitHub 2026-11-14:** Der unten als offen beschriebene Fokus-PR ist inzwischen **PR #9, gemergt**; aktueller `main`-HEAD `8fe4da20f4ca`. GitHub-Actions-Workflow „Tests“ auf diesem Commit erfolgreich. Die damalige GraphQL-Fehlermeldung bleibt als historischer Verlauf stehen. Weiterhin offen: manueller Echttest REAL-001 und die bestehenden Backlog-/Remote-Grenzen.
