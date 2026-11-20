@@ -194,3 +194,6 @@ ChatGPT-Export – Strukturbefund (2026-11-20, aktueller echter Export vom 2026-
 
 Synthetische und CI-Ergebnisse sind kein Test mit dem privaten Originalexport.
 Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md lesen.
+
+- **SEARCH-001 Folgekorrektur (PR offen):** Inhaltsregeln ignorieren den
+  technischen Nicht-Text-Platzhalter ohne Datenmigration oder Änderung am FTS5-Index.

@@ -38,6 +38,28 @@ class SearchIndexTests(unittest.TestCase):
         finally:
             db.close()
 
+    def test_content_rules_ignore_non_text_marker_on_import_and_rule_creation(self):
+        from chatidy.db import create_folder, create_rule
+        db = connect(self.path)
+        try:
+            placeholder_folder = create_folder(db, "Synthetic marker")
+            text_folder = create_folder(db, "Synthetic text")
+            # Rules created first must not assign a chat just because of a marker.
+            create_rule(db, "content", "Nicht-textueller Inhalt", placeholder_folder)
+            create_rule(db, "content", "Synthetische Antwort", text_folder)
+            upsert(db, self.chats())
+            members = db.execute("SELECT folder_id FROM memberships WHERE conversation_id='think-1'").fetchall()
+            self.assertNotIn(placeholder_folder, [row[0] for row in members])
+            self.assertIn(text_folder, [row[0] for row in members])
+            # A rule created later must also ignore already stored marker nodes.
+            late = create_folder(db, "Synthetic late marker")
+            create_rule(db, "content", "Nicht-textueller", late)
+            members = db.execute("SELECT folder_id FROM memberships WHERE conversation_id='think-1'").fetchall()
+            self.assertNotIn(late, [row[0] for row in members])
+            self.assertEqual(chat_detail(db, "think-1")["messages"][1]["content"], NON_TEXT)
+        finally:
+            db.close()
+
     def test_migration_rebuilds_old_index_and_keeps_data(self):
         with patch("chatidy.migrations.LATEST", 5):
             db = connect(self.path)

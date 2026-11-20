@@ -1,3 +1,13 @@
+## SEARCH-001 – Inhaltsregeln und technische Platzhalter (Feature-Branch)
+
+Bestehende Inhaltsregeln durchsuchen derzeit auch technische Platzhaltertexte.
+Kleine Folgebereinigung: `apply_rules` filtert `NON_TEXT` bei der Ermittlung
+von Gesprächsinhalten, wie der Suchindex bereits seit Schema 6. Keine Änderung
+an gespeicherten Nachrichten, bestehenden Zuordnungen oder Datenbankstruktur.
+Synthetische Regressionstests ergänzt; CI/PR-Review stehen aus.
+
+---
+
 # Aktueller Stand von Chatidy
 
 **Nachprüfung GitHub 2026-11-14:** Der unten als offen beschriebene Fokus-PR ist inzwischen **PR #9, gemergt**; aktueller `main`-HEAD `8fe4da20f4ca`. GitHub-Actions-Workflow „Tests“ auf diesem Commit erfolgreich. Die damalige GraphQL-Fehlermeldung bleibt als historischer Verlauf stehen. Weiterhin offen: manueller Echttest REAL-001 und die bestehenden Backlog-/Remote-Grenzen.

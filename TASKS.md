@@ -185,7 +185,7 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - [x] `[Nicht-textueller Inhalt]` wird beim Import nicht indiziert; Migration 6 baut den Index einmalig neu auf.
 - Akzeptanz: Gespräche/Nachrichten/Organisation unverändert, Titel weiter durchsuchbar, Rollback bei Fehler.
 - Tests: neue Importe, Migration 5→6 mit Altindex, fehlgeschlagene Migration, Konstante = SQL-Marker.
-- Grenze: Regeln mit Feld „Inhalt“ prüfen weiterhin den gespeicherten Text inkl. Platzhalter.
+- Nachtrag (Feature-Branch): Inhaltsregeln ignorieren den technischen Platzhalter beim Abgleich; gespeicherte Daten bleiben unverändert. PR/CI noch offen.
 
 ## PROV-004 – Codex-Aufgaben aus `codex.json`
 - Priorität: P3; Status: Implementiert (Auftrag 2026-11-20); Prüfung mit echtem Export durch Nutzer offen.
