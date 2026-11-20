@@ -24,6 +24,7 @@ const collapsible={dataset:{section:'folders'},querySelector:selector=>{
 const account={dataset:{},querySelector:()=>null};
 const writes=[];
 vm.runInNewContext(code,{
+  $(id){assert.equal(id,'folders');return controlled},
   document:{
     querySelectorAll(selector){assert.equal(selector,'.navsection');return [collapsible,account]},
     getElementById(id){assert.equal(id,'folders');return controlled}
