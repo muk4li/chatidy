@@ -2,6 +2,7 @@
 import io
 import json
 import os
+import stat
 import tempfile
 import unittest
 from pathlib import Path
@@ -44,6 +45,19 @@ class AccountLibraryTests(unittest.TestCase):
             with closing(connect()) as db:
                 self.assertIsNone(chat_detail(db, "same"))
         self.assertIsNone(scoped_database())
+
+    @unittest.skipIf(os.name == "nt", "POSIX owner-only permission checks")
+    def test_new_account_database_is_private(self):
+        with account_library(user(5), self.registry) as dbpath:
+            account_dir = dbpath.parent.stat()
+            database = dbpath.stat()
+            self.assertEqual(stat.S_IMODE(account_dir.st_mode) & 0o077, 0)
+            self.assertEqual(stat.S_IMODE(database.st_mode) & 0o077, 0)
+        # A permissive path must not be silently accepted or chmodded.
+        os.chmod(dbpath, 0o644)
+        with self.assertRaisesRegex(ValueError, "privat"):
+            with account_library(user(5), self.registry):
+                pass
 
     def test_bad_identity_cannot_select_arbitrary_paths(self):
         for bad in (None, "1", 0, -1, True):
