@@ -214,3 +214,12 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - [x] Synthetische Migration-, Reopen-, Eindeutigkeits- und Rollbacktests.
 - [ ] Nach RepoPilot-Modellfreigabe Besitzmodell, Datenzugriffe und Jobs isolieren.
 - Akzeptanz: alte Daten bleiben unverändert, keinerlei Remote-Freigabe.
+
+## AUTH-003 – Explizite schreibfreie Identitätsauflösung
+- Priorität: P1; Status: Implementiert auf gestapeltem Draft-Branch, CI offen.
+- [x] Exakter Lookup für aktiv eingeschriebene OIDC-Identitäten (`iss` + `sub`).
+- [x] Unbekannte/gesperrte Konten und E-Mail-Matches werden abgewiesen;
+  insbesondere keine automatische Erstbenutzer- oder Eigentümeranlage.
+- [x] Rein synthetische Isolationstests.
+- [ ] Authentifizierte HTTP-Session und Benutzerisolierung sämtlicher Daten
+  bleiben getrennte Folgepakete. Ohne OIDC-Verifikation ist Lookup kein Login.
