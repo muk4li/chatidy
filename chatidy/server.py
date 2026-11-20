@@ -4,8 +4,6 @@ from contextlib import closing
 from http.cookies import SimpleCookie
 from .auth_state import session_user, create_challenge, consume_challenge, issue_session, revoke_session
 from .users import enrolled_user
-from .oidc import new_login_challenge, authorization_url, OIDCError
-from .oidc_exchange import configured_settings, identity_from_code
 from .library_scope import account_library
 from .access_policy import private_route, public_route
 import os
@@ -101,6 +99,8 @@ class Handler(BaseHTTPRequestHandler):
     def _login(self):
         try:
             import secrets
+            from .oidc import new_login_challenge, authorization_url
+            from .oidc_exchange import configured_settings
             settings=configured_settings(os.environ)
             state,nonce,verifier=new_login_challenge()
             binding=secrets.token_urlsafe(48)
@@ -109,12 +109,13 @@ class Handler(BaseHTTPRequestHandler):
                                  nonce=nonce,code_verifier=verifier)
             return self._auth_redirect(authorization_url(settings,state,nonce,verifier),[
                 self._auth_cookie("chatidy_oidc",binding,600)])
-        except (OIDCError,ValueError):
+        except (ValueError,ImportError):
             return self.send(503,{"error":"Anmeldung nicht eingerichtet."})
 
     def _callback(self):
         params=parse_qs(urlsplit(self.path).query,keep_blank_values=True)
         try:
+            from .oidc_exchange import configured_settings, identity_from_code
             if ("error" in params or len(params.get("state",[]))!=1
                     or len(params.get("code",[]))!=1):
                 raise ValueError("OIDC-Callback ungültig.")
@@ -135,7 +136,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._auth_redirect("/app",[
                 self._auth_cookie("chatidy_oidc","",0),
                 self._auth_cookie("chatidy_session",token,43200)])
-        except (KeyError,ValueError,UnicodeError,OIDCError):
+        except (KeyError,ValueError,UnicodeError):
             return self.send(401,{"error":"Anmeldung fehlgeschlagen."})
         except Exception:
             return self.send(503,{"error":"Anmeldedienst derzeit nicht verfügbar."})

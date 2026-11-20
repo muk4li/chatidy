@@ -1,5 +1,6 @@
 """Synthetic OIDC browser paths; no real credentials, IdP or user exports."""
 import os
+import importlib.util
 import tempfile
 import threading
 import unittest
@@ -17,6 +18,7 @@ ISSUER="https://idp.example.invalid/application/o/test/"
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self,req,fp,code,msg,headers,url):return None
 
+@unittest.skipUnless(importlib.util.find_spec("jwt") is not None, "Optional OIDC dependencies not installed")
 class BrowserOIDCTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory()
@@ -67,7 +69,7 @@ class BrowserOIDCTests(unittest.TestCase):
 
     def test_unknown_account_and_replay_rejected(self):
         state,binding=self.challenge()
-        with patch("chatidy.server.identity_from_code",return_value={"issuer":ISSUER,"subject":"unregistered"}) as mock:
+        with patch("chatidy.oidc_exchange.identity_from_code",return_value={"issuer":ISSUER,"subject":"unregistered"}) as mock:
             self.assertEqual(self.callback(state,binding)[0],401)
             self.assertEqual(self.callback(state,binding)[0],401)
             self.assertEqual(mock.call_count,1)
@@ -75,7 +77,7 @@ class BrowserOIDCTests(unittest.TestCase):
 
     def test_wrong_browser_does_not_consume_state(self):
         state,binding=self.challenge()
-        with patch("chatidy.server.identity_from_code",return_value={"issuer":ISSUER,"subject":"stranger"}) as mock:
+        with patch("chatidy.oidc_exchange.identity_from_code",return_value={"issuer":ISSUER,"subject":"stranger"}) as mock:
             self.assertEqual(self.callback(state,"chatidy_oidc="+"x"*64)[0],401)
             mock.assert_not_called()
             self.assertEqual(self.callback(state,binding)[0],401)
@@ -86,7 +88,7 @@ class BrowserOIDCTests(unittest.TestCase):
             with db:db.execute("INSERT INTO users(oidc_issuer,oidc_sub) VALUES(?,?)",
                                (ISSUER,"synthetic-enrolled"))
         state,binding=self.challenge()
-        with patch("chatidy.server.identity_from_code",return_value={"issuer":ISSUER,"subject":"synthetic-enrolled"}):
+        with patch("chatidy.oidc_exchange.identity_from_code",return_value={"issuer":ISSUER,"subject":"synthetic-enrolled"}):
             status,_,headers=self.callback(state,binding)
         self.assertEqual(status,302)
         self.assertEqual(headers["Location"],"/app")
