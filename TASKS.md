@@ -223,3 +223,11 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - [x] Rein synthetische Isolationstests.
 - [ ] Authentifizierte HTTP-Session und Benutzerisolierung sämtlicher Daten
   bleiben getrennte Folgepakete. Ohne OIDC-Verifikation ist Lookup kein Login.
+
+## AUTH-004 – Manuelle lokale Einschreibung verifizierter OIDC-Identitäten
+- Priorität: P1; Status: Gestapelter Draft-PR, CI/Review offen.
+- [x] Bestätigte CLI-Einschreibung eines exakten HTTPS-Issuer/Subjekts,
+  Rollen owner/member; kein öffentlicher Endpoint, keine automatische Anmeldung.
+- [x] Zweites Eigentümerkonto nicht automatisch gestattet.
+- [x] Keine Übernahme bestehender Chats; synthetische Regressionstests.
+- [ ] Vor praktischem Einsatz IdP und Benutzerisolation vollständig prüfen.

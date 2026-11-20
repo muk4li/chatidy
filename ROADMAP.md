@@ -202,3 +202,7 @@ Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md 
 - **AUTH-003 (Draft, abhängig von AUTH-002):** rein serverseitiger,
   schreibfreier Lookup für bereits angelegte, aktive OIDC-Identitäten; noch
   keine Tokenvalidierung, Anmeldung, Sessions oder Ressourcenisolation.
+
+- **AUTH-004 (Draft, gestapelt auf AUTH-003):** administrativ bestätigte
+  lokale Kontoeinschreibung. Kein Browser-/Login-/Import-Zugriff und keine
+  automatische Bestandsübernahme.
