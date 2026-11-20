@@ -59,6 +59,8 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - Priorität: P1; Status: Offen.
 - Komponenten: Manifest-/Metadata-Adapter. Abhängigkeiten: EXP-001.
 - [ ] Nur mit dokumentiertem Schema zukünftige Metadaten interpretieren.
+- Befund 2026-11-20: Wurzel-`export_manifest.json` mit `logical_files.<name>.shard_count`/`files[]`
+  würde den Nachweis fehlender Endsegmente erlauben (Grenze aus EXP-001). Umsetzung nur auf Auftrag.
 - [ ] Keine privaten Exporte in Cloud/Repo anfordern; synthetische Beispiele nutzen.
 - Akzeptanz: Schema-Validierung vor Nutzung; sensible Konto-/Werbedaten nicht unnötig persistieren.
 - Tests: nicht vertrauenswürdige, fehlerhafte und zukünftige Manifestversionen.
@@ -142,19 +144,39 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 ## PROV-002 – Claude-Export importieren
 - Priorität: P2; Status: Offen – geplant, kein Umsetzungsauftrag. Abhängigkeiten: PROV-001.
 - Komponenten: Claude-Adapter, Archivinventar, Themencluster-Stoppwörter.
-- [ ] Vorab: Nutzer prüft echten Export lokal auf Elternverweise und `content`-Blocktypen (nur Schlüssel melden).
+- [x] Vorab: Strukturbefund aus echtem Export (nur Schlüssel/Typen), siehe ROADMAP Phase 6.
+- [ ] Zweige über `parent_message_uuid`, aktueller Zweig = spätestes Blatt, übrige Zweige in Metadaten (E10).
+- [ ] Lese-/Suchtext nur aus `text`-Blöcken und `extracted_content`; Tool-/Thinking-Blöcke als Kurzzeile (E11).
+- [ ] Keine URL aus Importdaten laden (E12); Nicht-Gesprächs-ZIPs mit klarer Meldung ablehnen (E13).
 - [ ] `chat_messages` → normalisiertes Modell; `human`→`user`; Text aus Textblöcken, Fallback `text` (E5).
 - [ ] IDs `claude:<uuid>` (E4); Rohdaten inkl. Thinking/Tools/`extracted_content` in `metadata`.
 - [ ] `projects.json`, `memories.json`, `users.json` als Metadaten inventarisieren, sensible markieren (E9).
 - Akzeptanz: kein stiller Inhaltsverlust; gemischte ChatGPT-/Claude-Bibliothek; idempotenter Reimport.
 - Tests: synthetische Claude-Fixtures (nur `text`, nur `content[]`, unbekannte Blocktypen, Anhänge,
   Variante mit `messages` statt `chat_messages` – auch mit zusätzlichem `id`: wird als Claude erkannt
-  oder kontrolliert abgelehnt, nie als Extractor gelesen),
+  oder kontrolliert abgelehnt, nie als Extractor gelesen; verzweigte/unsortierte/zyklische Verläufe;
+  leeres Gespräch, leerer Titel; Konto-/Memory-/Artifact-/Routinen-ZIP einzeln hochgeladen),
   gemischter Bestand, Reimport/Konflikte. Grenze: Batch-ZIPs großer Konten ungeprüft.
+
+## CGPT-001 – Denk- und Reasoning-Nachrichten im ChatGPT-Import lesbar machen
+- Priorität: P2; Status: Offen – Befund aus echtem Export, kein Umsetzungsauftrag.
+- Komponenten: Importer (`content_text`), Leseansicht. Abhängigkeiten: keine; passt zu E11.
+- [ ] `thoughts`/`reasoning_recap` als einklappbare Kurzzeile („Denkprozess“) statt „[Nicht-textueller Inhalt]“.
+- [ ] Nicht in Volltextsuche/Themencluster; Rohdaten unverändert in `metadata`.
+- Akzeptanz: bestehende Bibliotheken ohne Neuimport korrekt dargestellt (Darstellung aus Metadaten), kein Datenverlust.
+- Tests: synthetische Knoten je `content_type`, Reimport-Identität unverändert, DOM-Test.
+
+## PROV-004 – Codex-Aufgaben aus `codex.json` (Backlog)
+- Priorität: P3; Status: Offen – nur festgehalten.
+- Komponenten: eigener Adapter im Sinne von E1 (Anbieter `chatgpt`, Quelle `codex`). Abhängigkeiten: PROV-001.
+- [ ] `turns[]` als Gesprächsverlauf; PR-Titel/Diff-Kennzahlen als Metadaten; Dateiausschnitte nicht in die Suche.
+- Akzeptanz: keine Vermischung mit normalen Chats ohne sichtbare Kennzeichnung.
+- Tests: synthetische Codex-Fixtures, Reimport.
 
 ## PROV-003 – Weitere Anbieter und lokale Oberflächen (Backlog)
 - Priorität: P3; Status: Offen – nur bei echtem Bedarf.
 - Komponenten: zusätzliche Adapter (z. B. Open WebUI, weitere Cloud-Anbieter). Abhängigkeiten: PROV-001.
 - [ ] Je Anbieter: Exportstruktur dokumentieren, Adapter + synthetische Fixtures, keine API-/DB-Zugriffe (E7).
+- Nicht im Umfang: Messenger-Exporte (z. B. Instagram-DMs) – keine KI-Chats, enthalten Daten Dritter.
 - Akzeptanz: Kernmodule bleiben unverändert; neuer Anbieter = neuer Adapter + Tests.
 - Tests: pro Adapter; Formatänderungen bekannter Anbieter als neue Fixture-Variante.
