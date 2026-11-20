@@ -1,3 +1,12 @@
+## AUTH-004 – Explizite OIDC-Kontoeinschreibung (Draft-PR)
+
+Lokales CLI für vom Administrator vorher verifizierte OIDC-Issuer/Subjekt-
+Kennungen, mit ausdrücklichem `--confirm`. Keine HTTP-Registrierung, kein
+Automatismus für Eigentümerkonto oder bestehenden Chatbestand. Funktionen
+unabhängig von echter authentik-Installation synthetisch testbar.
+
+---
+
 ## AUTH-003 – OIDC-Identitätszuordnung (gestapelter Draft-PR)
 
 Schreibfreier `enrolled_user`-Lookup für bestehende aktive Benutzer über

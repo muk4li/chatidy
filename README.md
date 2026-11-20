@@ -158,3 +158,13 @@ Temporäre synthetische Daten; `CHROMIUM_PATH` überschreibt `/usr/bin/chromium`
 `KEEP_TEST_ARTIFACTS=1` erhält Testartefakte/Screenshots, sonst werden sie entfernt.
 Nachweise: [aktuellerStand.md](aktuellerStand.md), frühere Durchläufe:
 [Historie](docs/history.md). Entwicklungsregeln: [AGENTS.md](AGENTS.md).
+
+### Admin-Vorbereitung (ohne Login)
+
+Nur für künftige OIDC-Einrichtung: `python -m chatidy.enroll --db PFAD_ZUR_DB
+--issuer HTTPS_ISSUER --subject OIDC_SUB --role owner --confirm` (als eine Zeile).
+Issuer und Subject müssen zuvor administrativ beim Identity-Provider
+verifiziert werden. Das Kommando trägt ausschließlich eine Benutzeridentität
+in Schema 7 ein, **keine Chats**. Kein Anmelde- oder Registrierungssystem;
+öffentliche Bereitstellung weiterhin verboten. Private Kennungen nicht in
+Tickets, Logs oder GitHub ablegen.
