@@ -686,7 +686,12 @@ drop.addEventListener('drop',e=>importFiles(e.dataTransfer.files));
 // Collapsible sidebar sections (state is a per-browser convenience only).
 const closedSections=new Set(store.get('chatidy-closed-sections',[]));
 document.querySelectorAll('.navsection').forEach(section=>{
-  const toggle=section.querySelector('.sectiontoggle'),body=$(toggle.getAttribute('aria-controls'));
+  // Only sections with a real toggle and its controlled body are collapsible.
+  // Account information is a separate panel, never a collapsible nav section.
+  const toggle=section.querySelector('.sectiontoggle');
+  if(!toggle)return;
+  const body=$(toggle.getAttribute('aria-controls'));
+  if(!body)return;
   const apply=()=>{const open=!closedSections.has(section.dataset.section);toggle.setAttribute('aria-expanded',String(open));body.hidden=!open};
   toggle.onclick=()=>{closedSections.has(section.dataset.section)?closedSections.delete(section.dataset.section):closedSections.add(section.dataset.section);store.set('chatidy-closed-sections',[...closedSections]);apply()};
   apply();

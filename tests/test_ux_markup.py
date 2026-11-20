@@ -21,5 +21,11 @@ class UXContractTests(unittest.TestCase):
         self.assertIn('XMLHttpRequest',script)
         self.assertIn("const SOURCE_LABELS=",script)
         self.assertIn("addEventListener('popstate',applyRoute)",script)
+        # A non-collapsible account panel must not enter the navsection
+        # initializer; it previously crashed app.js before stats were loaded.
+        self.assertIn('id="account-panel" class="account-panel"',html)
+        self.assertNotIn('id="account-panel" class="navsection"',html)
+        self.assertIn('if(!toggle)return;',script)
+        self.assertIn('if(!body)return;',script)
 
 if __name__=="__main__":unittest.main()
