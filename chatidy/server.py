@@ -78,7 +78,7 @@ class Handler(BaseHTTPRequestHandler):
         cookie=SimpleCookie()
         try:
             cookie.load(self.headers.get("Cookie",""))
-            token=cookie["chatidy_session"].value
+            token=cookie["__Host-chatidy_session"].value
             if len(token)>512:return None
         except (KeyError,ValueError,UnicodeError):
             return None
@@ -108,8 +108,8 @@ class Handler(BaseHTTPRequestHandler):
                 create_challenge(db,state=state,browser_binding=binding,
                                  nonce=nonce,code_verifier=verifier)
             return self._auth_redirect(authorization_url(settings,state,nonce,verifier),[
-                self._auth_cookie("chatidy_oidc",binding,600)])
-        except (ValueError, ImportError):
+                self._auth_cookie("__Host-chatidy_oidc",binding,600)])
+        except (ValueError,ImportError):
             return self.send(503,{"error":"Anmeldung nicht eingerichtet."})
 
     def _callback(self):
@@ -121,7 +121,7 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError("OIDC-Callback ungültig.")
             cookie=SimpleCookie()
             cookie.load(self.headers.get("Cookie",""))
-            binding=cookie["chatidy_oidc"].value
+            binding=cookie["__Host-chatidy_oidc"].value
             settings=configured_settings(os.environ)
             with closing(connect(os.getenv("CHATIDY_DB",str(DEFAULT_DATABASE)))) as db:
                 challenge=consume_challenge(db,state=params["state"][0],
@@ -134,8 +134,8 @@ class Handler(BaseHTTPRequestHandler):
                 if user is None:raise ValueError("Nicht freigeschaltet.")
                 token=issue_session(db,user)
             return self._auth_redirect("/app",[
-                self._auth_cookie("chatidy_oidc","",0),
-                self._auth_cookie("chatidy_session",token,43200)])
+                self._auth_cookie("__Host-chatidy_oidc","",0),
+                self._auth_cookie("__Host-chatidy_session",token,43200)])
         except (KeyError,ValueError,UnicodeError):
             return self.send(401,{"error":"Anmeldung fehlgeschlagen."})
         except Exception:
@@ -145,15 +145,15 @@ class Handler(BaseHTTPRequestHandler):
         cookie=SimpleCookie()
         try:
             cookie.load(self.headers.get("Cookie",""))
-            token=cookie["chatidy_session"].value
+            token=cookie["__Host-chatidy_session"].value
         except (KeyError,ValueError,UnicodeError):
             token=None
         if token:
             with closing(connect(os.getenv("CHATIDY_DB",str(DEFAULT_DATABASE)))) as db:
                 revoke_session(db,token)
         return self._auth_redirect("/",[
-            self._auth_cookie("chatidy_session","",0),
-            self._auth_cookie("chatidy_oidc","",0)])
+            self._auth_cookie("__Host-chatidy_session","",0),
+            self._auth_cookie("__Host-chatidy_oidc","",0)])
 
     def _redirect(self,destination):
         self.send_response(302)
@@ -212,6 +212,13 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send(200, jobs.listing())
             if path.startswith("/api/import/jobs/"):
                 return self.send(200, jobs.public_status(path.removeprefix("/api/import/jobs/")))
+            if path=="/api/session":
+                if not self.auth_required():
+                    return self.send(404,{"error":"Nicht gefunden"})
+                user=self._principal()
+                if user is None:
+                    return self.send(401,{"error":"Anmeldung erforderlich."})
+                return self.send(200,{"display_name":user.display_name,"role":user.role})
             with closing(connect()) as db, db:
                 if path=="/api/tags":
                     return self.send(200, organisation.tags(db))
@@ -326,7 +333,9 @@ class Handler(BaseHTTPRequestHandler):
                     cid=str(value["conversation_id"])
                     status=int(bool(value.get("reviewed",True)))
                     with db:
-                        db.execute("UPDATE conversations SET reviewed=? WHERE id=?",(status,cid))
+                        changed=db.execute("UPDATE conversations SET reviewed=? WHERE id=?",(status,cid))
+                        if changed.rowcount==0:
+                            return self.send(404,{"error":"Chat nicht gefunden"})
                     return self.send(200,{"ok":True})
                 if path=="/api/rules":
                     rid=create_rule(db,value["field"],value["needle"],int(value["folder_id"]))
@@ -398,10 +407,28 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     # Give existing job/storage consumers the same project-relative default.
     os.environ.setdefault("CHATIDY_DB", str(DEFAULT_DATABASE))
-    if os.getenv("CHATIDY_AUTH_REQUIRED") == "1":
-        origin=urlsplit(os.getenv("CHATIDY_PUBLIC_ORIGIN",""))
+    mode=os.getenv("CHATIDY_AUTH_REQUIRED","0")
+    public_origin=os.getenv("CHATIDY_PUBLIC_ORIGIN","")
+    if mode not in ("0","1"):
+        raise ValueError("CHATIDY_AUTH_REQUIRED darf nur 0 oder 1 sein.")
+    if mode=="0" and public_origin:
+        raise ValueError("Öffentliche Origin ohne Anmeldung ist nicht zulässig.")
+    if mode=="1":
+        # Validate required variables *before* importing optional auth packages.
+        required=("CHATIDY_OIDC_ISSUER","CHATIDY_OIDC_AUTHORIZE",
+                  "CHATIDY_OIDC_TOKEN","CHATIDY_OIDC_JWKS",
+                  "CHATIDY_OIDC_CLIENT_ID","CHATIDY_OIDC_CLIENT_SECRET",
+                  "CHATIDY_PUBLIC_ORIGIN")
+        if any(not os.getenv(name) for name in required):
+            raise ValueError("Authentifizierung ist nicht vollständig konfiguriert.")
+        try:
+            from .oidc_exchange import configured_settings
+            configured_settings(os.environ)
+        except (ImportError,ValueError) as exc:
+            raise ValueError("Authentifizierung ist nicht verfügbar oder ungültig konfiguriert.") from exc
+        origin=urlsplit(public_origin)
         if origin.scheme!="https" or not origin.netloc or origin.path not in ("","/"):
-            raise ValueError("Auth-Testmodus benötigt CHATIDY_PUBLIC_ORIGIN als HTTPS-Origin.")
+            raise ValueError("Auth-Modus benötigt eine gültige HTTPS-Origin.")
     host="127.0.0.1"
     port=int(os.getenv("CHATIDY_PORT","8877"))
     print(f"Chatidy läuft lokal unter http://{host}:{port}")

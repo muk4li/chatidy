@@ -522,3 +522,21 @@ for(const [id,key] of [['resize-nav','nav'],['resize-reader','reader']]){
 }
 addEventListener('resize',applySizes);applySizes();
 refresh().then(async()=>{if(!importJob&&Number((await api('/api/stats')).chats||0)===0)showPage('import')}).catch(e=>message('Startfehler: '+e.message,true));
+
+/* AUTH-013: show account controls only when the server confirms an auth session. */
+(async()=>{
+  try{
+    const response=await fetch('/api/session',{credentials:'same-origin'});
+    if(!response.ok)return;
+    const account=await response.json();
+    $('account-name').textContent=account.display_name||'Angemeldet';
+    $('account-panel').hidden=false;
+  }catch{ /* Local single-user mode has no /api/session endpoint. */ }
+})();
+$('logout-button').addEventListener('click',async()=>{
+  try{
+    const response=await fetch('/logout',{method:'POST',credentials:'same-origin'});
+    if(!response.ok)throw new Error('Abmeldung fehlgeschlagen.');
+    location.assign('/');
+  }catch(e){message(e.message,true)}
+});

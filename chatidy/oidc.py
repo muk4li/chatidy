@@ -10,7 +10,7 @@ import hmac
 import json
 import secrets
 from urllib.parse import urlencode, urlsplit
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import jwt
 
@@ -36,6 +36,8 @@ class OIDCSettings:
     jwks_uri: str
     client_id: str
     redirect_uri: str
+    # Server-only credential; never expose it through repr, redirects or logs.
+    client_secret: str = field(default="", repr=False)
 
     def validate(self):
         issuer = _https_url(self.issuer)
