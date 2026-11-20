@@ -5,6 +5,7 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+from contextlib import closing
 from unittest.mock import patch
 
 from chatidy.db import connect, chat_detail, upsert
@@ -27,20 +28,20 @@ class AccountLibraryTests(unittest.TestCase):
 
     def test_two_accounts_same_external_chat_id_stay_separate(self):
         with patch.dict(os.environ, CHATIDY_DB=str(self.registry)):
-            with connect() as db:
+            with closing(connect()) as db:
                 self.assertEqual(db.execute("SELECT count(*) FROM conversations").fetchone()[0], 0)
             for n in (1, 2):
                 with account_library(user(n), self.registry) as path:
                     self.assertEqual(scoped_database(), path)
                     self.assertEqual(root_path(), path.parent / "import-jobs")
-                    with connect() as db:
+                    with closing(connect()) as db:
                         upsert(db, [{"id":"same","title":"Synthetic "+str(n),
                             "messages":[{"id":"same-message","role":"user","content":"Account "+str(n)}]}])
             for n in (1, 2):
                 with account_library(user(n), self.registry):
-                    with connect() as db:
+                    with closing(connect()) as db:
                         self.assertEqual(chat_detail(db, "same")["chat"]["title"], "Synthetic "+str(n))
-            with connect() as db:
+            with closing(connect()) as db:
                 self.assertIsNone(chat_detail(db, "same"))
         self.assertIsNone(scoped_database())
 
@@ -61,11 +62,11 @@ class AccountLibraryTests(unittest.TestCase):
                 worker.join(timeout=15)
                 self.assertFalse(worker.is_alive())
                 self.assertEqual(jobs.status(job_id)["state"], "done")
-                with connect() as db:
+                with closing(connect()) as db:
                     self.assertIsNotNone(chat_detail(db, "synthetic"))
             with account_library(user(2), self.registry):
                 self.assertEqual(jobs.listing()["count"], 0)
-                with connect() as db:
+                with closing(connect()) as db:
                     self.assertIsNone(chat_detail(db, "synthetic"))
 
 if __name__ == "__main__":
