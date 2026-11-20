@@ -253,3 +253,11 @@ angemeldeten Konten: Ein fremder Job ist nicht auflistbar, abrufbar,
 fortsetzbar, bestätigbar oder löschbar. Auch ein bekannter Job-Identifier
 gewährt keinen kontoübergreifenden Zugriff. Native ACL- und reale
 Authentik-/HTTPS-Tests bleiben dennoch vor Freigabe erforderlich.
+
+### Hostgebundene Login-Cookies
+
+Der Authentifizierungsmodus verwendet `__Host-chatidy_oidc` und
+`__Host-chatidy_session` mit `Secure`, `HttpOnly`, `SameSite=Lax` und
+`Path=/`, ohne `Domain`. Moderne Browser erzwingen bei `__Host-`-Cookies
+diese Hostbindung und verhindern so überschreibende Domain-Cookies von
+benachbarten Subdomains. Das ersetzt keinen echten HTTPS-/Authentik-Test.

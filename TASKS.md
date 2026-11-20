@@ -319,3 +319,10 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - [x] Fremde Jobliste/Status/Resume/Confirm/Delete verweigern.
 - [x] Originaljob bleibt erhalten und ist weiterhin nur vom Besitzer löschbar.
 - [ ] Native Windows-/Linux-ACL, Reverse-Proxy- und Live-OIDC-Prüfung vor Freigabe.
+
+## AUTH-021 – Hostgebundene OIDC- und Session-Cookies
+- Priorität: P1; Status: Gestapelter Draft-PR, CI offen.
+- [x] Cookie-Namen mit `__Host-`-Präfix und Secure/HttpOnly/SameSite/Path.
+- [x] Serverseitiges Lesen, Löschen, OIDC-Callback und Tests abgestimmt.
+- [x] HTTP-Tests prüfen die Attribute und das Fehlen von `Domain=`.
+- [ ] Echter HTTPS-Browser-/Proxy-Test und Sicherheitsfreigabe ausstehend.

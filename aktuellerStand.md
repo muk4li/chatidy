@@ -1,3 +1,11 @@
+## AUTH-021 – `__Host-`-Cookies (Draft-PR)
+
+OIDC-Bindung und Sitzungen verwenden das Hostpräfix; Cookie-Flags
+bleiben Secure/HttpOnly/SameSite=Lax/Path=/ und ohne Domain. HTTP-Tests
+prüfen die Schnittstelle; kein realer Browser-/authentik-Deploy geprüft.
+
+---
+
 ## AUTH-020 – HTTP-Importjob-Isolation (Draft-PR)
 
 Synthetische Regression: Zwei Konten können keine fremden Uploadjobs lesen,

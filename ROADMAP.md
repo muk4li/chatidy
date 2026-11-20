@@ -243,3 +243,6 @@ Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md 
 
 - **AUTH-020 (Draft):** kontofremde Importjob-IDs in HTTP-Status, Liste,
   Bestätigung, Fortsetzung und Löschung negativ testen. Kein Live-Deployment.
+
+- **AUTH-021 (Draft):** Hostgebundene OIDC- und Session-Cookies gegen
+  Domain-Shadows; echte HTTPS-/Browserprüfung bleibt Release-Gate.
