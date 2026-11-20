@@ -290,3 +290,6 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - [x] SERVICE.md mit Auth-/API-/Backup-/Restore-/Freigabekriterien.
 - [ ] Centrality/RepoPilot-Review, reale authentik-/Proxy-/Backup-Tests und
   ausdrückliche Eigentümer-Freigabe vor Internetbetrieb.
+
+- AUTH-015 Zusatzprüfung: CI auf Linux/Windows Python 3.11 auch ohne
+  `requirements-auth.txt`; optionale OIDC-Tests werden dann übersprungen.
