@@ -78,7 +78,7 @@ class Handler(BaseHTTPRequestHandler):
         cookie=SimpleCookie()
         try:
             cookie.load(self.headers.get("Cookie",""))
-            token=cookie["chatidy_session"].value
+            token=cookie["__Host-chatidy_session"].value
             if len(token)>512:return None
         except (KeyError,ValueError,UnicodeError):
             return None
@@ -108,7 +108,7 @@ class Handler(BaseHTTPRequestHandler):
                 create_challenge(db,state=state,browser_binding=binding,
                                  nonce=nonce,code_verifier=verifier)
             return self._auth_redirect(authorization_url(settings,state,nonce,verifier),[
-                self._auth_cookie("chatidy_oidc",binding,600)])
+                self._auth_cookie("__Host-chatidy_oidc",binding,600)])
         except (ValueError,ImportError):
             return self.send(503,{"error":"Anmeldung nicht eingerichtet."})
 
@@ -121,7 +121,7 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError("OIDC-Callback ungültig.")
             cookie=SimpleCookie()
             cookie.load(self.headers.get("Cookie",""))
-            binding=cookie["chatidy_oidc"].value
+            binding=cookie["__Host-chatidy_oidc"].value
             settings=configured_settings(os.environ)
             with closing(connect(os.getenv("CHATIDY_DB",str(DEFAULT_DATABASE)))) as db:
                 challenge=consume_challenge(db,state=params["state"][0],
@@ -134,8 +134,8 @@ class Handler(BaseHTTPRequestHandler):
                 if user is None:raise ValueError("Nicht freigeschaltet.")
                 token=issue_session(db,user)
             return self._auth_redirect("/app",[
-                self._auth_cookie("chatidy_oidc","",0),
-                self._auth_cookie("chatidy_session",token,43200)])
+                self._auth_cookie("__Host-chatidy_oidc","",0),
+                self._auth_cookie("__Host-chatidy_session",token,43200)])
         except (KeyError,ValueError,UnicodeError):
             return self.send(401,{"error":"Anmeldung fehlgeschlagen."})
         except Exception:
@@ -145,15 +145,15 @@ class Handler(BaseHTTPRequestHandler):
         cookie=SimpleCookie()
         try:
             cookie.load(self.headers.get("Cookie",""))
-            token=cookie["chatidy_session"].value
+            token=cookie["__Host-chatidy_session"].value
         except (KeyError,ValueError,UnicodeError):
             token=None
         if token:
             with closing(connect(os.getenv("CHATIDY_DB",str(DEFAULT_DATABASE)))) as db:
                 revoke_session(db,token)
         return self._auth_redirect("/",[
-            self._auth_cookie("chatidy_session","",0),
-            self._auth_cookie("chatidy_oidc","",0)])
+            self._auth_cookie("__Host-chatidy_session","",0),
+            self._auth_cookie("__Host-chatidy_oidc","",0)])
 
     def _redirect(self,destination):
         self.send_response(302)

@@ -62,6 +62,8 @@ class BrowserOIDCTests(unittest.TestCase):
         self.assertEqual(args["code_challenge_method"],["S256"])
         c=headers.get_all("Set-Cookie")[0]
         self.assertIn("Secure",c);self.assertIn("HttpOnly",c)
+        self.assertIn("Path=/",c)
+        self.assertNotIn("Domain=",c)
         return args["state"][0],c.split(";",1)[0]
 
     def callback(self,state,cookie):
@@ -78,7 +80,7 @@ class BrowserOIDCTests(unittest.TestCase):
     def test_wrong_browser_does_not_consume_state(self):
         state,binding=self.challenge()
         with patch("chatidy.oidc_exchange.identity_from_code",return_value={"issuer":ISSUER,"subject":"stranger"}) as mock:
-            self.assertEqual(self.callback(state,"chatidy_oidc="+"x"*64)[0],401)
+            self.assertEqual(self.callback(state,"__Host-chatidy_oidc="+"x"*64)[0],401)
             mock.assert_not_called()
             self.assertEqual(self.callback(state,binding)[0],401)
             self.assertEqual(mock.call_count,1)
@@ -92,10 +94,12 @@ class BrowserOIDCTests(unittest.TestCase):
             status,_,headers=self.callback(state,binding)
         self.assertEqual(status,302)
         self.assertEqual(headers["Location"],"/app")
-        cookie=[x for x in headers.get_all("Set-Cookie") if x.startswith("chatidy_session=")][0]
+        cookie=[x for x in headers.get_all("Set-Cookie") if x.startswith("__Host-chatidy_session=")][0]
         self.assertIn("Secure",cookie)
         self.assertIn("HttpOnly",cookie)
         self.assertIn("SameSite=Lax",cookie)
+        self.assertIn("Path=/",cookie)
+        self.assertNotIn("Domain=",cookie)
         token=cookie.split(";",1)[0]
         self.assertEqual(self.get("/api/stats",token)[0],200)
         import json

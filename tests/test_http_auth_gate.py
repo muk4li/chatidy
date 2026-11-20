@@ -45,7 +45,7 @@ class HttpGateTests(unittest.TestCase):
 
     def request(self,path,token=None,method="GET",data=None,origin=None):
         headers={"Host":"app.example.invalid"}
-        if token:headers["Cookie"]="chatidy_session="+token
+        if token:headers["Cookie"]="__Host-chatidy_session="+token
         if method=="POST":headers["Origin"]=origin if origin is not None else "https://app.example.invalid"
         req=urllib.request.Request(self.url+path,data=data,headers=headers,method=method)
         try:
