@@ -98,7 +98,8 @@ Details und Sicherheits-Gates: [SERVICE.md](SERVICE.md).
 - `/`: Landingpage ohne erfundene Demoansicht; Logo in `/app` führt dorthin.
 - `/app`: Alle Chats; `/app/inbox`, `/app/archive`, `/app/unfiled`,
   `/app/import`, `/app/topics` sowie stabile Ordner-IDs
-  (`/app/folders/<id>`), intelligente Ordner (`/app/smart/<id>`) und
+  (`/app/folders/<id>-<name>`, bisherige ID-Links bleiben gültig;
+  bei Umbenennung wird der Slug aktualisiert), intelligente Ordner (`/app/smart/<id>`) und
   Direktlinks zu Chats (`/app/chats/<id>`). Browser-Zurück und Lesezeichen
   funktionieren; in L2 sind alle Pfade nur für die jeweilige Sitzung sichtbar.
 - Quellen-Untertypen: ChatGPT, Codex, Claude und Extractor sind unabhängig

@@ -35,20 +35,38 @@ function modal(title,contents,onSave,saveLabel='Speichern'){
   dialog.showModal();
 }
 function currentName(){if(smart!==null)return smartFolders.find(f=>f.id===smart)?.name||'Intelligenter Ordner';if(folder!==null)return folders.find(f=>f.id===folder)?.name||'Ordner';return ({all:'Alle Gespräche',inbox:'Posteingang',archived:'Archivierte Gespräche',unfiled:'Ohne Gruppe',topics:'Themencluster'})[view]}
+// Folder ID remains authoritative; the suffix is decorative and may change on rename.
+function folderSlug(name){
+  const normalized=String(name||'').trim().toLowerCase()
+    .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
+    .normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
+  return normalized.replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60).replace(/-$/,'')||'ordner'
+}
+function folderPath(id){
+  const current=folders.find(item=>item.id===Number(id));
+  return '/app/folders/'+id+(current?'-'+folderSlug(current.name):'')
+}
+function canonicalizeFolderPath(id){
+  const canonical=folderPath(id);
+  if(location.pathname!==canonical)history.replaceState({},'',canonical+location.search);
+}
 function setView(v,id=null,{keepTag=false,skipHistory=false}={}){
   if(!keepTag)$('tag-filter').value='';
   page='library';$('import-page').hidden=true;$('library-page').hidden=false;
   document.body.classList.remove('page-import');smart=null;
   $('search').disabled=false;$('tag-filter').disabled=false;
   chosen.clear();renderSelection();view=v;folder=id;offset=0;selected=null;details=null;
-  if(!skipHistory)pushRoute(id!==null?'/app/folders/'+id:
+  if(!skipHistory)pushRoute(id!==null?folderPath(id):
     ({inbox:'/app/inbox',archived:'/app/archive',unfiled:'/app/unfiled',topics:'/app/topics'})[v]||'/app');
   renderSidebar();renderDetail();loadChats()
 }
 async function loadFolders(){
   folders=await api('/api/folders');$('stat-folders').textContent=folders.length;
   const target=$('bulk-folder'),current=target.value;target.replaceChildren(new Option('Zielordner wählen',''));
-  for(const f of folders)target.add(new Option(f.name,String(f.id)));target.value=current;renderSidebar();
+  for(const f of folders)target.add(new Option(f.name,String(f.id)));target.value=current;
+  const folderMatch=location.pathname.match(/^\/app\/folders\/([1-9]\d*)(?:-[a-z0-9-]+)?$/);
+  if(folderMatch&&folders.some(f=>f.id===Number(folderMatch[1])))canonicalizeFolderPath(Number(folderMatch[1]));
+  renderSidebar();
 }
 async function loadOrganisation(){
   const [tagResult,smartResult]=await Promise.all([api('/api/tags'),api('/api/smart-folders')]);smartFolders=smartResult;tags=tagResult;
@@ -156,10 +174,15 @@ function applyRoute(){
   if(path==='/app/archive'){setView('archived',null,{keepTag:true,skipHistory:true});return}
   if(path==='/app/unfiled'){setView('unfiled',null,{keepTag:true,skipHistory:true});return}
   if(path==='/app/topics'){setView('topics',null,{keepTag:true,skipHistory:true});return}
-  let match=path.match(/^\/app\/folders\/(\d+)$/);
+  let match=path.match(/^\/app\/folders\/([1-9]\d*)(?:-[a-z0-9]+(?:-[a-z0-9]+)*)?$/);
   if(match){
     const id=Number(match[1]);
-    if(!folders.some(f=>f.id===id)){setView('all',null,{keepTag:true,skipHistory:true});message('Ordner nicht gefunden.',true);return}
+    if(!Number.isSafeInteger(id)||!folders.some(f=>f.id===id)){
+      pushRoute('/app',true);
+      setView('all',null,{keepTag:true,skipHistory:true});
+      message('Ordner nicht gefunden.',true);return
+    }
+    canonicalizeFolderPath(id);
     setView('all',id,{keepTag:true,skipHistory:true});return
   }
   match=path.match(/^\/app\/smart\/(\d+)$/);
