@@ -14,6 +14,7 @@ class DeepLinkTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             with patch.dict(os.environ,CHATIDY_DB=td+"/test.sqlite3",CHATIDY_AUTH_REQUIRED="0",CHATIDY_PUBLIC_ORIGIN=""):
                 server=ThreadingHTTPServer(("127.0.0.1",0),Handler)
+                os.environ["CHATIDY_PORT"]=str(server.server_address[1])
                 thread=threading.Thread(target=server.serve_forever,daemon=True)
                 thread.start()
                 try:
