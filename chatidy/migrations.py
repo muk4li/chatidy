@@ -19,6 +19,10 @@ MIGRATIONS = {
         "DROP TABLE messages",
         "ALTER TABLE messages_v4 RENAME TO messages",
     ),
+    5: (
+        # Origin of a chat (E3): fixed column, not a tag. All existing chats came from ChatGPT.
+        "ALTER TABLE conversations ADD COLUMN provider TEXT NOT NULL DEFAULT 'chatgpt'",
+    ),
 }
 LATEST = max(MIGRATIONS)
 

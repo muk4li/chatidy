@@ -1,4 +1,8 @@
-"""Import official ChatGPT conversations.json, preserving the current conversation branch."""
+"""Import chat exports through explicit per-format adapters into one normalized chat model.
+
+Each adapter recognizes its format by positive structural markers. Exactly one adapter
+must match a conversation object; no match or several matches abort the import.
+"""
 import io
 import json
 import zipfile
@@ -60,7 +64,7 @@ def parse_chat(raw):
                          "role": role, "content": body,
                          "timestamp": message.get("create_time"),
                          "metadata": {"source": "chatgpt", "node_id": node_id, **message}})
-    return {"id": str(raw["id"]), "title": str(raw.get("title") or "Ohne Titel"),
+    return {"id": str(raw["id"]), "provider": "chatgpt", "title": str(raw.get("title") or "Ohne Titel"),
             "created": raw.get("create_time"), "updated": raw.get("update_time"),
             "project": str(raw.get("conversation_template_id") or ""),
             "archived": bool(raw.get("is_archived", False)),
@@ -98,13 +102,42 @@ def parse_extractor_chat(raw):
                          "content":body,
                          "timestamp":unix_time(item.get("timestamp")),
                          "metadata":{"source":"extractor", **item}})
-    return {"id":cid,"title":str(raw.get("title") or "Ohne Titel"),
+    return {"id":cid,"provider":"chatgpt","title":str(raw.get("title") or "Ohne Titel"),
             "created":unix_time(raw.get("created")),
             "updated":unix_time(raw.get("updated")),
             "project":str(raw.get("project_id") or ""),
             "archived":bool(raw.get("archived",False)),
             "metadata":{"source":"extractor", **{k:v for k,v in raw.items() if k != "messages"}},
             "messages":messages}
+
+def is_chatgpt(raw):
+    """Official ChatGPT export: conversation graph in `mapping`."""
+    return "mapping" in raw
+
+
+def is_extractor(raw):
+    """chatgpt-conversation-extractor: `id` plus a message list whose entries carry `role`."""
+    messages = raw.get("messages")
+    return ("id" in raw and isinstance(messages, list)
+            and all(isinstance(item, dict) and "role" in item for item in messages))
+
+
+# Fixed adapter list (E1): name, recognizer, parser. New formats are added here.
+ADAPTERS = (
+    ("chatgpt", is_chatgpt, parse_chat),
+    ("extractor", is_extractor, parse_extractor_chat),
+)
+
+
+def detect_format(raw):
+    """Return the single matching adapter name, None for no match; several matches abort (E2)."""
+    if not isinstance(raw, dict):
+        return None
+    matches = [name for name, recognize, _ in ADAPTERS if recognize(raw)]
+    if len(matches) > 1:
+        raise ValueError("Mehrdeutiges Exportformat: Konversation passt zu mehreren Formaten. Import abgebrochen.")
+    return matches[0] if matches else None
+
 
 def parse_root(root):
     if isinstance(root,dict) and isinstance(root.get("conversations"),list):
@@ -117,7 +150,9 @@ def parse_root(root):
     for raw in root:
         if not isinstance(raw,dict):
             raise ValueError("Ungültige Konversation im Export.")
-        chat=parse_chat(raw) if "mapping" in raw else parse_extractor_chat(raw)
+        name=detect_format(raw)
+        parser=next((parse for adapter, _, parse in ADAPTERS if adapter==name), None)
+        chat=parser(raw) if parser else None
         if not chat:
             raise ValueError("Unvollständige oder unbekannte Konversation im Export.")
         parsed.append(chat)
@@ -159,8 +194,7 @@ def archive_layout(archive):
                     root = next(values)
                     roots = root.get('conversations') if isinstance(root, dict) and 'conversations' in root else [root]
                     recognized = isinstance(roots, list) and bool(roots) and all(
-                        isinstance(raw, dict) and raw.get('id') and
-                        (isinstance(raw.get('mapping'), dict) or isinstance(raw.get('messages'), list))
+                        isinstance(raw, dict) and raw.get('id') and detect_format(raw) is not None
                         for raw in roots)
                 finally:
                     values.close()

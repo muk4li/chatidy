@@ -338,3 +338,16 @@ unverändert. Ein fehlgeschlagener Umbau rollt Daten, Schema und Versionsnummer
 zurück. Bestehende Dateien vor dem Upgrade bei geschlossener Anwendung lokal
 sichern. Die Änderung kann zusätzliches temporäres SQLite-/WAL-Speichervolumen
 benötigen. Der private Originalexport wurde für die Entwicklung nicht untersucht.
+
+## Anbieter und Formaterkennung (Schema 5)
+
+Schema 5 ergänzt `conversations.provider` (Herkunft des Chats). Bestehende Chats erhalten
+transaktional `chatgpt`; IDs, Nachrichten, Ordner, Tags und Review bleiben unverändert, ein
+fehlgeschlagener Umbau rollt zurück. Eine noch nicht migrierte Bibliothek wird in der
+Import-Vorschau weiterhin nur gelesen; fehlende Spalten gelten dort als Standardwert.
+
+Jede Konversation wird von genau einem Format-Adapter erkannt (`chatidy/importer.py`, `ADAPTERS`):
+offizieller ChatGPT-Export über `mapping`, chatgpt-conversation-extractor über `id` plus
+`messages[]` mit `role`. Passt kein Adapter, bricht der Import mit „unbekannte Konversation“ ab;
+passen mehrere, mit „Mehrdeutiges Exportformat“. Früher wurde alles ohne `mapping` als Extractor
+gelesen. `/api/chats?provider=…` filtert, `/api/stats` liefert zusätzlich `providers` (additiv).

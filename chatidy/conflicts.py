@@ -53,8 +53,10 @@ def classify_chat(db, chat):
             if key in old_meta and old_meta[key] != value:
                 return 'identity'
             additions |= key not in old_meta
-    for key, default in (('title', ''), ('created', None), ('project', ''), ('archived', False)):
-        if existing.get(key) != chat.get(key, default):
+    for key, default in (('title', ''), ('created', None), ('project', ''), ('archived', False), ('provider', 'chatgpt')):
+        # Read-only previews may see a not yet migrated library without newer columns;
+        # a missing column means the schema default (all pre-provider chats are ChatGPT).
+        if existing.get(key, default) != chat.get(key, default):
             return 'identity'
     old_meta = json.loads(existing.get('metadata', '{}'))
     for key, value in chat.get('metadata', {}).items():

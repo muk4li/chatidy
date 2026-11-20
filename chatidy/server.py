@@ -79,7 +79,7 @@ class Handler(BaseHTTPRequestHandler):
                 if path=="/api/folders":
                     return self.send(200,list_folders(db))
                 if path=="/api/chats":
-                    options = {key: query[key][0] for key in ("q", "mode", "tag", "project") if key in query}
+                    options = {key: query[key][0] for key in ("q", "mode", "tag", "project", "provider") if key in query}
                     if "smart" in query:
                         options = organisation.smart_query(db, int(query["smart"][0]))
                     folder=int(query["folder"][0]) if "folder" in query else None

@@ -69,7 +69,8 @@ class ImportPreviewTests(unittest.TestCase):
         import sqlite3
         with patch('chatidy.migrations.LATEST', 3):
             db = connect(self.path)
-            upsert(db, parse_export(json.dumps([conversation(0)]).encode(), 'synthetic.json'))
+            from legacy_schema import legacy_upsert
+            legacy_upsert(db, parse_export(json.dumps([conversation(0)]).encode(), 'synthetic.json'))
             db.close()
         before = self.path.read_bytes()
         job = self.analyze()
@@ -79,7 +80,8 @@ class ImportPreviewTests(unittest.TestCase):
         self.assertEqual(self.path.read_bytes(), before)
         self.assertEqual(self.commit(job)['state'], 'done')
         db = connect(self.path)
-        self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0], 4)
+        from chatidy.migrations import LATEST
+        self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0], LATEST)
         self.assertEqual(len(list_chats(db)), 8)
         db.close()
 

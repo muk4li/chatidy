@@ -130,12 +130,14 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - Tests: Commit-/Branch-Zuordnung und CI-Matrix prüfen. Manueller PR-Link:
   https://github.com/muk4li/chatidy/pull/new/feature/segmented-export-preview
 
-## PROV-001 – Anbieterneutrale Importbasis (Planung)
-- Priorität: P2; Status: Offen – geplant, kein Umsetzungsauftrag. Entscheidungen/Risiken: ROADMAP Phase 6.
-- Komponenten: Importer, Archivinventar, Migrationen, UI. Abhängigkeiten: EXP-001, DATA-001, IMP-001.
-- [ ] Bestehende Formate (ChatGPT offiziell, Extractor) als Adapter mit ausdrücklicher Erkennung (E1/E2).
-- [ ] Migration: `conversations.provider`, Bestand `chatgpt`; Format/Adapterversion in `metadata.source` (E3).
-- [ ] Anbieter-Badge pro Chat und Anbieterfilter in der Navigation.
+## PROV-001 – Anbieterneutrale Importbasis
+- Priorität: P2; Status: Implementiert (Backend); UI-Teil nach PROV-002 verschoben. Verifikation: aktuellerStand.md.
+- Komponenten: Importer, Archivinventar, Migrationen, API. Abhängigkeiten: EXP-001, DATA-001, IMP-001.
+- [x] Bestehende Formate (ChatGPT offiziell, Extractor) als Adapter mit ausdrücklicher Erkennung (E1/E2);
+  gilt auch für die Strukturerkennung in ZIPs ohne offizielle Dateinamen.
+- [x] Migration 5: `conversations.provider`, Bestand `chatgpt` (E3). Format steht weiter in `metadata.source`.
+- [x] API: `/api/chats?provider=`, `/api/stats.providers` (additiv); Anbieter Teil der Reimport-Identität.
+- [ ] → PROV-002: Anbieter-Badge pro Chat und Anbieterfilter in der Navigation (erst mit zweitem Anbieter sinnvoll).
 - Akzeptanz: Bestandsdaten, IDs, Zuordnungen und Reimport-Verhalten unverändert; mehrdeutige Formate brechen ab.
 - Tests: Migration von Schema 4, Erkennung/Mehrdeutigkeit, Reimport, API/DOM/Browser.
   Pflicht-Regressionstest: Objekt mit `messages` ohne Extractor-Merkmale (z. B. `sender` statt `role`)
@@ -148,6 +150,7 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - [ ] Zweige über `parent_message_uuid`, aktueller Zweig = spätestes Blatt, übrige Zweige in Metadaten (E10).
 - [ ] Lese-/Suchtext nur aus `text`-Blöcken und `extracted_content`; Tool-/Thinking-Blöcke als Kurzzeile (E11).
 - [ ] Keine URL aus Importdaten laden (E12); Nicht-Gesprächs-ZIPs mit klarer Meldung ablehnen (E13).
+- [ ] Anbieter-Badge pro Chat und Anbieterfilter in der Navigation (aus PROV-001 übernommen).
 - [ ] `chat_messages` → normalisiertes Modell; `human`→`user`; Text aus Textblöcken, Fallback `text` (E5).
 - [ ] IDs `claude:<uuid>` (E4); Rohdaten inkl. Thinking/Tools/`extracted_content` in `metadata`.
 - [ ] `projects.json`, `memories.json`, `users.json` als Metadaten inventarisieren, sensible markieren (E9).
@@ -159,7 +162,7 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
   gemischter Bestand, Reimport/Konflikte. Grenze: Batch-ZIPs großer Konten ungeprüft.
 
 ## CGPT-001 – Denk- und Reasoning-Nachrichten im ChatGPT-Import lesbar machen
-- Priorität: P2; Status: Implementiert (PR, Verifikation siehe aktuellerStand.md); Echtdaten-Sichtprüfung durch Nutzer offen.
+- Priorität: P2; Status: Abgeschlossen – PR #17 gemergt; Sichtprüfung mit echtem Export durch Nutzer bestanden (2026-11-20).
 - Komponenten: Leseansicht (`web/reading.js`, `web/app.js`). Abhängigkeiten: keine; passt zu E11.
 - [x] `thoughts`/`reasoning_recap` als eingeklappter Block („💭 Nachgedacht für …“ mit Schritten) statt
   „[Nicht-textueller Inhalt]“; aufeinanderfolgende `thoughts` + `reasoning_recap` werden ein Block.

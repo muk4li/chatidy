@@ -59,7 +59,7 @@ setzen; Chatidy verschiebt oder sucht diese Dateien nicht automatisch.
 - Neue Datenbanken starten mit acht ChatGPT-Kategorien. Vorhandene Ordner,
   Zuordnungen und Regeln bleiben unverändert; entfernte Ordner werden nicht neu angelegt.
 
-[Bedienung, Reimport-Regeln, Segmente, Jobs, Windows-Storage und Schema 4](docs/import-details.md).
+[Bedienung, Reimport-Regeln, Segmente, Jobs, Windows-Storage, Schema 4 und 5](docs/import-details.md).
 Dort stehen auch Ollama-Einrichtung, Extractor-Metadaten und die lokalen APIs.
 
 ## Datenschutz
@@ -85,7 +85,8 @@ Umgebungsvariablen für den Start im Terminal setzen.
 
 Vor Upgrade/Sicherung Anwendung beenden (Strg+C); Datenbankordner inklusive
 vorhandener `-wal`/`-shm`-Dateien und Originalexport separat außerhalb des Repos
-sichern. Schema 4 benötigt gegebenenfalls zusätzlichen temporären SQLite-/WAL-Platz.
+sichern. Schema 4 benötigt gegebenenfalls zusätzlichen temporären SQLite-/WAL-Platz;
+Schema 5 ergänzt nur die Spalte `provider` (bestehende Chats: `chatgpt`).
 
 ## Grenzen
 

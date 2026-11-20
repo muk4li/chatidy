@@ -168,13 +168,14 @@ def upsert(db, chats):
                                      "Bitte einen vollständigen Export desselben Gesprächszweigs verwenden. "
                                      "Import abgebrochen.")
             db.execute("""
-              INSERT INTO conversations(id,title,created,updated,project,archived,metadata)
-              VALUES(?,?,?,?,?,?,?)
+              INSERT INTO conversations(id,title,created,updated,project,archived,metadata,provider)
+              VALUES(?,?,?,?,?,?,?,?)
               ON CONFLICT(id) DO UPDATE SET title=excluded.title,
               created=excluded.created,updated=excluded.updated,
               project=excluded.project,archived=excluded.archived,metadata=excluded.metadata
             """, (cid, chat["title"],chat.get("created"),updated,
-                  chat.get("project") or "",int(chat.get("archived",False)),json.dumps(metadata, ensure_ascii=False)))
+                  chat.get("project") or "",int(chat.get("archived",False)),json.dumps(metadata, ensure_ascii=False),
+                  chat.get("provider") or "chatgpt"))
             db.execute("DELETE FROM messages WHERE conversation_id=?", (cid,))
             # Identity is (conversation_id, original message id). Never REPLACE:
             # duplicates within a conversation still fail atomically.
@@ -188,7 +189,7 @@ def upsert(db, chats):
             count+=1
     return count
 
-def list_chats(db, q="", folder=None, mode="all", limit=250, offset=0, tag=None, project=None):
+def list_chats(db, q="", folder=None, mode="all", limit=250, offset=0, tag=None, project=None, provider=None):
     sql="""SELECT c.*, (SELECT COUNT(*) FROM messages m WHERE m.conversation_id=c.id)
              AS message_count,
              (SELECT COUNT(*) FROM memberships g WHERE g.conversation_id=c.id) AS groups_count
@@ -207,6 +208,9 @@ def list_chats(db, q="", folder=None, mode="all", limit=250, offset=0, tag=None,
     if project:
         sql+=" AND c.project=?"
         args.append(project)
+    if provider:
+        sql+=" AND c.provider=?"
+        args.append(str(provider))
     if mode=="inbox":
         sql+=" AND c.reviewed=0"
     elif mode=="archived":
@@ -269,4 +273,6 @@ def stats(db):
             "inbox":db.execute("SELECT COUNT(*) FROM conversations WHERE reviewed=0").fetchone()[0],
             "archived":db.execute("SELECT COUNT(*) FROM conversations WHERE archived=1").fetchone()[0],
             "unfiled":db.execute("SELECT COUNT(*) FROM conversations c WHERE NOT EXISTS("
-                                 "SELECT 1 FROM memberships g WHERE g.conversation_id=c.id)").fetchone()[0]}
+                                 "SELECT 1 FROM memberships g WHERE g.conversation_id=c.id)").fetchone()[0],
+            "providers":{row[0]:row[1] for row in db.execute(
+                "SELECT provider,COUNT(*) FROM conversations GROUP BY provider ORDER BY provider")}}
