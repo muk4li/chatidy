@@ -231,3 +231,12 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - [x] Zweites Eigentümerkonto nicht automatisch gestattet.
 - [x] Keine Übernahme bestehender Chats; synthetische Regressionstests.
 - [ ] Vor praktischem Einsatz IdP und Benutzerisolation vollständig prüfen.
+
+## AUTH-005 – Interne Isolation von SQLite-Bibliotheken und Importjobs
+- Priorität: P1; Status: gestapelter Draft-PR, CI und Architektur-Review offen.
+- [x] Kontextgebundene Kontodatenbank aus vertrauenswürdiger numerischer ID.
+- [x] Worker-Thread übernimmt sicheren Jobkontext; keine globalen Env-Umschaltungen.
+- [x] Synthetische Tests für gleiche Chat-ID in zwei Bibliotheken und getrennte Jobs.
+- [ ] Vor öffentlichem Betrieb: Architekturvariante freigeben, HTTP/OIDC-Session
+  anbinden, Windows-/Dateisystem-Grenzen und Negativtests vollständig prüfen.
+- [ ] Bestandsdaten nur per gesonderter, ausdrücklich bestätigter Migration.

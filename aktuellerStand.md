@@ -1,3 +1,13 @@
+## AUTH-005 – Konto-Speicherkontext (Draft-PR)
+
+Eigene SQLite-Bibliotheken und Importjobs je vertrauenswürdiger interner ID,
+per Thread-Kontext statt globaler Umgebungsvariable; Hintergrundarbeiter
+übernehmen den Kontext. Lokal und ungebunden unverändert. Keine HTTP-
+Integration, Tokenprüfung, Berechtigungsvergabe oder Bestandsmigration.
+CI/Architektur- und native Windows-Tests vor Betrieb auswerten.
+
+---
+
 ## AUTH-004 – Explizite OIDC-Kontoeinschreibung (Draft-PR)
 
 Lokales CLI für vom Administrator vorher verifizierte OIDC-Issuer/Subjekt-

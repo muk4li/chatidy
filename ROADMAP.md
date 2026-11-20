@@ -206,3 +206,7 @@ Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md 
 - **AUTH-004 (Draft, gestapelt auf AUTH-003):** administrativ bestätigte
   lokale Kontoeinschreibung. Kein Browser-/Login-/Import-Zugriff und keine
   automatische Bestandsübernahme.
+
+- **AUTH-005 (Draft):** interner Kontext für getrennte Kontobibliotheken und
+  Importjobs, ohne bereits HTTP oder Authentik anzubinden. Speicher-Modell
+  ist noch im Review, keine öffentliche Freigabe.
