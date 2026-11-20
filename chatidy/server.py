@@ -206,6 +206,12 @@ class Handler(BaseHTTPRequestHandler):
         if path in STATIC:
             file,kind=STATIC[path]
             return self.send(200,(ROOT/file).read_bytes(),kind)
+        # Deep links load the same SPA. Authentication is already enforced by
+        # do_GET before this branch; no user identity is encoded in the URL.
+        if (path in ("/app/", "/app/import", "/app/inbox", "/app/archive",
+                     "/app/unfiled", "/app/topics")
+                or path.startswith(("/app/folders/", "/app/chats/", "/app/smart/"))):
+            return self.send(200,(ROOT/"web/index.html").read_bytes(),"text/html; charset=utf-8")
         query=parse_qs(urlsplit(self.path).query)
         try:
             if path=="/api/import/jobs":
