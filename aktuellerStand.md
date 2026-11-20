@@ -20,6 +20,8 @@
   Nutzer). META-001, SCALE-001, UX-001 (Rest), KNOW-001, AUTO-001 (Gruppenvorschläge
   für viele Chats), DATA-002 bleiben Backlog. Neu geplant (nur Doku, kein Code):
   Mehrere Chat-Anbieter inkl. Claude-Export, ROADMAP Phase 6 / PROV-001 bis PROV-003.
+  Claude- und ChatGPT-Exportstruktur am 2026-11-20 anhand echter Exporte (nur Schlüssel) geprüft;
+  Claude-Zweige bestätigt. Neu im Backlog: CGPT-001, PROV-004.
   Nur Loopback; kein Remote-Login (Centrality F-02). Kein manueller Windows-11-Test
   der neuen Oberfläche.
 - **Nächster Schritt:** Oberfläche lokal ausprobieren und Rückmeldung geben; danach
