@@ -233,3 +233,6 @@ Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md 
 
 - **AUTH-016 (Draft):** Produkttexte für localhost und späteren OIDC-
   Serverbetrieb konsistent; keine neue öffentliche Freigabe.
+
+- **AUTH-017 (Draft):** prüfbarer Tabelleninhalt-Vergleich und synthetische
+  SQLite-Backup-Wiederherstellung vor tatsächlicher Eigentümermigration.

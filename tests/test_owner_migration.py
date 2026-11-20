@@ -48,6 +48,23 @@ class MigrationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             copy_legacy(self.source,1,confirmed=True,server_stopped=True)
 
+    def test_backup_can_be_restored_separately_and_management_lock_is_not_a_job(self):
+        import sqlite3
+        jobs_dir=Path(self.t.name)/"import-jobs"
+        jobs_dir.mkdir()
+        (jobs_dir/"management.lock").write_bytes(b"")
+        result=copy_legacy(self.source,1,confirmed=True,server_stopped=True)
+        self.assertEqual(result["conversations"],1)
+        backup=Path(self.t.name)/"backups"/"chatidy-before-owner-migration-1.sqlite3"
+        restored=Path(self.t.name)/"restored-offline.sqlite3"
+        with closing(sqlite3.connect(backup)) as src, closing(sqlite3.connect(restored)) as dst:
+            src.backup(dst)
+        with closing(connect(restored)) as db:
+            self.assertEqual(chat_detail(db,"synthetic-chat"),self.original)
+            self.assertEqual(db.execute("PRAGMA integrity_check").fetchone()[0],"ok")
+            self.assertEqual(db.execute("PRAGMA foreign_key_check").fetchall(),[])
+        self.assertTrue(self.source.exists())
+
     def test_member_cannot_receive_legacy_data(self):
         with closing(connect(self.source)) as db:
             with db:

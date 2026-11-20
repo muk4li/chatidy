@@ -53,7 +53,7 @@ def copy_legacy(registry_path, user_id, *, confirmed=False, server_stopped=False
             user = User(row["id"],row["oidc_issuer"],row["oidc_sub"],row["role"],row["display_name"])
             # Import jobs are never moved silently; stop and handle them separately.
             jobs_dir=registry_path.parent/"import-jobs"
-            if jobs_dir.exists() and any(jobs_dir.iterdir()):
+            if jobs_dir.exists() and any(entry.name!="management.lock" for entry in jobs_dir.iterdir()):
                 raise ValueError("Bestands-Importjobs müssen zuerst administrativ geprüft werden.")
             snapshots={table:_snapshot(registry,table) for table in DATA_TABLES}
         if target.exists():
@@ -79,9 +79,10 @@ def copy_legacy(registry_path, user_id, *, confirmed=False, server_stopped=False
                       FROM (SELECT content FROM messages m WHERE m.conversation_id=c.id
                       AND m.content!='[Nicht-textueller Inhalt]' ORDER BY m.position,m.rowid)),'')
                       FROM conversations c""")
-                for table,(_,rows) in snapshots.items():
-                    if account.execute("SELECT count(*) FROM "+table).fetchone()[0]!=len(rows):
-                        raise ValueError("Migrationsprüfung fehlgeschlagen.")
+                for table,(columns,rows) in snapshots.items():
+                    target_columns,target_rows=_snapshot(account,table)
+                    if target_columns!=columns or target_rows!=rows:
+                        raise ValueError("Migrationsprüfung fehlgeschlagen: Datenvergleich.")
                 if account.execute("PRAGMA foreign_key_check").fetchall():
                     raise ValueError("Migrations-Fremdschlüsselprüfung fehlgeschlagen.")
                 if account.execute("PRAGMA integrity_check").fetchone()[0]!="ok":

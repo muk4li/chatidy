@@ -1,3 +1,11 @@
+## AUTH-017 – Backup-/Restoreregression (Draft)
+
+Datenmigration prüft gesamte Tabelleninhalte, ignoriert nur den persistenten
+Importjob-Registry-Lock und verweigert weiterhin echte Jobs. Test stellt
+ein Offline-Backup separat wieder her, mit Integritäts-/Fremdschlüsselprüfung.
+
+---
+
 ## AUTH-016 – Landingpage mit Login-Zielarchitektur (Draft)
 
 Texte sind nun für lokalen Betrieb und geplanten selbst betriebenen

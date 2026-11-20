@@ -298,3 +298,9 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - [x] Neutrale CTA „Bibliothek öffnen“ auf `/app`.
 - [x] Datenschutz-/Betriebstexte ohne falsche Zusage, dass Login fehlt.
 - [x] Statischer Regressionstest nur mit synthetischen UI-Beispielen.
+
+## AUTH-017 – Vollständiger Bestandsvergleich und Restore-Test
+- [x] Tabelleninhalte einschließlich Schlüssel/Metadaten beim Transfer prüfen.
+- [x] Verwaltungs-Sperrdatei allein ist kein offener Importjob.
+- [x] SQLite-Backup an separatem Pfad testweise wiederherstellen und prüfen.
+- [ ] Echte Backup-/Restore-Probe inkl. Jobs/ACL und Bestandsdaten ausstehend.

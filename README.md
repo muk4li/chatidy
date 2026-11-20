@@ -226,3 +226,13 @@ Modus als auch einen künftig freigegebenen selbst betriebenen Server,
 ohne einen öffentlichen Dienst oder bereits erfolgte Sicherheitsfreigabe
 vorzutäuschen. Der allgemeine Einstieg führt zu `/app`, das im Auth-Modus
 serverseitig zur Anmeldung weiterleitet.
+
+### AUTH-017 – Wiederherstellung der Bestandsdaten prüfen
+
+Die Offline-Migration vergleicht jetzt alle übernommenen Tabelleninhalte,
+nicht nur Zeilenzahlen. Die dauerhaft vorhandene `management.lock`-Datei
+allein verhindert den kontrollierten Migrationsschritt nicht; echte
+Importjob-Verzeichnisse müssen weiterhin vorher geprüft werden.
+Ein Regressionstest stellt das gesicherte SQLite-Backup an einem **anderen**
+Pfad wieder her und prüft Inhalt sowie Datenbankintegrität.
+Das ersetzt keinen realen Betreiber-Restore-Test vor Freigabe.
