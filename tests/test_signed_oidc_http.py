@@ -74,10 +74,10 @@ class SignedCallbackTests(unittest.TestCase):
         params=urllib.parse.parse_qs(urllib.parse.urlsplit(headers["Location"]).query)
         return params["state"][0],params["nonce"][0],headers.get_all("Set-Cookie")[0].split(";",1)[0]
 
-    def token(self,nonce,**overrides):
+    def token(self,expected_nonce,**overrides):
         now=int(time.time())
         payload={"iss":ISSUER,"sub":"synthetic-enrolled","aud":"synthetic-client",
-                 "iat":now,"exp":now+600,"nonce":nonce}
+                 "iat":now,"exp":now+600,"nonce":expected_nonce}
         payload.update(overrides)
         return self.jwt.encode(payload,self.key,algorithm="RS256",headers={"kid":"synthetic-only"})
 
@@ -105,6 +105,19 @@ class SignedCallbackTests(unittest.TestCase):
                 self.assertEqual(code,401)
                 self.assertIsNone(headers.get("Set-Cookie"))
                 self.assertEqual(self.req("/api/stats")[0],401)
+
+    def test_wrong_rsa_signature_rejected(self):
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        different_key=rsa.generate_private_key(public_exponent=65537,key_size=2048)
+        state,nonce,binding=self.start()
+        now=int(time.time())
+        payload={"iss":ISSUER,"sub":"synthetic-enrolled","aud":"synthetic-client",
+                 "iat":now,"exp":now+600,"nonce":nonce}
+        forged=self.jwt.encode(payload,different_key,algorithm="RS256",
+                               headers={"kid":"synthetic-only"})
+        status,_,headers=self.callback(forged,state,binding)
+        self.assertEqual(status,401)
+        self.assertIsNone(headers.get("Set-Cookie"))
 
     def test_signed_but_unenrolled_subject_rejected(self):
         state,nonce,binding=self.start()
