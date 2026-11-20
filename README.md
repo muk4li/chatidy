@@ -80,6 +80,14 @@ Konto-, Memory- und Artifact-ZIPs sind keine Gesprächsexporte.
 [Bedienung, Reimport-Regeln, Segmente, Jobs, Windows-Storage, Schema 4 bis 6](docs/import-details.md).
 Dort stehen auch Ollama-Einrichtung, Extractor-Metadaten und die lokalen APIs.
 
+## Mehrbenutzer-Vorbereitung (noch nicht nutzbar)
+
+Schema 7 legt lediglich eine leere `users`-Tabelle für spätere OIDC-Identitäten
+an. Es gibt **noch keinen Login, keine Benutzerisolation und keine
+Eigentümerzuordnung**. Die bisherige lokale Bibliothek, Importe und APIs
+bleiben unverändert. Die Anwendung darf weiterhin nicht öffentlich betrieben
+werden. Sicherung der bestehenden Datenbank vor einem Upgrade empfohlen.
+
 ## Datenschutz
 
 Alle Export-/Bibliotheksdaten bleiben lokal. Keine Cloud-API, Zugangsdaten,

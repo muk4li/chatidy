@@ -206,12 +206,11 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - Akzeptanz: Kernmodule bleiben unverändert; neuer Anbieter = neuer Adapter + Tests.
 - Tests: pro Adapter; Formatänderungen bekannter Anbieter als neue Fixture-Variante.
 
-## AUTH-001 – L2a: Benutzermodell und Datenisolation entwerfen
-- Priorität: P1; Status: Entwurf im Draft-PR, **keine Implementierung**.
-- Entwurf: [docs/auth-ownership-plan.md](docs/auth-ownership-plan.md).
-- [ ] RepoPilot-L1-Pilot und Centrality-ADR-007/008-Schnittstellen nachprüfen.
-- [ ] Modell mit Nutzer abstimmen; erst dann versionierte Schemaarbeit.
-- [ ] Separate PRs für technische Identität, Besitz/FK-Umstellung, OIDC/Session,
-  Bestandsmigration und öffentliche Sicherheitsprüfung.
-- Akzeptanz: Daten bleiben ohne ausdrückliche Migration unverändert; kein
-  `/app`-/API-Schutz wird vor tatsächlicher Implementierung behauptet.
+## AUTH-002 – Additive Benutzeridentitätsbasis (Schema 7)
+- Priorität: P1; Status: Implementierung auf Draft-Branch, CI/Review ausstehend.
+- [x] `users`-Schema mit internem Schlüssel, eindeutiger OIDC-Issuer/Subjekt-
+  Kombination, Anzeigeattributen, Rolle und Sperrstatus.
+- [x] Keine Kontenanlage, automatische Eigentümerzuordnung, API-/Login-Änderung.
+- [x] Synthetische Migration-, Reopen-, Eindeutigkeits- und Rollbacktests.
+- [ ] Nach RepoPilot-Modellfreigabe Besitzmodell, Datenzugriffe und Jobs isolieren.
+- Akzeptanz: alte Daten bleiben unverändert, keinerlei Remote-Freigabe.

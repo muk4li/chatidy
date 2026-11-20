@@ -1,10 +1,10 @@
-## L2a – Benutzer-/Besitzmodell (Draft-PR, Planungsstand)
+## AUTH-002 – Schema 7 (Draft-PR)
 
-Ein Architekturentwurf für spätere Mehrbenutzerfähigkeit wird unter
-`docs/auth-ownership-plan.md` bereitgestellt. Keine Schema-, Login-, Daten-
-oder Netzwerkänderung. Aktuelle lokale APIs bleiben unauthentifiziert und
-dürfen nicht öffentlich bereitgestellt werden. Die konkrete Umsetzung wartet
-auf den RepoPilot-Pilot und darauf abgestimmte Architekturentscheidungen.
+Additive Tabelle `users` für späteren authentik-OIDC-Bezug (`iss`+`sub`),
+Rolle/Status und Anzeigenamen. Keine automatische Benutzeranlage oder
+Eigentümerzuordnung. Sämtliche bisherigen Daten/API-Pfade bleiben im lokalen
+Einzelnutzermodus unverändert; **nicht** für öffentlichen Betrieb geeignet.
+Synthetische Migrations-/Rollbacktests ergänzt; tatsächlicher CI-Status siehe PR.
 
 ---
 
