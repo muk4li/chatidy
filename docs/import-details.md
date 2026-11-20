@@ -115,10 +115,16 @@ JSON-Metadaten, Anhänge/Binärressourcen, HTML-Darstellung, Begleitdateien und
 unbekannte Ressourcen. `codex.json`, `ads.json`, Kontoeinstellungen, Bibliotheks-/
 Anhangzuordnungen sowie `shared_conversations.json` und `sectioned_conversations.json`
 werden nur inventarisiert. DAT und HTML werden weder extrahiert noch ausgeführt.
-`export_manifest.json` und `sites/export_manifest.json` werden gezählt; ihre
-ungeprüften Felder bestimmen weder Segmentzahl noch Dateipfade oder Limits.
-Ein fehlendes letztes Segment ist ohne validiertes Manifest nicht nachweisbar;
-die Vorschau macht diese Grenze sichtbar.
+`export_manifest.json` und `sites/export_manifest.json` werden gezählt. Das
+Wurzel-Manifest (im selben Ordner wie die Konversationsdateien) wird nur dann
+ausgewertet, wenn es das 2026 beobachtete Schema hat: `version` (Zahl) und
+`logical_files` mit genau einem Eintrag, dessen `files` ausschließlich
+Konversationsdateien sind (`shard_count`, falls vorhanden, muss passen). Dann
+müssen die Dateinamen exakt übereinstimmen; ein fehlendes oder zusätzliches
+Segment bricht mit „Export unvollständig …“ ab. Pfade, Größen und Limits werden
+nicht aus dem Manifest übernommen. Ist das Manifest fehlerhaft, unbekannt oder
+mehrdeutig, bleibt es beim Inventar, und die Vorschau zeigt die Grenze
+„fehlendes letztes Segment nicht nachweisbar“ weiterhin an.
 
 Unbekannte Zusatzdateien blockieren einen eindeutig erkannten offiziellen Export
 nicht. Ohne offizielle Dateinamen können strukturell erkannte Conversation-/

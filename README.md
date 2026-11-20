@@ -103,8 +103,9 @@ Suchindex neu auf.
   Junctions, Symlinks, UNC-/Geräte-/Netzpfade, FAT/exFAT oder Alternate Data Streams.
   Keine unsicheren Fallbacks. Andere Plattformen können auf den synchronen API-Import
   beschränkt sein. Details zur lokalen Vertrauensgrenze stehen in der Importdokumentation.
-- Manifestschemas sind ungeprüft: ein fehlendes letztes Segment ist ohne validierte
-  Gesamtzahl nicht erkennbar. Doppelte Gesprächs-IDs im Batch werden abgelehnt.
+- Ein fehlendes letztes Segment wird nur erkannt, wenn das Wurzel-`export_manifest.json`
+  das bekannte Schema hat (aktuelle ChatGPT-Exporte); sonst bleibt es eine sichtbare Grenze.
+  Doppelte Gesprächs-IDs im Batch werden abgelehnt.
 - Aktiver Gesprächszweig und überwiegend Text; Anhänge/Bilder bleiben Referenzen.
   Kein vollständiger Medienbetrachter, keine Versionshistorie, keine automatische
   Zweigzusammenführung und kein Rundlaufexport im Originalformat. Unklare/verkürzte

@@ -1,4 +1,5 @@
-"""Classify archive names without trusting metadata or manifest schemas."""
+"""Classify archive names; validate segment completeness only against a recognizable manifest."""
+import json
 import re
 from pathlib import PurePosixPath
 
@@ -6,6 +7,42 @@ SEGMENT = re.compile(r'^conversations-(\d{1,8})\.json$', re.I)
 METADATA = frozenset(('ads.json', 'codex.json', 'conversation_asset_file_names.json',
     'library_files.json', 'sectioned_conversations.json', 'shared_conversations.json',
     'user.json', 'user_settings.json'))
+
+
+MAX_MANIFEST_BYTES = 5 * 1024 * 1024
+
+
+def manifest_segments(archive, item):
+    """Conversation file names listed by the root export_manifest.json, or None.
+
+    Observed schema (2026-11): {"version": int, "logical_files": {name: {"files": [...],
+    "sharded": bool, "shard_count": int}}, "export_files": [...]}. Only a single logical entry
+    whose files are all conversation files counts; anything else is treated as unrecognized.
+    """
+    if item.file_size > MAX_MANIFEST_BYTES:
+        return None
+    try:
+        with archive.open(item) as source:
+            value = json.loads(source.read(MAX_MANIFEST_BYTES + 1).decode('utf-8-sig'))
+    except (ValueError, UnicodeError, RecursionError):
+        return None
+    if not isinstance(value, dict) or not isinstance(value.get('version'), int) \
+            or isinstance(value.get('version'), bool) or not isinstance(value.get('logical_files'), dict):
+        return None
+    candidates = []
+    for entry in value['logical_files'].values():
+        files = entry.get('files') if isinstance(entry, dict) else None
+        if not isinstance(files, list) or not files or not all(isinstance(x, str) for x in files):
+            continue
+        names = [PurePosixPath(x.replace('\\', '/')).name.casefold() for x in files]
+        if all(n == 'conversations.json' or SEGMENT.fullmatch(n) for n in names):
+            count = entry.get('shard_count')
+            if count is not None and (not isinstance(count, int) or isinstance(count, bool) or count != len(names)):
+                return None
+            if len(set(names)) != len(names):
+                return None
+            candidates.append(set(names))
+    return candidates[0] if len(candidates) == 1 else None
 
 
 def classify(archive, max_entries, max_json_bytes):
@@ -39,7 +76,7 @@ def classify(archive, max_entries, max_json_bytes):
         elif name == 'export_manifest.json':
             counts['metadata'] += 1
             manifests += 1
-            manifest_paths.append(path)
+            manifest_paths.append((path, item))
         elif name in METADATA:
             counts['metadata'] += 1
             roles[role_names[name]] += 1
@@ -76,14 +113,32 @@ def classify(archive, max_entries, max_json_bytes):
         selected = []
         format_name = 'structured_json_archive'
     root_folder = PurePosixPath(selected[0].filename.replace('\\','/')).parent if selected else None
-    for manifest in manifest_paths:
+    validated = False
+    for manifest, item in manifest_paths:
         role = 'root_manifest' if manifest.parent == root_folder else 'site_manifest' if manifest.parent.name.casefold() == 'sites' else 'other_manifest'
         roles[role] += 1
-    if manifests:
+        if role == 'root_manifest' and selected:
+            expected = manifest_segments(archive, item)
+            if expected is not None:
+                found = {PurePosixPath(x.filename.replace('\\', '/')).name.casefold() for x in selected}
+                if expected != found:
+                    missing = sorted(expected - found)
+                    extra = sorted(found - expected)
+                    detail = (('fehlend: ' + ', '.join(missing[:5])) if missing else '') + \
+                             ('; ' if missing and extra else '') + \
+                             (('nicht im Manifest: ' + ', '.join(extra[:5])) if extra else '')
+                    raise ValueError(f'Export unvollständig: Manifest nennt {len(expected)} Konversationsdateien, '
+                                     f'im Archiv sind {len(found)} ({detail}). Bitte den vollständigen Export verwenden.')
+                validated = True
+    if validated and numbered:
+        warnings.remove('Ohne validiertes Manifest ist ein fehlendes letztes Segment nicht nachweisbar.')
+    if validated:
+        warnings.append('Konversationsdateien mit dem Export-Manifest abgeglichen: vollständig.')
+    elif manifests:
         warnings.append('Manifeste nur inventarisiert; keine Felder ungeprüft als Spezifikation verwendet.')
     if counts['metadata']:
         warnings.append('Zusätzliche JSON-Metadaten werden nicht als Gespräche importiert.')
     if counts['unknown']:
         warnings.append('Unbekannte Zusatzressourcen werden nicht ausgeführt oder extrahiert.')
     return selected, candidates, {'format': format_name, 'counts': counts, 'manifests': manifests,
-        'manifests_validated': False, 'metadata_roles': roles, 'sensitive_metadata_files': sensitive, 'warnings': warnings}
+        'manifests_validated': validated, 'metadata_roles': roles, 'sensitive_metadata_files': sensitive, 'warnings': warnings}

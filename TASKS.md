@@ -56,11 +56,14 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
   Abbruch/Wiederaufnahme, parallele Bibliotheksänderung, Windows/Linux-CI.
 
 ## META-001 – Noch unbekannte offizielle Zusatzschemas
-- Priorität: P1; Status: Offen.
+- Priorität: P1; Status: Teilweise implementiert (Manifest-Abgleich der Segmente).
 - Komponenten: Manifest-/Metadata-Adapter. Abhängigkeiten: EXP-001.
 - [ ] Nur mit dokumentiertem Schema zukünftige Metadaten interpretieren.
-- Befund 2026-11-20: Wurzel-`export_manifest.json` mit `logical_files.<name>.shard_count`/`files[]`
-  würde den Nachweis fehlender Endsegmente erlauben (Grenze aus EXP-001). Umsetzung nur auf Auftrag.
+- [x] 2026-11-20 (Auftrag des Nutzers): Wurzel-`export_manifest.json` mit erkanntem Schema
+  (`version`, genau ein `logical_files`-Eintrag nur mit Konversationsdateien, passender `shard_count`)
+  wird gegen die gefundenen Segmente abgeglichen; Abweichung = Abbruch „Export unvollständig“.
+  Unbekannte/fehlerhafte/mehrdeutige Manifeste bleiben Inventar mit Warnung. Grenze aus EXP-001 damit
+  für aktuelle ChatGPT-Exporte geschlossen. Offen: Prüfung mit echtem Export durch den Nutzer.
 - [ ] Keine privaten Exporte in Cloud/Repo anfordern; synthetische Beispiele nutzen.
 - Akzeptanz: Schema-Validierung vor Nutzung; sensible Konto-/Werbedaten nicht unnötig persistieren.
 - Tests: nicht vertrauenswürdige, fehlerhafte und zukünftige Manifestversionen.
