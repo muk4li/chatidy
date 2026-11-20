@@ -304,3 +304,9 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - [x] Verwaltungs-Sperrdatei allein ist kein offener Importjob.
 - [x] SQLite-Backup an separatem Pfad testweise wiederherstellen und prüfen.
 - [ ] Echte Backup-/Restore-Probe inkl. Jobs/ACL und Bestandsdaten ausstehend.
+
+## AUTH-018 – Signierter synthetischer OIDC-HTTP-Test
+- [x] Echte RS256-Prüfung im Callback mit selbst generiertem RSA-Schlüssel.
+- [x] Positive Session und negative Fälle für State-Replay, Nonce, Issuer,
+  Audience, Expiry und fehlende Benutzerfreigabe.
+- [ ] Authentik-Client, HTTPS-Proxy und reale Login-/Logout-Tests offen.

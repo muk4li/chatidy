@@ -236,3 +236,10 @@ Importjob-Verzeichnisse müssen weiterhin vorher geprüft werden.
 Ein Regressionstest stellt das gesicherte SQLite-Backup an einem **anderen**
 Pfad wieder her und prüft Inhalt sowie Datenbankintegrität.
 Das ersetzt keinen realen Betreiber-Restore-Test vor Freigabe.
+
+### AUTH-018 – Vollständiger synthetischer OIDC-Signaturtest
+
+Mit eigens im Test erzeugtem RSA-Schlüssel wird der komplette HTTP-Callback
+von PKCE-State bis zur gültigen Sitzung geprüft, ebenso falsche Signatur/
+Nonce/Issuer/Audience/Expiry und nicht eingeschriebene Benutzer.
+Kein realer Identity-Provider und keine privaten Tokens. Live-Freigabe offen.

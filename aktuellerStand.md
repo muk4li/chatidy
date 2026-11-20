@@ -1,3 +1,11 @@
+## AUTH-018 – Signierter synthetischer Callbacktest (Draft)
+
+Im Test erzeugte RSA-IDs durchlaufen Tokenverifikation bis zur Session;
+Signatur-/Nonce-/Audience-/Expiry-/Enrollment-Ablehnungen werden überprüft.
+Kein Produktiv-IdP- oder Proxy-Test.
+
+---
+
 ## AUTH-017 – Backup-/Restoreregression (Draft)
 
 Datenmigration prüft gesamte Tabelleninhalte, ignoriert nur den persistenten

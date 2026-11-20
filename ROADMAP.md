@@ -236,3 +236,6 @@ Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md 
 
 - **AUTH-017 (Draft):** prüfbarer Tabelleninhalt-Vergleich und synthetische
   SQLite-Backup-Wiederherstellung vor tatsächlicher Eigentümermigration.
+
+- **AUTH-018 (Draft):** vollständige synthetische HTTP-Integrationsprüfung
+  mit signierten OIDC-ID-Tokens und Negativfällen; IdP live ausstehend.
