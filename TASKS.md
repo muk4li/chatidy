@@ -249,3 +249,10 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
   und zwei Konten mit derselben ursprünglichen Konversations-ID.
 - [ ] Live-OIDC-Callback, Logout, Cookie-/CSRF-Sicherheitsreview und native
   Windows-/Job-Tests vor öffentlicher Exposition.
+
+## AUTH-010 – Verifizierbarer Code-Exchange (Draft)
+- [x] Explizite IdP-Endpunkte, HTTPS und Redirect-Verbot für OIDC-
+  Token und JWKS, Größenlimits, PKCE-Verifier.
+- [x] Synthetische Positiv-/Negativtests ohne Live-Zugang.
+- [ ] HTTP-Login, Callback und sichere Sitzungs-Cookies integrieren;
+  IdP-Livetest/Security-Review vor Deploy.

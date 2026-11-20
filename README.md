@@ -171,3 +171,11 @@ und alle `/api/*`-Routen mit einer aktiven serverseitigen Sitzung. Danach
 wählt er die SQLite-Bibliothek und Importjobs des Benutzers. Der lokale
 Standardmodus bleibt unverändert. **Es gibt noch keinen OIDC-Login oder
 Callback: nicht öffentlich bereitstellen!**
+
+### OIDC-Code-Austausch (AUTH-010, noch kein Login)
+
+Ein gesonderter Baustein nutzt ausschließlich explizit konfigurierte HTTPS-
+Endpunkte für Tokenantwort und JWKS, begrenzt Antwortgrößen und verwirft
+Redirects. Der Token wird nicht persistiert. Verifikation erfolgt durch
+AUTH-007, Einmalsitzungen durch AUTH-008. HTTP-Callback und Cookies folgen
+separat. Keine öffentliche Freigabe oder Bestandsmigration.
