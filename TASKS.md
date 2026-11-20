@@ -256,3 +256,9 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - [x] Synthetische Positiv-/Negativtests ohne Live-Zugang.
 - [ ] HTTP-Login, Callback und sichere Sitzungs-Cookies integrieren;
   IdP-Livetest/Security-Review vor Deploy.
+
+## AUTH-011 – OIDC-Login, Callback, Logout (gestapelter Draft)
+- [x] PKCE, browsergebundener Einmal-State, sichere Sitzungs-Cookies,
+  explizit freigeschaltete User, HTTP-Logout und synthetische Negativtests.
+- [ ] Live-Provider-/Proxy-Sicherheitsprüfung, Benutzer-/Job-Isolation und
+  Bestandsmigration samt Backup/Restore vor öffentlicher Freigabe.

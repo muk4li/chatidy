@@ -215,3 +215,6 @@ Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md 
 
 - **AUTH-010 (Draft):** OIDC-Code- und JWKS-Abruf von festen HTTPS-Endpunkten;
   Callback, Cookies und öffentliche Betriebsfreigabe fehlen noch.
+
+- **AUTH-011 (Draft):** OIDC-Login/Callback/Logout im gesonderten Auth-Testmodus;
+  keine Freigabe für Produktion oder automatische Altdatenübernahme.

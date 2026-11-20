@@ -179,3 +179,12 @@ Endpunkte für Tokenantwort und JWKS, begrenzt Antwortgrößen und verwirft
 Redirects. Der Token wird nicht persistiert. Verifikation erfolgt durch
 AUTH-007, Einmalsitzungen durch AUTH-008. HTTP-Callback und Cookies folgen
 separat. Keine öffentliche Freigabe oder Bestandsmigration.
+
+### AUTH-011: OIDC-Browseranmeldung (noch keine Freigabe)
+
+Opt-in-Auth-Testmodus: `/login` startet PKCE und einmaligen, browsergebundenen
+State; `/auth/callback` führt nach signierter ID-Token-Prüfung ausschließlich
+für explizit angelegte aktive Konten eine Session ein. Das Cookie ist
+Secure/HttpOnly/SameSite=Lax. `/logout` widerruft die Sitzung per POST.
+**Nicht öffentlich betreiben**, bevor authentik-Liveprüfung, Proxy-/CSRF-
+Security-Review, Backups und Bestandsdatenmigration abgeschlossen sind.
