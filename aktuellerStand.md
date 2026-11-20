@@ -1,11 +1,10 @@
-## LAND-001 – Produkt-Landingpage (Feature-Branch, noch nicht gemergt)
+## SEARCH-001 – Inhaltsregeln und technische Platzhalter (Feature-Branch)
 
-Basis: `af9e8a45cbc4c74091681a042bc30ca2f9d0ed9e` auf main.
-Statische Produktseite unter `/`, bestehende Bibliothek unter `/app`.
-Kein Login, keine API-Sperre, keine Änderung an DB/Importer/Jobs oder Bind-Adresse.
-Nur für lokale Verwendung; PR, CI und Review stehen aus. Testnachweise sind
-im zugehörigen PR festzuhalten. Centrality ADR-007/008 bleiben für die
-zukünftige Authentifizierung und Benutzertrennung maßgeblich.
+Bestehende Inhaltsregeln durchsuchen derzeit auch technische Platzhaltertexte.
+Kleine Folgebereinigung: `apply_rules` filtert `NON_TEXT` bei der Ermittlung
+von Gesprächsinhalten, wie der Suchindex bereits seit Schema 6. Keine Änderung
+an gespeicherten Nachrichten, bestehenden Zuordnungen oder Datenbankstruktur.
+Synthetische Regressionstests ergänzt; CI/PR-Review stehen aus.
 
 ---
 

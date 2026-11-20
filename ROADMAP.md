@@ -195,13 +195,5 @@ ChatGPT-Export – Strukturbefund (2026-11-20, aktueller echter Export vom 2026-
 Synthetische und CI-Ergebnisse sind kein Test mit dem privaten Originalexport.
 Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md lesen.
 
-## Phase 7 – Öffentlicher Einstieg und Benutzerkonten (Centrality ADR-007/008)
-
-- **In Entwicklung:** LAND-001 – statische Landingpage auf `/`, bestehende lokale
-  Bibliothek auf `/app`. Keine öffentliche Exposition und kein Login in diesem Schritt.
-- **Offen:** RepoPilot-Pilot abwarten; danach authentik/OIDC, geschützte Sessions,
-  serverseitig isolierte Benutzerbibliotheken und Zugriffe auf alle Import-/API-Routen.
-- **Offen:** Erhalt und ausdrückliche getestete Zuordnung bestehender Einzelnutzerdaten,
-  Backup/Restore, Negativtests und Freigabe vor öffentlichem Betrieb.
-- Quelle der Sicherheits-/Architekturentscheidungen: privates Centrality-Repo,
-  ADR-007 und ADR-008 (keine privaten Dokumentinhalte in Chatidy kopieren).
+- **SEARCH-001 Folgekorrektur (PR offen):** Inhaltsregeln ignorieren den
+  technischen Nicht-Text-Platzhalter ohne Datenmigration oder Änderung am FTS5-Index.

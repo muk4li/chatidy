@@ -56,7 +56,7 @@ setzen; Chatidy verschiebt oder sucht diese Dateien nicht automatisch.
   Doppelklick setzt zurück. Import, Vorschau und Jobverwaltung auf eigener Seite.
 - Offizielle klassische und nummerierte Segment-ZIPs sowie Extractor-JSON;
   Analyse, Vorschau, Batch-Bestätigung und wiederaufnehmbare lokale Jobs.
-- Volltextsuche in Titeln/Nachrichten, Ordner mit Mehrfachzuordnung, Tags,
+- Volltextsuche in Titeln/Nachrichten und Inhaltsregeln ohne technische Nicht-Text-Platzhalter, Ordner mit Mehrfachzuordnung, Tags,
   Posteingang/Review, Regeln, gespeicherte Suchansichten und Themencluster.
 - Mehrfachauswahl bis 500 geladene Chats; bestätigte zusätzliche Drag-Zuordnung,
   auf Touch-Geräten über die Auswahlleiste. Keine unsichtbare Gesamtauswahl.
