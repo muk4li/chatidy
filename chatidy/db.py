@@ -313,4 +313,7 @@ def stats(db):
             "unfiled":db.execute("SELECT COUNT(*) FROM conversations c WHERE NOT EXISTS("
                                  "SELECT 1 FROM memberships g WHERE g.conversation_id=c.id)").fetchone()[0],
             "providers":{row[0]:row[1] for row in db.execute(
-                "SELECT provider,COUNT(*) FROM conversations GROUP BY provider ORDER BY provider")}}
+                "SELECT provider,COUNT(*) FROM conversations GROUP BY provider ORDER BY provider")},
+            "sources":{row[0]:row[1] for row in db.execute(
+                "SELECT json_extract(metadata, '$.source'),COUNT(*) FROM conversations "
+                "WHERE json_valid(metadata) GROUP BY json_extract(metadata, '$.source')")}}
