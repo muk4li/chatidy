@@ -4,6 +4,7 @@ HTTPS endpoints come from trusted application configuration, never from requests
 or JWT headers. HTTP redirects are rejected; no access or refresh token stored.
 """
 import json
+import base64
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -21,9 +22,16 @@ def exchange_code(settings, code, code_verifier, *, trusted_jwks, opener=None):
     if (not isinstance(code, str) or not code or len(code) > 4096
             or not isinstance(code_verifier, str) or not 43 <= len(code_verifier) <= 128):
         raise OIDCError("OIDC-Code oder PKCE-Verifier ungültig.")
+    if not isinstance(settings.client_secret, str) or not settings.client_secret.strip():
+        raise OIDCError("OIDC Confidential-Client-Secret fehlt.")
+    # OAuth 2.0 section 2.3.1: form-encode credentials before HTTP Basic.
+    # Never put the secret in a URL, form body, exception or log.
+    encoded_id = urllib.parse.quote(settings.client_id, safe="")
+    encoded_secret = urllib.parse.quote(settings.client_secret, safe="")
+    credential = base64.b64encode(
+        (encoded_id + ":" + encoded_secret).encode("utf-8")).decode("ascii")
     payload = urllib.parse.urlencode({
         "grant_type": "authorization_code",
-        "client_id": settings.client_id,
         "code": code,
         "redirect_uri": settings.redirect_uri,
         "code_verifier": code_verifier,
@@ -31,7 +39,8 @@ def exchange_code(settings, code, code_verifier, *, trusted_jwks, opener=None):
     request = urllib.request.Request(
         settings.token_endpoint, data=payload, method="POST",
         headers={"Content-Type": "application/x-www-form-urlencoded",
-                 "Accept": "application/json"})
+                 "Accept": "application/json",
+                 "Authorization": "Basic " + credential})
     transport = opener if opener is not None else urllib.request.build_opener(NoRedirect)
     try:
         with transport.open(request, timeout=12) as response:
@@ -53,12 +62,14 @@ def configured_settings(environment):
     """Validate operator-defined endpoints and exact redirect URI."""
     names = ("CHATIDY_OIDC_ISSUER", "CHATIDY_OIDC_AUTHORIZE",
              "CHATIDY_OIDC_TOKEN", "CHATIDY_OIDC_JWKS",
-             "CHATIDY_OIDC_CLIENT_ID", "CHATIDY_PUBLIC_ORIGIN")
+             "CHATIDY_OIDC_CLIENT_ID", "CHATIDY_PUBLIC_ORIGIN",
+             "CHATIDY_OIDC_CLIENT_SECRET")
     if any(not environment.get(name) for name in names):
         raise OIDCError("OIDC-Konfiguration unvollständig.")
     origin = environment["CHATIDY_PUBLIC_ORIGIN"].rstrip("/")
     values = [environment[key] for key in names[:5]]
-    return OIDCSettings(*values, origin + "/auth/callback").validate()
+    return OIDCSettings(*values, origin + "/auth/callback",
+                        client_secret=environment["CHATIDY_OIDC_CLIENT_SECRET"]).validate()
 
 
 def load_trusted_jwks(settings, *, opener=None):

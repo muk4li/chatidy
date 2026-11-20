@@ -5,13 +5,15 @@ import time
 import unittest
 from urllib.parse import parse_qs, urlsplit
 
-import jwt
-from cryptography.hazmat.primitives.asymmetric import rsa
+try:
+    import jwt
+    from cryptography.hazmat.primitives.asymmetric import rsa
+    from chatidy.oidc import (OIDCSettings, OIDCError, new_login_challenge,
+                              authorization_url, verify_id_token)
+except ImportError:
+    jwt = None
 
-from chatidy.oidc import (OIDCSettings, OIDCError, new_login_challenge,
-                          authorization_url, verify_id_token)
-
-
+@unittest.skipIf(jwt is None, "Optional OIDC dependencies not installed")
 class OIDCTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

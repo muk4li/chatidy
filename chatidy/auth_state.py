@@ -11,6 +11,7 @@ import time
 from .users import User
 
 CHALLENGE_SECONDS = 600
+MAX_PENDING_CHALLENGES = 1000
 SESSION_SECONDS = 12 * 60 * 60
 
 
@@ -25,7 +26,12 @@ def create_challenge(db, *, state, browser_binding, nonce, code_verifier, now=No
     if not isinstance(nonce, str) or len(nonce) < 32 or not isinstance(code_verifier, str) or len(code_verifier) < 32:
         raise ValueError("Ungültige OIDC-Challenge.")
     with db:
+        # DELETE acquires SQLite's writer lock; cap validation and insert
+        # run in the same transaction to prevent concurrent over-allocation.
         db.execute("DELETE FROM oidc_pending WHERE expires_at <= ?", (at,))
+        count = db.execute("SELECT count(*) FROM oidc_pending").fetchone()[0]
+        if count >= MAX_PENDING_CHALLENGES:
+            raise ValueError("Zu viele gleichzeitige Anmeldeversuche. Bitte später erneut versuchen.")
         db.execute("""INSERT INTO oidc_pending(state_hash,browser_hash,nonce,code_verifier,expires_at)
                       VALUES(?,?,?,?,?)""",
                    (_digest(state), _digest(browser_binding), nonce, code_verifier, at + CHALLENGE_SECONDS))

@@ -17,3 +17,18 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: python -m pip install -r requirements-auth.txt
       - run: python tests/run_ci.py
+
+  local-stdlib:
+    name: Local stdlib without OIDC (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      # Deliberately do not install requirements-auth.txt here.
+      - run: python tests/run_ci.py
