@@ -414,13 +414,17 @@ def main():
     if mode=="0" and public_origin:
         raise ValueError("Öffentliche Origin ohne Anmeldung ist nicht zulässig.")
     if mode=="1":
-        # Fail closed before starting a listener if auth is incomplete.
-        from .oidc_exchange import configured_settings
-        from .oidc import OIDCError
+        # Validate required variables *before* importing optional auth packages.
+        required=("CHATIDY_OIDC_ISSUER","CHATIDY_OIDC_AUTHORIZE",
+                  "CHATIDY_OIDC_TOKEN","CHATIDY_OIDC_JWKS",
+                  "CHATIDY_OIDC_CLIENT_ID","CHATIDY_PUBLIC_ORIGIN")
+        if any(not os.getenv(name) for name in required):
+            raise ValueError("Authentifizierung ist nicht vollständig konfiguriert.")
         try:
+            from .oidc_exchange import configured_settings
             configured_settings(os.environ)
-        except OIDCError as exc:
-            raise ValueError("Authentifizierung ist nicht vollständig konfiguriert.") from exc
+        except (ImportError,ValueError) as exc:
+            raise ValueError("Authentifizierung ist nicht verfügbar oder ungültig konfiguriert.") from exc
         origin=urlsplit(public_origin)
         if origin.scheme!="https" or not origin.netloc or origin.path not in ("","/"):
             raise ValueError("Auth-Modus benötigt eine gültige HTTPS-Origin.")
