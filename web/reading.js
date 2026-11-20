@@ -78,4 +78,7 @@ function readingItems(messages){
   return items;
 }
 
-if(typeof module!=='undefined')module.exports={readingItems,claudeActivity};
+// Readable messages only; matches message_count from /api/chats.
+function visibleMessageCount(messages){return (Array.isArray(messages)?messages:[]).filter(m=>m&&m.content!==PLACEHOLDER).length}
+
+if(typeof module!=='undefined')module.exports={readingItems,claudeActivity,visibleMessageCount};

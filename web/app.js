@@ -244,7 +244,7 @@ function section(title,open=true){const d=element('details','section');d.open=op
 function renderDetail(){
   const detail=$('detail');detail.replaceChildren();
   if(!details){const blank=element('div','empty detail-empty');blank.append(element('div','empty-icon','✳'),element('strong','','Kein Chat geöffnet'),element('p','','Wähle in der Liste einen Chat, um Verlauf, Gruppen und Tags zu sehen.'));detail.append(blank);return}
-  const c=details.chat;detail.append(element('h2','',c.title),element('div','muted',providerLabel(c.provider)+' · '+(c.project?'Projekt: '+c.project+' · ':'')+details.messages.length+' Nachrichten · '+date(c.updated||c.created)+(c.reviewed?' · geprüft':' · noch nicht geprüft')));
+  const c=details.chat;detail.append(element('h2','',c.title),element('div','muted',providerLabel(c.provider)+' · '+(c.project?'Projekt: '+c.project+' · ':'')+visibleMessageCount(details.messages)+' Nachrichten · '+date(c.updated||c.created)+(c.reviewed?' · geprüft':' · noch nicht geprüft')));
   const actions=element('div','detail-actions');
   actions.append(button(c.reviewed?'↺ Erneut prüfen':'✓ Geprüft',async()=>{
     try{await post('/api/review',{conversation_id:c.id,reviewed:!c.reviewed});await refresh();await showChat(c.id)}catch(e){message(e.message,true)}
@@ -261,7 +261,7 @@ function renderDetail(){
   if(details.suggestions.length)groupBody.append(element('div','notice','KI-Vorschläge: '+details.suggestions.map(x=>folders.find(f=>f.id===x.folder_id)?.name||x.folder_id).join(', ')+' – bitte über „Gruppen bearbeiten“ bestätigen.'));
   detail.append(groups);
   if(c.metadata&&Object.keys(c.metadata).length){const [meta,metaBody]=section('Gesprächsmetadaten',false);metaBody.append(element('pre','metadata-json',JSON.stringify(c.metadata,null,2)));detail.append(meta)}
-  detail.append(element('div','msglabel','Verlauf · '+details.messages.length+' Nachrichten'));
+  detail.append(element('div','msglabel','Verlauf · '+visibleMessageCount(details.messages)+' Nachrichten'));
   for(const item of readingItems(details.messages)){
     if(item.kind==='thinking'){detail.append(thinkingBlock(item));continue}
     if(item.kind==='activity'){

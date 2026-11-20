@@ -58,6 +58,9 @@ class ReadingViewTests(unittest.TestCase):
                 self.assertEqual(messages[1]["metadata"]["content"]["content_type"], "thoughts")
                 self.assertEqual(messages[1]["metadata"]["content"]["thoughts"][0]["summary"], "Synthetischer Plan")
                 self.assertEqual(messages[2]["metadata"]["content"]["content"], "Nachgedacht für 3s")
+                from chatidy.db import list_chats, stats
+                self.assertEqual(list_chats(db)[0]["message_count"], 2, "thinking nodes are not counted")
+                self.assertEqual(stats(db)["messages"], 2)
                 again = parse_export(json.dumps(thinking_export()).encode(), "conversations.json")[0]
                 self.assertEqual(classify_chat(db, again), "identical")
             finally:

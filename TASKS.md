@@ -171,8 +171,9 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
   „[Nicht-textueller Inhalt]“; aufeinanderfolgende `thoughts` + `reasoning_recap` werden ein Block.
 - [x] Nur Darstellung: gespeicherter Inhalt, Volltextsuche, Themencluster und Reimport-Identität unverändert;
   Rohdaten weiter unter „Metadaten“. Kein Neuimport nötig.
-- Grenze: Kopfzeile zählt weiter gespeicherte Nachrichten (inkl. Denkknoten); der Platzhalter bleibt im
-  Suchindex (eine Bereinigung bräuchte Importer-/Indexänderung und wäre ein eigener Auftrag).
+- [x] Nachtrag: Nachrichtenzahlen (Liste, Kopfzeile, Verlauf, Statistik) zählen nur lesbare Nachrichten;
+  Denk-/Werkzeugknoten (`[Nicht-textueller Inhalt]`) nicht mehr. Gespeicherte Daten unverändert.
+- Grenze: der Platzhalter bleibt im Suchindex (→ SEARCH-001).
 - Akzeptanz: bestehende Bibliotheken ohne Neuimport korrekt dargestellt (Darstellung aus Metadaten), kein Datenverlust.
 - Tests: synthetische Knoten je `content_type`, Reimport-Identität unverändert, DOM-Test.
 

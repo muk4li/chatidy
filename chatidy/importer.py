@@ -16,6 +16,9 @@ from .streaming import json_values
 MAX_UPLOAD = 200 * 1024 * 1024
 MAX_UNCOMPRESSED = 350 * 1024 * 1024
 MAX_ENTRIES = 12000
+# Stored content of messages without readable text (thinking, tool-only turns, other types).
+# The raw message stays in metadata; counts and the search index skip this marker.
+NON_TEXT = "[Nicht-textueller Inhalt]"
 
 def content_text(message):
     content = message.get("content") or {}
@@ -57,7 +60,7 @@ def parse_chat(raw):
         if not body.strip() and isinstance(message.get("content"), dict):
             content = message["content"]
             if content.get("content_type") not in (None, "text"):
-                body = "[Nicht-textueller Inhalt]"
+                body = NON_TEXT
         if not body.strip():
             continue
         messages.append({"id": str(message.get("id") or f"{raw['id']}:node:{node_id}"),
@@ -193,7 +196,7 @@ def parse_claude_chat(raw):
     messages = []
     for mid, item in branch:
         sender = str(item.get("sender") or "unknown")
-        body = claude_text(item) or "[Nicht-textueller Inhalt]"
+        body = claude_text(item) or NON_TEXT
         messages.append({"id": mid, "role": CLAUDE_ROLES.get(sender, sender), "content": body,
                          "timestamp": unix_time(item.get("created_at")),
                          "metadata": {"source": "claude", **item}})

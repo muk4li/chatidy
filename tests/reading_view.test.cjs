@@ -67,3 +67,11 @@ console.log('reading_view: ok');
   assert.equal(readingItems([claude('d',P,[])])[0].kind,'message');
   console.log('reading_view claude: ok');
 }
+
+// Visible message count (thinking/tool-only nodes excluded)
+{
+  const {visibleMessageCount}=require(path.join(__dirname,'..','web','reading.js'));
+  assert.equal(visibleMessageCount([{content:'a'},{content:P},{content:'b'},null]),2);
+  assert.equal(visibleMessageCount(undefined),0);
+  console.log('reading_view count: ok');
+}
