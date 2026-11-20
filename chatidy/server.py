@@ -90,7 +90,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Cache-Control","no-store")
         self.end_headers()
 
-    def _local_get(self):
+    def do_GET(self):
         if not self.same_origin():
             return self.send(403,{"error":"Ungültiger Host oder Origin."})
         if not self.auth_required():
@@ -108,7 +108,7 @@ class Handler(BaseHTTPRequestHandler):
         with account_library(user,os.getenv("CHATIDY_DB",str(DEFAULT_DATABASE))):
             return self._local_get()
 
-    def _local_post(self):
+    def do_POST(self):
         if not self.same_origin():
             return self.send(403,{"error":"Ungültiger Host oder Origin."})
         if not self.auth_required():
@@ -122,7 +122,7 @@ class Handler(BaseHTTPRequestHandler):
         with account_library(user,os.getenv("CHATIDY_DB",str(DEFAULT_DATABASE))):
             return self._local_post()
 
-    def do_GET(self):
+    def _local_get(self):
         if not self.same_origin():
             return self.send(403,{"error":"Ungültiger Host oder Origin."})
         path=unquote(urlsplit(self.path).path)
@@ -169,7 +169,7 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError,TypeError,OverflowError) as exc:
             return self.send(400,{"error":str(exc)})
 
-    def do_POST(self):
+    def _local_post(self):
         if not self.same_origin():
             return self.send(403,{"error":"Ungültiger Host oder Origin."})
         path=urlsplit(self.path).path
