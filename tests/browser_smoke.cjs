@@ -45,6 +45,9 @@ const {spawn,spawnSync}=require('node:child_process');
     await page.goto(base+'/app');
     await page.locator('#stat-folders').filter({hasText:'8'}).waitFor();
     assert.equal(await page.locator('a.brand').getAttribute('href'),'/');
+    // Startup must finish even when an account panel has no collapse button.
+    await page.waitForFunction(()=>document.getElementById('count-all').textContent==='0');
+    assert.equal(await page.locator('#stat-folders').textContent(),'8');
     const chats=[{id:'synthetic-one',title:'Synthetic One',messages:[{role:'user',content:'Synthetic SQLite question',files:[{url:'https://example.invalid/private.png'}]}]},
       {id:'synthetic-two',title:'Synthetic Two',messages:[{role:'assistant',content:'Synthetic second answer'}]}];
     await page.locator('#file-input').setInputFiles({name:'synthetic.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(chats))});
