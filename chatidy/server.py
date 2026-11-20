@@ -17,6 +17,7 @@ ROOT=Path(__file__).resolve().parent.parent
 MAX_BODY=MAX_UPLOAD
 STATIC={"/":("web/index.html","text/html; charset=utf-8"),
         "/style.css":("web/style.css","text/css; charset=utf-8"),
+        "/reading.js":("web/reading.js","text/javascript; charset=utf-8"),
         "/app.js":("web/app.js","text/javascript; charset=utf-8")}
 MODEL=os.getenv("CHATIDY_OLLAMA_MODEL","llama3.2")
 

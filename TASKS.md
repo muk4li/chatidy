@@ -159,10 +159,14 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
   gemischter Bestand, Reimport/Konflikte. Grenze: Batch-ZIPs großer Konten ungeprüft.
 
 ## CGPT-001 – Denk- und Reasoning-Nachrichten im ChatGPT-Import lesbar machen
-- Priorität: P2; Status: Offen – Befund aus echtem Export, kein Umsetzungsauftrag.
-- Komponenten: Importer (`content_text`), Leseansicht. Abhängigkeiten: keine; passt zu E11.
-- [ ] `thoughts`/`reasoning_recap` als einklappbare Kurzzeile („Denkprozess“) statt „[Nicht-textueller Inhalt]“.
-- [ ] Nicht in Volltextsuche/Themencluster; Rohdaten unverändert in `metadata`.
+- Priorität: P2; Status: Implementiert (PR, Verifikation siehe aktuellerStand.md); Echtdaten-Sichtprüfung durch Nutzer offen.
+- Komponenten: Leseansicht (`web/reading.js`, `web/app.js`). Abhängigkeiten: keine; passt zu E11.
+- [x] `thoughts`/`reasoning_recap` als eingeklappter Block („💭 Nachgedacht für …“ mit Schritten) statt
+  „[Nicht-textueller Inhalt]“; aufeinanderfolgende `thoughts` + `reasoning_recap` werden ein Block.
+- [x] Nur Darstellung: gespeicherter Inhalt, Volltextsuche, Themencluster und Reimport-Identität unverändert;
+  Rohdaten weiter unter „Metadaten“. Kein Neuimport nötig.
+- Grenze: Kopfzeile zählt weiter gespeicherte Nachrichten (inkl. Denkknoten); der Platzhalter bleibt im
+  Suchindex (eine Bereinigung bräuchte Importer-/Indexänderung und wäre ein eigener Auftrag).
 - Akzeptanz: bestehende Bibliotheken ohne Neuimport korrekt dargestellt (Darstellung aus Metadaten), kein Datenverlust.
 - Tests: synthetische Knoten je `content_type`, Reimport-Identität unverändert, DOM-Test.
 

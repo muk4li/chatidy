@@ -136,6 +136,25 @@ const {spawn,spawnSync}=require('node:child_process');
     assert.equal((await (await fetch(base+'/api/chat/synthetic-0')).json()).chat.updated,20);
     // The UI polls job state and returns to the library once it sees the finished job.
     await page.locator('#library-page').waitFor();
+    console.log('Browser checkpoint: thinking messages');
+    const rootNode={id:'client-created-root',parent:null,message:null};
+    const msg=(id,parent,content)=>({id,parent,message:{id:'m-'+id,author:{role:id==='u'?'user':'assistant'},content,create_time:1710000000}});
+    const thinking=[{id:'synthetic-thinking',title:'Synthetic Thinking',create_time:1710000000,update_time:1710000100,current_node:'a',mapping:{
+      'client-created-root':rootNode,u:msg('u','client-created-root',{content_type:'text',parts:['Synthetic question']}),
+      t:msg('t','u',{content_type:'thoughts',thoughts:[{summary:'Synthetic plan',content:'Synthetic step',chunks:[],finished:true}]}),
+      r:msg('r','t',{content_type:'reasoning_recap',content:'Nachgedacht für 3s'}),
+      a:msg('a','r',{content_type:'text',parts:['Synthetic answer']})}}];
+    response=await fetch(base+'/api/import',{method:'POST',headers:{'X-Filename':'synthetic.json'},body:JSON.stringify(thinking)});assert(response.ok);
+    await page.evaluate(()=>showChat('synthetic-thinking'));
+    const block=page.locator('#detail details.thinking');await block.waitFor();
+    assert.equal(await block.count(),1,'thoughts and recap form one block');
+    assert.match(await block.locator('summary').first().textContent(),/Nachgedacht für 3s · 1 Schritt/);
+    assert.equal(await page.locator('#detail .bubble').count(),2,'only real messages are bubbles');
+    assert(!(await page.locator('#detail').textContent()).includes('[Nicht-textueller Inhalt]'));
+    assert(!(await page.locator('#detail .thinking-title').isVisible()),'thinking is collapsed by default');
+    await block.locator('summary').first().click();
+    assert.equal(await page.locator('#detail .thinking-title').textContent(),'Synthetic plan');
+    assert.deepEqual(remote,[],'Thinking view must not load remote assets');
     await page.setViewportSize({width:390,height:844});
     assert(await page.evaluate(()=>{const buttons=[...document.querySelectorAll('#views button')];return buttons.slice(1).every((b,i)=>b.getBoundingClientRect().left>=buttons[i].getBoundingClientRect().right)}),'Mobile navigation buttons must not overlap');
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Mobile layout must fit viewport without horizontal overflow');

@@ -53,6 +53,7 @@ setzen; Chatidy verschiebt oder sucht diese Dateien nicht automatisch.
 - Mehrfachauswahl bis 500 geladene Chats; bestätigte zusätzliche Drag-Zuordnung,
   auf Touch-Geräten über die Auswahlleiste. Keine unsichtbare Gesamtauswahl.
 - Rollen, Projekt-/Nachrichtenmetadaten und Code als Text; JSON-Export bis 500 Chats.
+- ChatGPT-Denkprozesse (`thoughts`/`reasoning_recap`) als eingeklappter Block in der Leseansicht.
 - Optionale, ausdrücklich ausgelöste Ollama-Vorschläge: Titel und höchstens
   6000 Zeichen gehen an `127.0.0.1:11434`, keine autonome Zuordnung.
 - Neue Datenbanken starten mit acht ChatGPT-Kategorien. Vorhandene Ordner,

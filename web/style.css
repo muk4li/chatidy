@@ -215,3 +215,8 @@ dialog::backdrop{background:#03060ad0}
   .bulkbar select{width:100%}
   .import-zone{flex-wrap:wrap}.import-zone .primary{width:100%}
 }
+
+.thinking{margin:.35rem 0 .35rem 14px;padding:4px 10px;border-left:2px solid var(--faint);font-size:12px;color:var(--muted)}
+.thinking>summary{color:var(--muted)}
+.thinking-title{font-weight:600;margin-top:6px;color:var(--muted)}
+.thinking-text{white-space:pre-wrap;color:var(--muted)}

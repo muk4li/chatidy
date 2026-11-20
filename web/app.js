@@ -204,6 +204,17 @@ function appendContent(box,content){
     if(/^[\w+#.-]{1,20}$/.test(head))code.dataset.lang=head;box.append(code);
   });
 }
+function thinkingBlock(item){
+  const box=element('details','thinking');
+  box.append(element('summary','','💭 '+item.label+(item.steps.length?' · '+item.steps.length+(item.steps.length===1?' Schritt':' Schritte'):'')));
+  for(const step of item.steps){
+    if(step.title)box.append(element('div','thinking-title',step.title));
+    if(step.text)box.append(element('div','thinking-text',step.text));
+  }
+  const raw=element('details');raw.append(element('summary','','Metadaten'));
+  raw.append(element('pre','metadata-json',JSON.stringify(item.messages.map(m=>m.metadata),null,2)));box.append(raw);
+  return box;
+}
 function section(title,open=true){const d=element('details','section');d.open=open;d.append(element('summary','',title));const body=element('div','sectionbody');d.append(body);return [d,body]}
 function renderDetail(){
   const detail=$('detail');detail.replaceChildren();
@@ -226,7 +237,9 @@ function renderDetail(){
   detail.append(groups);
   if(c.metadata&&Object.keys(c.metadata).length){const [meta,metaBody]=section('Gesprächsmetadaten',false);metaBody.append(element('pre','metadata-json',JSON.stringify(c.metadata,null,2)));detail.append(meta)}
   detail.append(element('div','msglabel','Verlauf · '+details.messages.length+' Nachrichten'));
-  for(const m of details.messages){
+  for(const item of readingItems(details.messages)){
+    if(item.kind==='thinking'){detail.append(thinkingBlock(item));continue}
+    const m=item.message;
     const box=element('div','bubble '+(m.role==='user'?'user':'assistant'));
     box.append(element('div','role',m.role==='user'?'DU':m.role==='assistant'?'ASSISTENT':String(m.role||'Unbekannt').toUpperCase()));
     appendContent(box,m.content);
