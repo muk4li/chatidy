@@ -198,3 +198,7 @@ Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md 
 - **AUTH-002 (Schema 7, Draft-PR):** leere OIDC-Benutzertabelle als
   additive Migrationsbasis. Bestehende Bibliothek bleibt ohne Benutzerzuordnung;
   Authentifizierung und API-Berechtigungen sind weiterhin **nicht implementiert**.
+
+- **AUTH-003 (Draft, abhängig von AUTH-002):** rein serverseitiger,
+  schreibfreier Lookup für bereits angelegte, aktive OIDC-Identitäten; noch
+  keine Tokenvalidierung, Anmeldung, Sessions oder Ressourcenisolation.

@@ -86,7 +86,10 @@ Schema 7 legt lediglich eine leere `users`-Tabelle für spätere OIDC-Identität
 an. Es gibt **noch keinen Login, keine Benutzerisolation und keine
 Eigentümerzuordnung**. Die bisherige lokale Bibliothek, Importe und APIs
 bleiben unverändert. Die Anwendung darf weiterhin nicht öffentlich betrieben
-werden. Sicherung der bestehenden Datenbank vor einem Upgrade empfohlen.
+werden. Ein interner, schreibfreier Identitäts-Lookup akzeptiert nur explizit
+angelegte aktive Konten mit exakter OIDC-Issuer/Subjekt-Kombination; er ist
+**keine** Tokenprüfung oder Login-Funktion. Sicherung der bestehenden Datenbank
+vor einem Upgrade empfohlen.
 
 ## Datenschutz
 
