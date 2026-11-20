@@ -575,6 +575,74 @@ async function importFile(file){
     importJob=result.id;localStorage.setItem('chatidy-import-job',importJob);clearTimeout(importPoll);pollImport();
   }catch(e){message('Import fehlgeschlagen: '+e.message,true)}finally{$('pick-file').disabled=false}
 }
+// F-003: A multi-selection creates separate, inspectable import jobs. Each
+// file retains its own progress, failure and explicit preview confirmation.
+function uploadWithProgress(file,progress){
+  return new Promise((resolve,reject)=>{
+    const req=new XMLHttpRequest();
+    req.open('POST','/api/import/analyze');
+    req.setRequestHeader('Content-Type','application/octet-stream');
+    req.setRequestHeader('X-Filename',file.name.replace(/[^a-zA-Z0-9_.-]/g,'_'));
+    req.upload.onprogress=e=>{if(e.lengthComputable)progress(Math.round(e.loaded/e.total*100))};
+    req.onload=()=>{
+      let data;
+      try{data=JSON.parse(req.responseText)}catch{reject(new Error('Ungültige Serverantwort.'));return}
+      if(req.status>=200&&req.status<300)resolve(data);
+      else reject(new Error(data.error||'Upload fehlgeschlagen ('+req.status+').'))
+    };
+    req.onerror=()=>reject(new Error('Verbindung beim Upload unterbrochen.'));
+    req.send(file)
+  })
+}
+function multiStatus(file){
+  const row=element('div','multi-upload-row');
+  const name=element('strong','',file.name);
+  const state=element('span','muted','Wartet auf Upload');
+  const actions=element('div','multi-upload-actions');
+  row.append(name,state,actions);$('multi-upload-status').append(row);
+  return {state,actions}
+}
+async function monitorMultiJob(id,row){
+  try{
+    const status=await api('/api/import/jobs/'+id);
+    row.state.textContent=jobLabels[status.state]||status.state;
+    if(status.error)row.state.textContent+=' · '+status.error;
+    if(status.state==='awaiting_confirmation'){
+      row.actions.replaceChildren(button('Vorschau öffnen',async()=>{
+        importJob=id;localStorage.setItem('chatidy-import-job',id);
+        showPage('import');await pollImport();
+        $('import-preview').scrollIntoView({block:'start'});
+      }));
+    }else if(status.active||status.state==='uploaded'||status.state==='committing'){
+      setTimeout(()=>monitorMultiJob(id,row),1800);
+    }
+  }catch(e){row.state.textContent='Statusfehler: '+e.message}
+}
+async function importFiles(files){
+  const list=Array.from(files||[]);
+  if(!list.length)return;
+  if(list.length===1){await importFile(list[0]);return}
+  showPage('import');
+  $('multi-upload-status').hidden=false;
+  $('multi-upload-status').replaceChildren(element('strong','','Mehrfachauswahl: '+list.length+' Dateien – jede Vorschau einzeln prüfen und bestätigen'));
+  if(list.length>20){message('Bitte höchstens 20 Dateien gleichzeitig auswählen.',true);return}
+  $('pick-file').disabled=true;
+  try{
+    for(const file of list){
+      const row=multiStatus(file);
+      if(!/\.(json|zip)$/i.test(file.name)){row.state.textContent='Fehler: nur ZIP/JSON erlaubt';continue}
+      if(!file.size||file.size>200*1024*1024){row.state.textContent='Fehler: leer oder größer als 200 MB';continue}
+      try{
+        row.state.textContent='Upload läuft: 0 %';
+        const result=await uploadWithProgress(file,value=>row.state.textContent='Upload läuft: '+value+' %');
+        row.state.textContent='Hochgeladen · Server prüft …';
+        monitorMultiJob(result.id,row);
+      }catch(e){row.state.textContent='Fehler: '+e.message}
+    }
+    await loadJobs();
+    message('Dateien übermittelt. Bitte für jede Datei die Vorschau öffnen und den Import bestätigen.');
+  }finally{$('pick-file').disabled=false}
+}
 if(importJob){page='import';$('import-page').hidden=false;$('library-page').hidden=true;document.body.classList.add('page-import');pollImport()}
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
 document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{showPage(b.dataset.page);if(b.dataset.page==='import')loadJobs()});
@@ -594,10 +662,11 @@ $('new-folder').onclick=createFolder;$('new-rule').onclick=rulesModal;$('export'
 $('refresh').onclick=refresh;$('more').onclick=()=>loadChats(true);$('clear').onclick=()=>{$('search').value='';offset=0;syncRouteQuery();loadChats();$('search').focus()};
 $('search').oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{offset=0;syncRouteQuery();loadChats()},250)};
 for(const id of ['date-from','date-to','date-sort','undated'])$(id).onchange=()=>{updateUndatedControls();offset=0;syncRouteQuery();loadChats()};
-$('pick-file').onclick=()=>$('file-input').click();$('file-input').onchange=e=>importFile(e.target.files[0]);
+$('pick-file').onclick=()=>$('file-input').click();
+$('file-input').onchange=e=>{const files=Array.from(e.target.files);e.target.value='';importFiles(files)};
 const drop=$('dropzone');for(const type of ['dragenter','dragover'])drop.addEventListener(type,e=>{e.preventDefault();drop.classList.add('drag')});
 for(const type of ['dragleave','drop'])drop.addEventListener(type,e=>{e.preventDefault();drop.classList.remove('drag')});
-drop.addEventListener('drop',e=>importFile(e.dataTransfer.files[0]));
+drop.addEventListener('drop',e=>importFiles(e.dataTransfer.files));
 // Collapsible sidebar sections (state is a per-browser convenience only).
 const closedSections=new Set(store.get('chatidy-closed-sections',[]));
 document.querySelectorAll('.navsection').forEach(section=>{
