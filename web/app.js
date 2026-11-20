@@ -622,6 +622,13 @@ async function importFiles(files){
   const list=Array.from(files||[]);
   if(!list.length)return;
   if(list.length===1){await importFile(list[0]);return}
+  // A previous single-file job keeps its server-side status, but must not
+  // unexpectedly redirect away from the newly selected multi-file queue.
+  clearTimeout(importPoll);
+  importJob=null;
+  localStorage.removeItem('chatidy-import-job');
+  $('import-status').hidden=true;
+  $('import-preview').hidden=true;
   showPage('import');
   $('multi-upload-status').hidden=false;
   $('multi-upload-status').replaceChildren(element('strong','','Mehrfachauswahl: '+list.length+' Dateien – jede Vorschau einzeln prüfen und bestätigen'));

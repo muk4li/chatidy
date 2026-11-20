@@ -246,7 +246,7 @@ a.brand:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-
 .filter-check input{accent-color:var(--accent)}
 #date-sort{min-width:130px}
 .multi-upload-status{display:grid;gap:8px;margin:12px 0}
-.multi-upload-row{border:1px solid var(--stroke);border-radius:10px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.multi-upload-row{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
 .multi-upload-row strong{overflow-wrap:anywhere;flex:1;min-width:140px}
 .multi-upload-row .muted{font-size:12px}
 .multi-upload-actions{margin-left:auto}
