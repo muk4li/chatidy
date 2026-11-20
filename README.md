@@ -46,6 +46,11 @@ Start im Repo-Root ändert sich kein Speicherort, es ist keine Migration nötig.
 Für vorhandene Daten außerhalb des Projektordners deren bisherigen Pfad explizit
 setzen; Chatidy verschiebt oder sucht diese Dateien nicht automatisch.
 
+Die Importseite erläutert die unterstützten Formate unter **„Welchen Export kann ich auswählen?“**.
+Für ChatGPT das gesamte Export-ZIP auswählen; bei Claude das ZIP der Kategorie
+`conversations` (z. B. `conversations-000.zip`) oder `conversations.json`.
+Konto-, Memory- und Artifact-ZIPs sind keine Gesprächsexporte.
+
 ## Funktionen
 
 - Dreigeteilte Oberfläche: links Ansichten mit Anzahl (Alle, Posteingang, Archiviert,

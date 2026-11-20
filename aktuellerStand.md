@@ -1,10 +1,11 @@
-## SEARCH-001 – Inhaltsregeln und technische Platzhalter (Feature-Branch)
+## UX-002 – Import-Hilfe für mehrere Anbieter (Feature-Branch)
 
-Bestehende Inhaltsregeln durchsuchen derzeit auch technische Platzhaltertexte.
-Kleine Folgebereinigung: `apply_rules` filtert `NON_TEXT` bei der Ermittlung
-von Gesprächsinhalten, wie der Suchindex bereits seit Schema 6. Keine Änderung
-an gespeicherten Nachrichten, bestehenden Zuordnungen oder Datenbankstruktur.
-Synthetische Regressionstests ergänzt; CI/PR-Review stehen aus.
+Basis: `af9e8a45cbc4c74091681a042bc30ca2f9d0ed9e` auf `main`.
+Die Importseite nennt ChatGPT, Claude und Extractor ausdrücklich und erklärt
+welche Claude-Kategorie-ZIPs importierbar sind. Die Hilfe ist per nativer
+`details`-Komponente einklappbar. Keine neue Abhängigkeit oder Änderung am
+Import-Workflow, Datenmodell, Speicherort und Netzwerk. Tests im PR/CI prüfen;
+manueller Echttest bleibt ausstehend.
 
 ---
 
