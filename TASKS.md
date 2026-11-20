@@ -206,11 +206,12 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - Akzeptanz: Kernmodule bleiben unverändert; neuer Anbieter = neuer Adapter + Tests.
 - Tests: pro Adapter; Formatänderungen bekannter Anbieter als neue Fixture-Variante.
 
-## UX-002 – Anbieterübergreifende Import-Hilfe
-- Priorität: P2; Status: Auf Feature-Branch umgesetzt, Review/CI offen.
-- [x] Neutrale Überschrift statt „ChatGPT-Export importieren“.
-- [x] Einklappbare Hinweise für ChatGPT, Claude und Extractor; Beschränkungen
-  für Claude-Kategorie-ZIPs und Codex-Aufgaben erklären.
-- [x] Rein statische Änderung, keine Änderung an Import-/Identitätslogik oder Storage.
-- Akzeptanz: bestehender Import-Workflow bleibt unverändert; Hinweis
-  mit Tastatur erreichbar und in synthetischem Browser-/HTTP-Test erfasst.
+## AUTH-001 – L2a: Benutzermodell und Datenisolation entwerfen
+- Priorität: P1; Status: Entwurf im Draft-PR, **keine Implementierung**.
+- Entwurf: [docs/auth-ownership-plan.md](docs/auth-ownership-plan.md).
+- [ ] RepoPilot-L1-Pilot und Centrality-ADR-007/008-Schnittstellen nachprüfen.
+- [ ] Modell mit Nutzer abstimmen; erst dann versionierte Schemaarbeit.
+- [ ] Separate PRs für technische Identität, Besitz/FK-Umstellung, OIDC/Session,
+  Bestandsmigration und öffentliche Sicherheitsprüfung.
+- Akzeptanz: Daten bleiben ohne ausdrückliche Migration unverändert; kein
+  `/app`-/API-Schutz wird vor tatsächlicher Implementierung behauptet.

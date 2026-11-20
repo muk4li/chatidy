@@ -1,11 +1,10 @@
-## UX-002 – Import-Hilfe für mehrere Anbieter (Feature-Branch)
+## L2a – Benutzer-/Besitzmodell (Draft-PR, Planungsstand)
 
-Basis: `af9e8a45cbc4c74091681a042bc30ca2f9d0ed9e` auf `main`.
-Die Importseite nennt ChatGPT, Claude und Extractor ausdrücklich und erklärt
-welche Claude-Kategorie-ZIPs importierbar sind. Die Hilfe ist per nativer
-`details`-Komponente einklappbar. Keine neue Abhängigkeit oder Änderung am
-Import-Workflow, Datenmodell, Speicherort und Netzwerk. Tests im PR/CI prüfen;
-manueller Echttest bleibt ausstehend.
+Ein Architekturentwurf für spätere Mehrbenutzerfähigkeit wird unter
+`docs/auth-ownership-plan.md` bereitgestellt. Keine Schema-, Login-, Daten-
+oder Netzwerkänderung. Aktuelle lokale APIs bleiben unauthentifiziert und
+dürfen nicht öffentlich bereitgestellt werden. Die konkrete Umsetzung wartet
+auf den RepoPilot-Pilot und darauf abgestimmte Architekturentscheidungen.
 
 ---
 
