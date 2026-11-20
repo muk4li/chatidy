@@ -205,3 +205,13 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - Nicht im Umfang: Messenger-Exporte (z. B. Instagram-DMs) – keine KI-Chats, enthalten Daten Dritter.
 - Akzeptanz: Kernmodule bleiben unverändert; neuer Anbieter = neuer Adapter + Tests.
 - Tests: pro Adapter; Formatänderungen bekannter Anbieter als neue Fixture-Variante.
+
+## AUTH-001 – L2a: Benutzermodell und Datenisolation entwerfen
+- Priorität: P1; Status: Entwurf im Draft-PR, **keine Implementierung**.
+- Entwurf: [docs/auth-ownership-plan.md](docs/auth-ownership-plan.md).
+- [ ] RepoPilot-L1-Pilot und Centrality-ADR-007/008-Schnittstellen nachprüfen.
+- [ ] Modell mit Nutzer abstimmen; erst dann versionierte Schemaarbeit.
+- [ ] Separate PRs für technische Identität, Besitz/FK-Umstellung, OIDC/Session,
+  Bestandsmigration und öffentliche Sicherheitsprüfung.
+- Akzeptanz: Daten bleiben ohne ausdrückliche Migration unverändert; kein
+  `/app`-/API-Schutz wird vor tatsächlicher Implementierung behauptet.

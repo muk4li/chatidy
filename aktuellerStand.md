@@ -1,3 +1,13 @@
+## L2a – Benutzer-/Besitzmodell (Draft-PR, Planungsstand)
+
+Ein Architekturentwurf für spätere Mehrbenutzerfähigkeit wird unter
+`docs/auth-ownership-plan.md` bereitgestellt. Keine Schema-, Login-, Daten-
+oder Netzwerkänderung. Aktuelle lokale APIs bleiben unauthentifiziert und
+dürfen nicht öffentlich bereitgestellt werden. Die konkrete Umsetzung wartet
+auf den RepoPilot-Pilot und darauf abgestimmte Architekturentscheidungen.
+
+---
+
 # Aktueller Stand von Chatidy
 
 **Nachprüfung GitHub 2026-11-14:** Der unten als offen beschriebene Fokus-PR ist inzwischen **PR #9, gemergt**; aktueller `main`-HEAD `8fe4da20f4ca`. GitHub-Actions-Workflow „Tests“ auf diesem Commit erfolgreich. Die damalige GraphQL-Fehlermeldung bleibt als historischer Verlauf stehen. Weiterhin offen: manueller Echttest REAL-001 und die bestehenden Backlog-/Remote-Grenzen.

@@ -194,3 +194,11 @@ ChatGPT-Export – Strukturbefund (2026-11-20, aktueller echter Export vom 2026-
 
 Synthetische und CI-Ergebnisse sind kein Test mit dem privaten Originalexport.
 Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md lesen.
+
+## L2a – Benutzeridentität und Datenisolation (Entwurf)
+
+Architekturrahmen: Centrality ADR-007/008. Der Entwurf unter
+[docs/auth-ownership-plan.md](docs/auth-ownership-plan.md) dokumentiert das
+vorgesehene Besitzer-/Sitzungsmodell und die migrationskritischen Relationen.
+**Noch nicht implementiert:** Login, Benutzerkontext, Zugriffsschutz und
+Zuordnung bestehender Daten. RepoPilot bleibt der zuerst zu prüfende Pilot.
