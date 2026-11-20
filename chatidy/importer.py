@@ -110,6 +110,107 @@ def parse_extractor_chat(raw):
             "metadata":{"source":"extractor", **{k:v for k,v in raw.items() if k != "messages"}},
             "messages":messages}
 
+CLAUDE_ROLES = {"human": "user", "assistant": "assistant"}
+
+
+def claude_messages_key(raw):
+    """Claude exports use `chat_messages`; a `messages` variant is accepted only with `sender`."""
+    for key in ("chat_messages", "messages"):
+        items = raw.get(key)
+        if isinstance(items, list) and all(isinstance(item, dict) and "sender" in item for item in items):
+            if key == "chat_messages" or items:
+                return key
+    return None
+
+
+def claude_text(message):
+    """Reading/search text (E11): text blocks, fallback `text`, plus attachment text."""
+    blocks = message.get("content")
+    parts = []
+    if isinstance(blocks, list):
+        parts = [block["text"] for block in blocks
+                 if isinstance(block, dict) and block.get("type") == "text"
+                 and isinstance(block.get("text"), str) and block["text"].strip()]
+    if not parts and isinstance(message.get("text"), str) and message["text"].strip():
+        parts = [message["text"]]
+    for attachment in message.get("attachments") or []:
+        if isinstance(attachment, dict) and isinstance(attachment.get("extracted_content"), str) \
+                and attachment["extracted_content"].strip():
+            name = attachment.get("file_name") if isinstance(attachment.get("file_name"), str) else ""
+            parts.append(f"[Anhang{': ' + name if name else ''}]\n" + attachment["extracted_content"])
+    return "\n\n".join(parts)
+
+
+def claude_branch(cid, items):
+    """Select the current branch (E10): parent links form a tree; the latest leaf wins.
+
+    Roots are messages whose parent is not part of the conversation. Messages without
+    any parent field keep list order. Cycles or equally recent leaves abort.
+    """
+    by_id = {}
+    for index, item in enumerate(items):
+        mid = str(item.get("uuid") or f"{cid}:claude:{index}")
+        if mid in by_id:
+            raise ValueError("Doppelte Nachrichten-ID innerhalb eines Claude-Gesprächs. Import abgebrochen.")
+        by_id[mid] = item
+    if not any("parent_message_uuid" in item for item in items):
+        return list(by_id.items()), []
+    parent = {mid: item.get("parent_message_uuid") for mid, item in by_id.items()}
+    parent = {mid: (p if isinstance(p, str) and p in by_id else None) for mid, p in parent.items()}
+    for start in by_id:
+        seen, cursor = set(), start
+        while cursor is not None:
+            if cursor in seen:
+                raise ValueError("Ungültiger Claude-Gesprächsverlauf: Zyklus erkannt. Import abgebrochen.")
+            seen.add(cursor)
+            cursor = parent[cursor]
+    has_child = {p for p in parent.values() if p is not None}
+    leaves = [mid for mid in by_id if mid not in has_child]
+    stamp = lambda mid: unix_time(by_id[mid].get("created_at"))
+    if len(leaves) > 1:
+        if any(stamp(mid) is None for mid in leaves):
+            raise ValueError("Mehrdeutiger Claude-Gesprächszweig: Zeitstempel fehlt. Import abgebrochen.")
+        latest = max(stamp(mid) for mid in leaves)
+        leaves = [mid for mid in leaves if stamp(mid) == latest]
+        if len(leaves) > 1:
+            raise ValueError("Mehrdeutiger Claude-Gesprächszweig: mehrere gleich neue Enden. Import abgebrochen.")
+    chain, cursor = [], leaves[0]
+    while cursor is not None:
+        chain.append(cursor)
+        cursor = parent[cursor]
+    chain.reverse()
+    selected = set(chain)
+    return [(mid, by_id[mid]) for mid in chain], [by_id[mid] for mid in by_id if mid not in selected]
+
+
+def parse_claude_chat(raw):
+    """Adapt one conversation from the official Claude export (conversations.json)."""
+    key = claude_messages_key(raw)
+    if not raw.get("uuid") or key is None:
+        return None
+    cid = "claude:" + str(raw["uuid"])
+    branch, inactive = claude_branch(cid, raw[key])
+    messages = []
+    for mid, item in branch:
+        sender = str(item.get("sender") or "unknown")
+        body = claude_text(item) or "[Nicht-textueller Inhalt]"
+        messages.append({"id": mid, "role": CLAUDE_ROLES.get(sender, sender), "content": body,
+                         "timestamp": unix_time(item.get("created_at")),
+                         "metadata": {"source": "claude", **item}})
+    metadata = {"source": "claude", "original_id": str(raw["uuid"]),
+                **{k: v for k, v in raw.items() if k != key}}
+    if inactive:
+        metadata["inactive_branch_messages"] = inactive
+    return {"id": cid, "provider": "claude", "title": str(raw.get("name") or "Ohne Titel"),
+            "created": unix_time(raw.get("created_at")), "updated": unix_time(raw.get("updated_at")),
+            "project": "", "archived": False, "metadata": metadata, "messages": messages}
+
+
+def is_claude(raw):
+    """Official Claude export: `uuid` plus `chat_messages[]` whose entries carry `sender`."""
+    return "uuid" in raw and claude_messages_key(raw) is not None
+
+
 def is_chatgpt(raw):
     """Official ChatGPT export: conversation graph in `mapping`."""
     return "mapping" in raw
@@ -126,6 +227,7 @@ def is_extractor(raw):
 ADAPTERS = (
     ("chatgpt", is_chatgpt, parse_chat),
     ("extractor", is_extractor, parse_extractor_chat),
+    ("claude", is_claude, parse_claude_chat),
 )
 
 
@@ -140,12 +242,15 @@ def detect_format(raw):
 
 
 def parse_root(root):
+    if isinstance(root,dict) and "data_files" in root and "total_files" in root:
+        raise ValueError("Das ist das Claude-Export-Manifest, es enthält keine Gespräche. "
+                         "Bitte die Datei conversations-NNN.zip importieren.")
     if isinstance(root,dict) and isinstance(root.get("conversations"),list):
         root=root["conversations"]
     if isinstance(root,dict):
         root=[root]
     if not isinstance(root,list) or not root:
-        raise ValueError("Erwartet ChatGPT-conversations.json oder Extractor-JSON.")
+        raise ValueError("Erwartet conversations.json von ChatGPT oder Claude oder Extractor-JSON.")
     parsed=[]
     for raw in root:
         if not isinstance(raw,dict):
@@ -203,13 +308,30 @@ def archive_layout(archive):
         inventory['counts']['conversation_segment'] = len(selected)
         inventory['counts']['unknown'] -= len(selected)
     if not selected:
-        raise ValueError('Keine erkennbaren Konversationsdateien im Archiv.')
+        raise ValueError('Keine erkennbaren Konversationsdateien im Archiv.' + claude_category_hint(archive))
     for item in selected:
         check_compression(item)
     inventory.update(segment_count=len(selected),
                      segments=[PurePosixPath(x.filename.replace('\\','/')).name[:160] for x in selected[:20]],
                      selected_json_bytes=sum(x.file_size for x in selected))
     return selected, inventory
+
+
+CLAUDE_CATEGORY_FILES = (
+    ({'users.json', 'login_history.json'}, 'Konto- und Login-Daten (light_metadata)'),
+    ({'routines.json', 'routine_runs.json'}, 'Claude-Code-Routinen (claude_code_cloud)'),
+    ({'artifact.json', 'artifact_comments.json'}, 'Artifacts (frames)'),
+)
+
+
+def claude_category_hint(archive):
+    """E13: explain which Claude export category was uploaded instead of conversations."""
+    names = {PurePosixPath(x.filename.replace('\\', '/')).name.casefold() for x in archive.infolist()}
+    for markers, label in CLAUDE_CATEGORY_FILES:
+        if names & markers:
+            return (f' Erkannt: Claude-Export, Kategorie {label}. Gespräche enthält nur '
+                    'die Datei conversations-NNN.zip.')
+    return ''
 
 
 def check_compression(item):
@@ -277,7 +399,7 @@ def iter_export(source, name):
     else:
         raise ValueError("Bitte eine .zip- oder .json-Datei wählen.")
     if not seen:
-        raise ValueError("Keine erkennbaren ChatGPT-Konversationen gefunden.")
+        raise ValueError("Keine erkennbaren Konversationen gefunden.")
 
 
 def parse_export(data, name):
