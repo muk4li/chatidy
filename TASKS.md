@@ -205,3 +205,12 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - Nicht im Umfang: Messenger-Exporte (z. B. Instagram-DMs) – keine KI-Chats, enthalten Daten Dritter.
 - Akzeptanz: Kernmodule bleiben unverändert; neuer Anbieter = neuer Adapter + Tests.
 - Tests: pro Adapter; Formatänderungen bekannter Anbieter als neue Fixture-Variante.
+
+## AUTH-007 – OIDC-PKCE und verifizierbarer ID-Token (Baustein)
+- Priorität: P1; Status: Draft-PR, keine HTTP-Anbindung.
+- [x] PKCE-S256, State, Nonce und feste HTTPS-Issuer/Endpunkte.
+- [x] Signaturprüfung über feste vertrauenswürdige JWKS und gepinnte Bibliotheken;
+  Issuer, Audience, Exp, Iat, Nonce, Subjekt und Multi-Audience-AZP.
+- [x] Synthetische RSA-Positiv-/Negativtests in Windows-/Linux-CI.
+- [ ] Einmaliger serverseitiger State-Speicher, Code-Exchange, Session/Logout,
+  protected API und Authentik-Live-Test bleiben separate Sicherheits-Gates.

@@ -134,3 +134,11 @@ Temporäre synthetische Daten; `CHROMIUM_PATH` überschreibt `/usr/bin/chromium`
 `KEEP_TEST_ARTIFACTS=1` erhält Testartefakte/Screenshots, sonst werden sie entfernt.
 Nachweise: [aktuellerStand.md](aktuellerStand.md), frühere Durchläufe:
 [Historie](docs/history.md). Entwicklungsregeln: [AGENTS.md](AGENTS.md).
+
+### OIDC-Kryptografie (noch nicht in der App aktiviert)
+
+Für den künftigen Login gibt es einen isolierten, mit synthetischen
+RSA-Schlüsseln getesteten ID-Token-/PKCE-Baustein. Die optionalen und exakt
+gepinnten Abhängigkeiten stehen unter `requirements-auth.txt`.
+Der normale lokale Start verwendet die Python-Standardbibliothek; aktuell
+existieren weder Login-Handler noch Sessions. **Nicht öffentlich deployen.**

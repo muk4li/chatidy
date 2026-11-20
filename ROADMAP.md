@@ -194,3 +194,6 @@ ChatGPT-Export – Strukturbefund (2026-11-20, aktueller echter Export vom 2026-
 
 Synthetische und CI-Ergebnisse sind kein Test mit dem privaten Originalexport.
 Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md lesen.
+
+- **AUTH-007 (Draft):** optionaler, testbarer OIDC-Kryptobaustein
+  (PKCE, RSA-ID-Token über feste JWKS). Noch kein Login, keine HTTP-Freigabe.

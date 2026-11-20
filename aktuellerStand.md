@@ -1,3 +1,13 @@
+## AUTH-007 – OIDC-Tokenprüfung und PKCE (Draft-PR)
+
+Optionaler Prüfbaustein für eine künftige authentik-Anmeldung: RS256,
+vertrauenswürdige JWKS, Issuer/Audience/Expiry/Nonce und PKCE-S256;
+synthetische RSA-Tests. Exakt gepinnte Auth-Abhängigkeiten und separate
+CI-Installation. Keine HTTP-Session, Authentik-Verbindung oder
+Benutzer-Bibliothek-Verknüpfung. Localhost-only bleibt Pflicht.
+
+---
+
 # Aktueller Stand von Chatidy
 
 **Nachprüfung GitHub 2026-11-14:** Der unten als offen beschriebene Fokus-PR ist inzwischen **PR #9, gemergt**; aktueller `main`-HEAD `8fe4da20f4ca`. GitHub-Actions-Workflow „Tests“ auf diesem Commit erfolgreich. Die damalige GraphQL-Fehlermeldung bleibt als historischer Verlauf stehen. Weiterhin offen: manueller Echttest REAL-001 und die bestehenden Backlog-/Remote-Grenzen.
