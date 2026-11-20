@@ -237,6 +237,6 @@ Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md 
 - **AUTH-017 (Draft):** prüfbarer Tabelleninhalt-Vergleich und synthetische
   SQLite-Backup-Wiederherstellung vor tatsächlicher Eigentümermigration.
 
-- **AUTH-018 (Draft):** Obergrenze für gleichzeitig ausstehende OIDC-
+- **AUTH-019 (Draft):** Obergrenze für gleichzeitig ausstehende OIDC-
   Einmal-Zustände, ohne neue Migration oder HTTP-Schnittstelle. Das ist
   kein Ersatz für vorgeschaltetes Rate-Limiting.

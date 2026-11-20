@@ -1,4 +1,4 @@
-## AUTH-018 – OIDC-Challenge-Kapazität (Draft-PR)
+## AUTH-019 – OIDC-Challenge-Kapazität (Draft-PR)
 
 Login-Challenges erhalten eine Obergrenze in SQLite; abgelaufene Zustände
 werden bereinigt, aktive werden bei Kapazitätsgrenze nicht verdrängt.

@@ -305,7 +305,7 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - [x] SQLite-Backup an separatem Pfad testweise wiederherstellen und prüfen.
 - [ ] Echte Backup-/Restore-Probe inkl. Jobs/ACL und Bestandsdaten ausstehend.
 
-## AUTH-018 – Kapazitätsgrenze für anonyme OIDC-Login-Challenges
+## AUTH-019 – Kapazitätsgrenze für anonyme OIDC-Login-Challenges
 - Priorität: P1; Status: Gestapelter Draft-PR, CI/Review ausstehend.
 - [x] Feste Obergrenze (1000) aktiver Login-Challenges in der Registry.
 - [x] Abgelaufene States werden vor Zählung entfernt; bereits aktive bleiben
