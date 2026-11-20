@@ -35,7 +35,7 @@ class UsersSchemaTests(unittest.TestCase):
         before = self.seed_version_six()
         db = connect(self.path)
         try:
-            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 7)
+            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], migrations.LATEST)
             self.assertEqual(db.execute("SELECT count(*) FROM users").fetchone()[0], 0)
             self.assertEqual(chat_detail(db, "synthetic-chat"), before)
             self.assertEqual(db.execute("PRAGMA foreign_key_check").fetchall(), [])
@@ -71,7 +71,7 @@ class UsersSchemaTests(unittest.TestCase):
         db = connect(self.path)
         try:
             self.assertEqual(db.execute("SELECT count(*) FROM users").fetchone()[0], 0)
-            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 7)
+            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], migrations.LATEST)
         finally:
             db.close()
 
