@@ -240,3 +240,6 @@ Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md 
 - **AUTH-019 (Draft):** Obergrenze für gleichzeitig ausstehende OIDC-
   Einmal-Zustände, ohne neue Migration oder HTTP-Schnittstelle. Das ist
   kein Ersatz für vorgeschaltetes Rate-Limiting.
+
+- **AUTH-020 (Draft):** kontofremde Importjob-IDs in HTTP-Status, Liste,
+  Bestätigung, Fortsetzung und Löschung negativ testen. Kein Live-Deployment.

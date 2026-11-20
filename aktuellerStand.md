@@ -1,3 +1,11 @@
+## AUTH-020 – HTTP-Importjob-Isolation (Draft-PR)
+
+Synthetische Regression: Zwei Konten können keine fremden Uploadjobs lesen,
+fortsetzen, bestätigen oder löschen. Besitzerzugriff bleibt erhalten.
+Integrations- und reale Sicherheitsgates sind nicht aufgehoben.
+
+---
+
 ## AUTH-019 – OIDC-Challenge-Kapazität (Draft-PR)
 
 Login-Challenges erhalten eine Obergrenze in SQLite; abgelaufene Zustände

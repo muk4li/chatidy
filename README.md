@@ -245,3 +245,11 @@ Prüfung entfernt. Bei Auslastung wird ein weiterer Login kontrolliert
 abgewiesen, nicht zulasten bereits laufender Anmeldeversuche automatisch
 gelöscht. Dies ist nur eine Speicherobergrenze, kein vollständiges
 IP-/Proxy-Rate-Limiting; Internetfreigabe bleibt vom Sicherheits-Gate abhängig.
+
+### HTTP-Test der Importjob-Trennung
+
+Ein zusätzlicher synthetischer Test prüft die Jobverwaltung mit zwei
+angemeldeten Konten: Ein fremder Job ist nicht auflistbar, abrufbar,
+fortsetzbar, bestätigbar oder löschbar. Auch ein bekannter Job-Identifier
+gewährt keinen kontoübergreifenden Zugriff. Native ACL- und reale
+Authentik-/HTTPS-Tests bleiben dennoch vor Freigabe erforderlich.

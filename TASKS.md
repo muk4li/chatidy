@@ -312,3 +312,10 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
   erhalten; Schreib-Transaktion verhindert ungeschützte Parallelüberbuchung.
 - [x] Synthetische Regressionstests für Überlast, Replay, Freigabe und Ablauf.
 - [ ] Authentik-/Reverse-Proxy-Rate-Limiting und reale Lasttests vor Internetbetrieb.
+
+## AUTH-020 – Negative HTTP-Tests für kontofremde Importjobs
+- Priorität: P1; Status: Gestapelter Draft-PR, CI/Review offen.
+- [x] Zwei synthetische Sessions, private Upload-/Job-Wurzeln.
+- [x] Fremde Jobliste/Status/Resume/Confirm/Delete verweigern.
+- [x] Originaljob bleibt erhalten und ist weiterhin nur vom Besitzer löschbar.
+- [ ] Native Windows-/Linux-ACL, Reverse-Proxy- und Live-OIDC-Prüfung vor Freigabe.
