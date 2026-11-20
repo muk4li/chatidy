@@ -155,6 +155,31 @@ const {spawn,spawnSync}=require('node:child_process');
     await block.locator('summary').first().click();
     assert.equal(await page.locator('#detail .thinking-title').textContent(),'Synthetic plan');
     assert.deepEqual(remote,[],'Thinking view must not load remote assets');
+    console.log('Browser checkpoint: claude provider');
+    const cm=(uuid,sender,parent,content,created)=>({uuid,sender,parent_message_uuid:parent,text:'',content,created_at:created,attachments:[],files:[]});
+    const claudeExport=[{uuid:'synthetic-claude',name:'Synthetic Claude',created_at:'2026-11-01T10:00:00Z',updated_at:'2026-11-01T10:05:00Z',chat_messages:[
+      cm('q','human','root',[{type:'text',text:'Synthetic claude question'}],'2026-11-01T10:00:00Z'),
+      cm('t','assistant','q',[{type:'tool_use',name:'web_search',input:{query:'synthetic'}},{type:'tool_result',content:[{type:'text',text:'https://example.invalid/hidden'}],is_error:false}],'2026-11-01T10:01:00Z'),
+      cm('a','assistant','t',[{type:'text',text:'Synthetic claude answer'},{type:'tool_use',name:'bash',input:{}}],'2026-11-01T10:02:00Z')]}];
+    response=await fetch(base+'/api/import',{method:'POST',headers:{'X-Filename':'conversations.json'},body:JSON.stringify(claudeExport)});assert(response.ok);
+    await page.evaluate(()=>{providerFilter='';return refresh()});
+    await page.evaluate(()=>{document.getElementById('tag-filter').value='';document.getElementById('search').value='';setView('all')});
+    const claudeButton=page.locator('#provider-list button').filter({hasText:'Claude'});await claudeButton.waitFor();
+    assert(await page.locator('#provider-section').isVisible());
+    await page.locator('.chat-row .pill.provider-claude').first().waitFor();
+    await claudeButton.click();
+    await page.waitForFunction(()=>document.querySelectorAll('.chat-row').length===1);
+    assert.match(await page.locator('.chat-row').textContent(),/Synthetic Claude/);
+    await page.locator('.chat-row .chat-open').click();
+    await page.locator('#detail details.activity').first().waitFor();
+    assert.match(await page.locator('#detail .muted').first().textContent(),/^Claude · /);
+    assert.equal(await page.locator('#detail .bubble').count(),2,'tool-only turn is a compact block, not a bubble');
+    assert.match(await page.locator('#detail > details.activity summary').first().textContent(),/1 Werkzeugaufruf \(web_search\)/);
+    assert.match(await page.locator('#detail .bubble details.activity.inline summary').textContent(),/1 Werkzeugaufruf \(bash\)/);
+    assert(!(await page.locator('#detail').textContent()).includes('[Nicht-textueller Inhalt]'));
+    assert.deepEqual(remote,[],'Claude view must not load remote assets');
+    await claudeButton.click();
+    await page.waitForFunction(()=>document.querySelectorAll('.chat-row').length>1);
     await page.setViewportSize({width:390,height:844});
     assert(await page.evaluate(()=>{const buttons=[...document.querySelectorAll('#views button')];return buttons.slice(1).every((b,i)=>b.getBoundingClientRect().left>=buttons[i].getBoundingClientRect().right)}),'Mobile navigation buttons must not overlap');
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Mobile layout must fit viewport without horizontal overflow');

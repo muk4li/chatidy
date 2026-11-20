@@ -62,7 +62,8 @@ Die folgenden offenen Themen sind Backlog, keine automatisch folgenden Aufträge
 
 ## Phase 6 – Mehrere Chat-Anbieter (geplant)
 
-Status: **Offen – nur geplant, kein Umsetzungsauftrag.** Backlog: PROV-001 bis PROV-003 in TASKS.md.
+Status: **Teilweise implementiert** – PROV-001 und PROV-002 (Claude-Import inkl. UI) umgesetzt, Prüfung mit
+echtem Claude-Export durch den Nutzer offen; PROV-003/PROV-004 Backlog. Details: TASKS.md.
 
 Ziel: Neben ChatGPT auch Claude-Exporte (claude.ai, Settings › Privacy › Export data)
 verlustfrei importieren; jeder Chat trägt sichtbar und filterbar seinen Anbieter.

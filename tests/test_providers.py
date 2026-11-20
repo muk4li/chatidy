@@ -119,6 +119,23 @@ class ProviderStorageTests(unittest.TestCase):
         finally:
             db.close()
 
+    def test_smart_folder_keeps_provider_filter(self):
+        from chatidy.organisation import create_smart_folder, smart_query
+        db = connect(self.path)
+        try:
+            other = {"id": "x:1", "provider": "other", "title": "Synthetic other", "updated": 5,
+                     "messages": [{"id": "o1", "role": "user", "content": "Synthetic other text"}]}
+            upsert(db, parse_export(json.dumps([CHATGPT]).encode(), "conversations.json") + [other])
+            folder = create_smart_folder(db, "Synthetic provider view", {"q": "", "provider": "other", "mode": "all"})
+            query = smart_query(db, folder)
+            self.assertEqual(query["provider"], "other")
+            self.assertEqual([c["id"] for c in list_chats(db, **query)], ["x:1"])
+            for bad in ({"provider": 5}, {"provider": "x" * 41}):
+                with self.subTest(bad=bad), self.assertRaises(ValueError):
+                    create_smart_folder(db, "Synthetic bad", bad)
+        finally:
+            db.close()
+
 
 if __name__ == "__main__":
     unittest.main()
