@@ -21,7 +21,7 @@ class DeepLinkTests(unittest.TestCase):
                     url="http://127.0.0.1:"+str(server.server_address[1])
                     with urllib.request.urlopen(url+"/app") as response:
                         main=response.read()
-                    for path in ("/app/import","/app/inbox","/app/archive","/app/unfiled","/app/topics","/app/folders/12","/app/chats/codex%3Atask","/app/smart/4"):
+                    for path in ("/app/import","/app/inbox","/app/archive","/app/unfiled","/app/topics","/app/folders/12","/app/folders/12-meine-projekte","/app/chats/codex%3Atask","/app/smart/4"):
                         with self.subTest(path=path):
                             with urllib.request.urlopen(url+path) as response:
                                 self.assertEqual(response.status,200)
