@@ -36,7 +36,7 @@ const {spawn,spawnSync}=require('node:child_process');
     page.on('request',r=>{if(!r.url().startsWith(base))remote.push(r.url())});
     let acceptDialogs=true;const dialogs=[];
     page.on('dialog',d=>{dialogs.push(d.message());return acceptDialogs?d.accept():d.dismiss()});
-    console.log('Browser checkpoint: page loaded');await page.goto(base);await page.locator('#stat-folders').filter({hasText:'8'}).waitFor();
+    console.log('Browser checkpoint: page loaded');await page.goto(base + '/app');await page.locator('#stat-folders').filter({hasText:'8'}).waitFor();
     const chats=[{id:'synthetic-one',title:'Synthetic One',messages:[{role:'user',content:'Synthetic SQLite question',files:[{url:'https://example.invalid/private.png'}]}]},
       {id:'synthetic-two',title:'Synthetic Two',messages:[{role:'assistant',content:'Synthetic second answer'}]}];
     await page.locator('#file-input').setInputFiles({name:'synthetic.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(chats))});
