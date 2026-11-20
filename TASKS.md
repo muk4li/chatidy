@@ -1,7 +1,8 @@
 # Operatives Backlog
 
-Aktueller Fokus: Nutzbarkeit und Verständlichkeit. Weitere Import-/Storage-Härtung
-und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs beheben.
+Aktueller Fokus (2026-11-20): **F-001 bis F-009 gemeinsam in einem neuen
+UX-Integrations-PR gegen main**. Die L2-Codebasis aus #52/#53 ist auf main;
+der reale Authentik-/Zwei-Konten-Test und die Betriebsfreigabe bleiben offen.
 
 ## REAL-001 – Manueller Echttest durch Nutzer
 - Priorität: P0; Status: Offen – nur lokal durch den Nutzer ausführbar.
@@ -214,3 +215,27 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - [x] Synthetische RSA-Positiv-/Negativtests in Windows-/Linux-CI.
 - [ ] Einmaliger serverseitiger State-Speicher, Code-Exchange, Session/Logout,
   protected API und Authentik-Live-Test bleiben separate Sicherheits-Gates.
+
+## UX-F-001 bis UX-F-009 – gemeinsamer Abschluss-PR
+- Status: **in Arbeit auf einem gemeinsamen Branch**; erst nach CI und
+  manueller UX-Abnahme als abgeschlossen deklarieren.
+- [x] F-001: Logo der App führt nach `/`.
+- [x] F-002: Illustrierte Fake-Demo von Landingpage entfernen.
+- [x] F-003: Mehrere ZIP/JSON-Dateien in einer Auswahl; pro Datei Uploadstatus,
+  Job, Vorschau und eigene Bestätigung.
+- [x] F-004: Wechsel zu „Alle Chats“ beendet den Tagfilter.
+- [x] F-005: „Suchtext leeren“ setzt Suchbegriff und Ergebnisse zurück.
+- [x] F-006: Codex aus Metadaten als unabhängige Quelle, kombinierbar mit Anbieter.
+- [x] F-007: Datumsbereiche, Sortierung und „Ohne Datum“.
+- [x] F-008: Quelltypen mit eigener Kennzeichnung; Claude Code **nur bei
+  zuverlässig vorhandener exportseitiger Typkennung**; keine Heuristik.
+- [x] F-009: Benutzerneutrale /app-Unterpfade und Direktlinks, serverseitiger
+  Identitätskontext über die bestehende geschützte Sitzung.
+- [ ] Echte UI-Browser-Abnahme, insbesondere Mehrfach-ZIP, Zurück/Vorwärts,
+  direktes Öffnen, kombiniert gesetzte Filter, Import-Fehlerpfade.
+- [ ] Echte Authentik-/Zwei-Konten-/Windows-ACL-/Proxy-Sicherheitsfreigabe
+  bleibt **außerhalb** dieses UX-PR.
+- [ ] **Centrality synchronisieren (SPÄTER):** erst nach Chatidy-Merge;
+  ausdrücklich nicht Teil dieses PR und nicht erledigt.
+
+[Einzelheiten und Akzeptanz](docs/ux-f001-f009.md).

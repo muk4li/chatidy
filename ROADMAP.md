@@ -1,8 +1,10 @@
 # Chatidy – Produkt-Roadmap
 
-Stand: Nutzbarkeitsdurchlauf auf main `8e19e78` (2026-11-14). Legende: **Implementiert und getestet**,
-**Teilweise implementiert**, **Offen**, **Blockiert**. Neue Funktionen dieses
-Durchlaufs werden erst nach ihren Tests hochgestuft; private Exportdaten bleiben lokal.
+Stand: 2026-11-20 – L2-Code integriert über #52 und #53; ein gemeinsamer
+UX-Branch bereitet F-001 bis F-009 vor. Legende: **Implementiert und getestet**,
+**Teilweise implementiert**, **Offen**, **Blockiert**. Der frühere
+Nutzbarkeitsdurchlauf bleibt als Historie unten erhalten. Öffentliche L2-
+Freigabe und echte Authentik-Tests sind weiterhin offen.
 
 Aktueller Fokus: Nutzbarkeit und Verständlichkeit. Passende Startkategorien und
 kompakte Dokumentation sind umgesetzt (FOCUS-001). Nächster Nachweis ist der
@@ -195,5 +197,21 @@ ChatGPT-Export – Strukturbefund (2026-11-20, aktueller echter Export vom 2026-
 Synthetische und CI-Ergebnisse sind kein Test mit dem privaten Originalexport.
 Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md lesen.
 
-- **AUTH-007 (Draft):** optionaler, testbarer OIDC-Kryptobaustein
-  (PKCE, RSA-ID-Token über feste JWKS). Noch kein Login, keine HTTP-Freigabe.
+- **AUTH-007 bis AUTH-023:** L2-Server-/Session-, Speicher-, OIDC- und
+  Migrationscode ist über #52 und #53 auf `main` integriert. Live-Authentik,
+  TLS/Reverse-Proxy, Windows-ACL und Abnahme bleiben **nicht freigegeben**.
+
+## UX F-001 bis F-009 – gemeinsamer Integrationsbranch
+
+Die neun Änderungen werden in **einem** PR gegen `main` überprüft:
+Landinglogo und Entfernung der Demo, mehrfache ZIP-Auswahl, Tag-/Suche-
+Korrekturen, Codex-/Quellen-Untertypen, Datumsfilter und mandantenfähige
+Deep-Links. Keine Einzelmerges oder eigenständigen gestapelten PRs.
+Siehe [UX-Spezifikation](docs/ux-f001-f009.md).
+
+## Folgeaufgabe außerhalb dieses PR
+
+**Centrality aktualisieren: OFFEN / NICHT AUSGEFÜHRT.** Nach Abschluss,
+Review und Merge im Chatidy-Repo den L2-/UX-Iststand, Architekturentscheidungen
+und offene Freigabeprüfungen dort separat abgleichen. Dieser PR verändert
+Centrality weder technisch noch dokumentarisch.
