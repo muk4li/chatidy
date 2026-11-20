@@ -368,3 +368,11 @@ nacheinander importieren (bislang nicht mit echtem Mehrteil-Export geprüft).
   dem neuesten Ende. Nachrichten anderer Zweige bleiben unter `inactive_branch_messages` in den
   Gesprächsmetadaten. Zyklen, doppelte IDs oder mehrere gleich neue Enden brechen ab.
 - Binärdateien (Bilder, Uploads) sind im Claude-Export nicht enthalten, nur ihre Namen.
+
+## Suchindex ohne Platzhalter (Schema 6)
+
+Nachrichten ohne lesbaren Text (Denkprozesse, reine Werkzeugaufrufe) werden mit dem Inhalt
+`[Nicht-textueller Inhalt]` gespeichert; die Rohdaten stehen in den Metadaten. Dieser Platzhalter
+wird nicht mehr in die Volltextsuche aufgenommen und nicht mitgezählt. Schema 6 baut dafür den
+Suchindex einmalig aus den gespeicherten Nachrichten neu auf; Gespräche, Nachrichten und
+Organisation bleiben unverändert, bei einem Fehler wird zurückgerollt.

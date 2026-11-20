@@ -177,6 +177,13 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - Akzeptanz: bestehende Bibliotheken ohne Neuimport korrekt dargestellt (Darstellung aus Metadaten), kein Datenverlust.
 - Tests: synthetische Knoten je `content_type`, Reimport-Identität unverändert, DOM-Test.
 
+## SEARCH-001 – Platzhalter nicht in der Volltextsuche
+- Priorität: P2; Status: Implementiert. Abhängigkeiten: CGPT-001.
+- [x] `[Nicht-textueller Inhalt]` wird beim Import nicht indiziert; Migration 6 baut den Index einmalig neu auf.
+- Akzeptanz: Gespräche/Nachrichten/Organisation unverändert, Titel weiter durchsuchbar, Rollback bei Fehler.
+- Tests: neue Importe, Migration 5→6 mit Altindex, fehlgeschlagene Migration, Konstante = SQL-Marker.
+- Grenze: Regeln mit Feld „Inhalt“ prüfen weiterhin den gespeicherten Text inkl. Platzhalter.
+
 ## PROV-004 – Codex-Aufgaben aus `codex.json` (Backlog)
 - Priorität: P3; Status: Offen – nur festgehalten.
 - Komponenten: eigener Adapter im Sinne von E1 (Anbieter `chatgpt`, Quelle `codex`). Abhängigkeiten: PROV-001.

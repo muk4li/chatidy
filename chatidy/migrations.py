@@ -23,6 +23,16 @@ MIGRATIONS = {
         # Origin of a chat (E3): fixed column, not a tag. All existing chats came from ChatGPT.
         "ALTER TABLE conversations ADD COLUMN provider TEXT NOT NULL DEFAULT 'chatgpt'",
     ),
+    6: (
+        # Rebuild the full-text index without the non-text marker (SEARCH-001). Only the derived
+        # index changes; conversations and messages stay untouched. Marker must match importer.NON_TEXT.
+        "DELETE FROM search_index",
+        "INSERT INTO search_index(conversation_id,title,body) "
+        "SELECT c.id, c.title, COALESCE((SELECT group_concat(content, char(10)) FROM "
+        "(SELECT content FROM messages m WHERE m.conversation_id=c.id "
+        "AND m.content!='[Nicht-textueller Inhalt]' ORDER BY m.position, m.rowid)), '') "
+        "FROM conversations c",
+    ),
 }
 LATEST = max(MIGRATIONS)
 

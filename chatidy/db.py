@@ -185,7 +185,8 @@ def upsert(db, chats):
                            VALUES(?,?,?,?,?,?,?)""",messages)
             db.execute("DELETE FROM search_index WHERE conversation_id=?", (cid,))
             db.execute("INSERT INTO search_index(conversation_id,title,body) VALUES(?,?,?)",
-                       (cid,chat["title"],"\n".join(m["content"] for m in chat["messages"])))
+                       (cid,chat["title"],"\n".join(m["content"] for m in chat["messages"]
+                                                    if m["content"]!=NON_TEXT)))
             apply_rules(db,cid)
             count+=1
     return count
