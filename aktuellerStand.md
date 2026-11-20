@@ -1,3 +1,11 @@
+## AUTH-011 – Browser-Login und OIDC-Callback (Draft)
+
+Einmaliger browsergebundener State mit PKCE und verifiziertem ID-Token,
+Sitzung für explizit freigeschaltete Konten, Secure-Cookies und Logout.
+Synthetische HTTP-Tests; Authentik-Live-/Deployment- und Migrationsgates offen.
+
+---
+
 ## AUTH-010 – OIDC-Code-Exchange (Draft-PR)
 
 Synthetisch getesteter Token-/JWKS-Abruf ohne offene Redirects, nur

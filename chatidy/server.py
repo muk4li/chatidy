@@ -2,7 +2,8 @@
 import json
 from contextlib import closing
 from http.cookies import SimpleCookie
-from .auth_state import session_user
+from .auth_state import session_user, create_challenge, consume_challenge, issue_session, revoke_session
+from .users import enrolled_user
 from .library_scope import account_library
 from .access_policy import private_route, public_route
 import os
@@ -84,6 +85,76 @@ class Handler(BaseHTTPRequestHandler):
         with closing(connect(os.getenv("CHATIDY_DB",str(DEFAULT_DATABASE)))) as registry:
             return session_user(registry,token)
 
+    def _auth_cookie(self,name,value,age):
+        return f"{name}={value}; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age={int(age)}"
+
+    def _auth_redirect(self,target,cookies=()):
+        self.send_response(302)
+        self.send_header("Location",target)
+        self.send_header("Cache-Control","no-store")
+        self.send_header("Referrer-Policy","no-referrer")
+        for cookie in cookies:self.send_header("Set-Cookie",cookie)
+        self.end_headers()
+
+    def _login(self):
+        try:
+            import secrets
+            from .oidc import new_login_challenge, authorization_url
+            from .oidc_exchange import configured_settings
+            settings=configured_settings(os.environ)
+            state,nonce,verifier=new_login_challenge()
+            binding=secrets.token_urlsafe(48)
+            with closing(connect(os.getenv("CHATIDY_DB",str(DEFAULT_DATABASE)))) as db:
+                create_challenge(db,state=state,browser_binding=binding,
+                                 nonce=nonce,code_verifier=verifier)
+            return self._auth_redirect(authorization_url(settings,state,nonce,verifier),[
+                self._auth_cookie("chatidy_oidc",binding,600)])
+        except (ValueError, ImportError):
+            return self.send(503,{"error":"Anmeldung nicht eingerichtet."})
+
+    def _callback(self):
+        params=parse_qs(urlsplit(self.path).query,keep_blank_values=True)
+        try:
+            from .oidc_exchange import configured_settings, identity_from_code
+            if ("error" in params or len(params.get("state",[]))!=1
+                    or len(params.get("code",[]))!=1):
+                raise ValueError("OIDC-Callback ungültig.")
+            cookie=SimpleCookie()
+            cookie.load(self.headers.get("Cookie",""))
+            binding=cookie["chatidy_oidc"].value
+            settings=configured_settings(os.environ)
+            with closing(connect(os.getenv("CHATIDY_DB",str(DEFAULT_DATABASE)))) as db:
+                challenge=consume_challenge(db,state=params["state"][0],
+                                            browser_binding=binding)
+                if challenge is None:
+                    raise ValueError("OIDC-Zustand bereits benutzt oder abgelaufen.")
+                identity=identity_from_code(settings,code=params["code"][0],
+                    verifier=challenge["code_verifier"],nonce=challenge["nonce"])
+                user=enrolled_user(db,identity["issuer"],identity["subject"])
+                if user is None:raise ValueError("Nicht freigeschaltet.")
+                token=issue_session(db,user)
+            return self._auth_redirect("/app",[
+                self._auth_cookie("chatidy_oidc","",0),
+                self._auth_cookie("chatidy_session",token,43200)])
+        except (KeyError,ValueError,UnicodeError):
+            return self.send(401,{"error":"Anmeldung fehlgeschlagen."})
+        except Exception:
+            return self.send(503,{"error":"Anmeldedienst derzeit nicht verfügbar."})
+
+    def _logout(self):
+        cookie=SimpleCookie()
+        try:
+            cookie.load(self.headers.get("Cookie",""))
+            token=cookie["chatidy_session"].value
+        except (KeyError,ValueError,UnicodeError):
+            token=None
+        if token:
+            with closing(connect(os.getenv("CHATIDY_DB",str(DEFAULT_DATABASE)))) as db:
+                revoke_session(db,token)
+        return self._auth_redirect("/",[
+            self._auth_cookie("chatidy_session","",0),
+            self._auth_cookie("chatidy_oidc","",0)])
+
     def _redirect(self,destination):
         self.send_response(302)
         self.send_header("Location",destination)
@@ -96,6 +167,10 @@ class Handler(BaseHTTPRequestHandler):
         if not self.auth_required():
             return self._local_get()
         path=unquote(urlsplit(self.path).path)
+        if path=="/login":
+            return self._login()
+        if path=="/auth/callback":
+            return self._callback()
         if public_route(path):
             return self._local_get()
         if path not in STATIC and not private_route(path):
@@ -114,6 +189,8 @@ class Handler(BaseHTTPRequestHandler):
         if not self.auth_required():
             return self._local_post()
         path=unquote(urlsplit(self.path).path)
+        if path=="/logout":
+            return self._logout()
         if not private_route(path):
             return self.send(404,{"error":"Nicht gefunden"})
         user=self._principal()
