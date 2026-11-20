@@ -1,3 +1,12 @@
+## AUTH-018 – OIDC-Challenge-Kapazität (Draft-PR)
+
+Login-Challenges erhalten eine Obergrenze in SQLite; abgelaufene Zustände
+werden bereinigt, aktive werden bei Kapazitätsgrenze nicht verdrängt.
+Synthetischer Grenzfalltest ergänzt. Authentik-Livebetrieb, Rate-Limiting,
+Proxy-/Backup-/Datenschutz-Freigabe bleiben offen.
+
+---
+
 ## AUTH-017 – Backup-/Restoreregression (Draft)
 
 Datenmigration prüft gesamte Tabelleninhalte, ignoriert nur den persistenten

@@ -2,6 +2,8 @@
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
+from chatidy import auth_state
 
 from chatidy.db import connect
 from chatidy.users import enrolled_user
@@ -45,6 +47,29 @@ class AuthStateTests(unittest.TestCase):
                          nonce=self.nonce,code_verifier=self.verifier,now=10)
         self.assertIsNone(consume_challenge(self.db,state=self.state,
                                             browser_binding=self.browser,now=611))
+
+    def test_pending_login_limit_fails_closed_and_preserves_inflight_challenges(self):
+        with patch.object(auth_state, "MAX_PENDING_CHALLENGES", 2):
+            for index in range(2):
+                create_challenge(self.db, state=str(index) * 48,
+                                 browser_binding="b" * 48, nonce=self.nonce,
+                                 code_verifier=self.verifier, now=100)
+            with self.assertRaisesRegex(ValueError, "Zu viele"):
+                create_challenge(self.db, state="z" * 48,
+                                 browser_binding="c" * 48, nonce=self.nonce,
+                                 code_verifier=self.verifier, now=101)
+            self.assertEqual(self.db.execute("SELECT count(*) FROM oidc_pending").fetchone()[0], 2)
+            self.assertEqual(consume_challenge(self.db, state="0"*48,
+                             browser_binding="b"*48, now=102),
+                             {"nonce":self.nonce,"code_verifier":self.verifier})
+            create_challenge(self.db, state="z" * 48,
+                             browser_binding="c" * 48, nonce=self.nonce,
+                             code_verifier=self.verifier, now=103)
+            self.assertEqual(self.db.execute("SELECT count(*) FROM oidc_pending").fetchone()[0], 2)
+            # Once both remaining challenges expire, an attempt can proceed.
+            create_challenge(self.db, state="n"*48, browser_binding="d"*48,
+                             nonce=self.nonce, code_verifier=self.verifier, now=800)
+            self.assertEqual(self.db.execute("SELECT count(*) FROM oidc_pending").fetchone()[0], 1)
 
     def test_session_lookup_revocation_expiry_and_disabled_account(self):
         token = issue_session(self.db, self.user, now=100)

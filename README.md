@@ -236,3 +236,12 @@ Importjob-Verzeichnisse müssen weiterhin vorher geprüft werden.
 Ein Regressionstest stellt das gesicherte SQLite-Backup an einem **anderen**
 Pfad wieder her und prüft Inhalt sowie Datenbankintegrität.
 Das ersetzt keinen realen Betreiber-Restore-Test vor Freigabe.
+
+### Gleichzeitige OIDC-Anmeldeversuche
+
+Der serverseitige Einmal-State-Speicher ist auf maximal 1000 gleichzeitig
+aktive Login-Challenges begrenzt; abgelaufene Einträge werden vor der
+Prüfung entfernt. Bei Auslastung wird ein weiterer Login kontrolliert
+abgewiesen, nicht zulasten bereits laufender Anmeldeversuche automatisch
+gelöscht. Dies ist nur eine Speicherobergrenze, kein vollständiges
+IP-/Proxy-Rate-Limiting; Internetfreigabe bleibt vom Sicherheits-Gate abhängig.
