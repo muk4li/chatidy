@@ -212,3 +212,6 @@ Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md 
 
 - **AUTH-009 (Draft):** internes HTTP-Sitzungsgate mit Konto-Datenbanken,
   nur ausdrücklich aktivierter Testmodus; OIDC-Login und Exposition fehlen.
+
+- **AUTH-010 (Draft):** OIDC-Code- und JWKS-Abruf von festen HTTPS-Endpunkten;
+  Callback, Cookies und öffentliche Betriebsfreigabe fehlen noch.

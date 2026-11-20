@@ -1,3 +1,11 @@
+## AUTH-010 – OIDC-Code-Exchange (Draft-PR)
+
+Synthetisch getesteter Token-/JWKS-Abruf ohne offene Redirects, nur
+konfigurierte HTTPS-Endpunkte. Keine HTTP-Browseranmeldung. Kein Live-IdP-
+Test oder öffentlicher Server; in CI optionale gepinnte Auth-Abhängigkeiten.
+
+---
+
 ## AUTH-009 – Serverseitiges HTTP-Gate (Draft-PR)
 
 Opt-in-Testmodus schützt `/app`, App-Assets und alle Daten-/Import-APIs
