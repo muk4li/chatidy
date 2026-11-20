@@ -1,3 +1,12 @@
+## AUTH-009 – Serverseitiges HTTP-Gate (Draft-PR)
+
+Opt-in-Testmodus schützt `/app`, App-Assets und alle Daten-/Import-APIs
+serverseitig vor Zugriff ohne aktive Sitzung. Bei gültiger Session wird
+der pro Konto isolierte DB-/Importjob-Kontext aktiviert. Keine tatsächliche
+OIDC-Anmeldung und kein Deployment; lokaler Standardmodus bleibt erhalten.
+
+---
+
 ## AUTH-008 – OIDC-State und Sessions (Draft-PR)
 
 Schema 8 speichert browsergebundene kurzlebige Login-Challenges und

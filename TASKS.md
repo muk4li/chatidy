@@ -240,3 +240,12 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - [x] Synthetische Replay-/Browserbindung-/Expiry-/Kontosperrtests.
 - [ ] Echten OIDC-Code-Exchange, Cookie-Flags, CSRF-/API-Gate und vollständige
   Benutzer-/Job-Isolation in Folge-PRs integrieren; keine Live-Freigabe.
+
+## AUTH-009 – HTTP-Sitzungsgate (Draft)
+- Priorität: P1; Status: Integrations-PR offen, CI/Review notwendig.
+- [x] Expliziter Auth-Testmodus: private `/app`, App-Assets und `/api/*`.
+- [x] Session aus serverseitigem Speicher, danach kontospezifische DB/Jobs.
+- [x] Synthetische Negativtests für fehlende/gesperrte Session, POST-Origin
+  und zwei Konten mit derselben ursprünglichen Konversations-ID.
+- [ ] Live-OIDC-Callback, Logout, Cookie-/CSRF-Sicherheitsreview und native
+  Windows-/Job-Tests vor öffentlicher Exposition.
