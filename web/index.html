@@ -49,7 +49,16 @@
     <div class="notice" id="notice" role="status" hidden></div>
 
     <section id="import-page" class="page" aria-label="Import" hidden>
-      <header class="pagehead"><h1>ChatGPT-Export importieren</h1><p class="muted">ZIP oder conversations.json auswählen. Chatidy zeigt zuerst eine Vorschau; übernommen wird erst nach deiner Bestätigung.</p></header>
+      <header class="pagehead"><h1>KI-Gespräche importieren</h1><p class="muted">ChatGPT-, Claude- und kompatible JSON-Exporte. Zuerst analysieren, dann den gesamten Batch bewusst bestätigen.</p></header>
+      <details class="format-help">
+        <summary>Welchen Export kann ich auswählen?</summary>
+        <ul>
+          <li><strong>ChatGPT:</strong> das vollständige offizielle Export-ZIP; Chatidy verarbeitet die nummerierten Gesprächssegmente gemeinsam und erkennt darin auch Codex-Aufgaben.</li>
+          <li><strong>Claude:</strong> ausschließlich <code>conversations-000.zip</code> (oder ein weiteres nummeriertes Gesprächs-ZIP) bzw. <code>conversations.json</code>. Konto-, Memory- und Artifact-ZIPs enthalten keine importierbaren Gespräche.</li>
+          <li><strong>Extractor:</strong> kompatible strukturierte JSON-Datei oder ein ZIP mit solchen Dateien.</li>
+        </ul>
+        <p>Die Vorschau zeigt erkannte Formate, Gesprächszahlen und Konflikte. Zusatzdateien und Anhänge werden nicht automatisch zur Medienbibliothek.</p>
+      </details>
       <section class="import-zone" id="dropzone">
         <div class="import-icon">↥</div>
         <div class="import-description"><strong>Datei hier ablegen</strong><span>Lokal verarbeitet · keine Synchronisierung · bis 200 MB</span></div>

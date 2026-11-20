@@ -4,6 +4,14 @@ Chatidy organisiert lokale ChatGPT- und Claude-Exporte: Python-Standardbibliothe
 SQLite/FTS5 und eine Weboberfläche unter **http://127.0.0.1:8877**.
 Es verändert keine Unterhaltungen auf chatgpt.com und benötigt keinen ChatGPT-Login.
 
+## Startseite und lokale Anwendung
+
+`/` zeigt eine öffentliche Produkt-Landingpage und `/app` die bestehende lokale Bibliothek.
+**Noch kein Login:** Bis eine serverseitige OIDC-Anmeldung mit geschützten APIs
+und Benutzerisolation umgesetzt und getestet ist, darf Chatidy ausschließlich
+auf Loopback laufen und nicht öffentlich bereitgestellt werden. Der Link
+„Bibliothek öffnen“ auf der Landingpage ist nur für die lokale Entwicklung gedacht.
+
 ## Schnellstart
 
 Python 3.10+ mit SQLite/FTS5, keine zusätzlichen Python-Pakete.
@@ -24,7 +32,7 @@ $env:CHATIDY_DB = Join-Path $env:LOCALAPPDATA "Chatidy\chatidy.sqlite3"
 py -3.13 -m chatidy
 ```
 
-Browser öffnen → links **Import** (öffnet sich bei leerer Bibliothek automatisch) →
+Browser unter `http://127.0.0.1:8877/app` öffnen → links **Import** (öffnet sich bei leerer Bibliothek automatisch) →
 **Datei auswählen** → vollständiges Export-ZIP oder
 `conversations.json` auswählen → **Import-Vorschau** prüfen →
 **Diesen Batch importieren** → auf **Erfolgreich** warten.
@@ -38,6 +46,11 @@ Start im Repo-Root ändert sich kein Speicherort, es ist keine Migration nötig.
 Für vorhandene Daten außerhalb des Projektordners deren bisherigen Pfad explizit
 setzen; Chatidy verschiebt oder sucht diese Dateien nicht automatisch.
 
+Die Importseite erläutert die unterstützten Formate unter **„Welchen Export kann ich auswählen?“**.
+Für ChatGPT das gesamte Export-ZIP auswählen; bei Claude das ZIP der Kategorie
+`conversations` (z. B. `conversations-000.zip`) oder `conversations.json`.
+Konto-, Memory- und Artifact-ZIPs sind keine Gesprächsexporte.
+
 ## Funktionen
 
 - Dreigeteilte Oberfläche: links Ansichten mit Anzahl (Alle, Posteingang, Archiviert,
@@ -48,7 +61,7 @@ setzen; Chatidy verschiebt oder sucht diese Dateien nicht automatisch.
   Doppelklick setzt zurück. Import, Vorschau und Jobverwaltung auf eigener Seite.
 - Offizielle klassische und nummerierte Segment-ZIPs sowie Extractor-JSON;
   Analyse, Vorschau, Batch-Bestätigung und wiederaufnehmbare lokale Jobs.
-- Volltextsuche in Titeln/Nachrichten, Ordner mit Mehrfachzuordnung, Tags,
+- Volltextsuche in Titeln/Nachrichten und Inhaltsregeln ohne technische Nicht-Text-Platzhalter, Ordner mit Mehrfachzuordnung, Tags,
   Posteingang/Review, Regeln, gespeicherte Suchansichten und Themencluster.
 - Mehrfachauswahl bis 500 geladene Chats; bestätigte zusätzliche Drag-Zuordnung,
   auf Touch-Geräten über die Auswahlleiste. Keine unsichtbare Gesamtauswahl.
@@ -66,6 +79,14 @@ setzen; Chatidy verschiebt oder sucht diese Dateien nicht automatisch.
 
 [Bedienung, Reimport-Regeln, Segmente, Jobs, Windows-Storage, Schema 4 bis 6](docs/import-details.md).
 Dort stehen auch Ollama-Einrichtung, Extractor-Metadaten und die lokalen APIs.
+
+## Mehrbenutzer-Vorbereitung (noch nicht nutzbar)
+
+Schema 7 legt lediglich eine leere `users`-Tabelle für spätere OIDC-Identitäten
+an. Es gibt **noch keinen Login, keine Benutzerisolation und keine
+Eigentümerzuordnung**. Die bisherige lokale Bibliothek, Importe und APIs
+bleiben unverändert. Die Anwendung darf weiterhin nicht öffentlich betrieben
+werden. Sicherung der bestehenden Datenbank vor einem Upgrade empfohlen.
 
 ## Datenschutz
 
