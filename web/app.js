@@ -48,7 +48,7 @@ function folderPath(id){
 }
 function canonicalizeFolderPath(id){
   const canonical=folderPath(id);
-  if(location.pathname!==canonical)pushRoute(canonical,true);
+  if(location.pathname!==canonical)history.replaceState({},'',canonical+location.search);
 }
 function setView(v,id=null,{keepTag=false,skipHistory=false}={}){
   if(!keepTag)$('tag-filter').value='';
