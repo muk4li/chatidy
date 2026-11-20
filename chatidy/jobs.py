@@ -1,5 +1,6 @@
 """Durable import lifecycle and explicitly confirmed, confined job cleanup."""
 import hashlib
+import contextvars
 from contextlib import closing
 import json
 import math
@@ -10,6 +11,7 @@ import time
 import uuid
 from pathlib import Path
 from .db import connect, upsert
+from .library_scope import scoped_database
 from .importer import MAX_UPLOAD, iter_export, inspect_export
 from . import import_plan
 from . import job_storage as storage
@@ -18,7 +20,7 @@ STATES = frozenset(('uploading', 'uploaded', 'validating', 'committing', 'done',
 
 
 def database_path():
-    return Path(os.path.abspath(os.getenv('CHATIDY_DB', 'data/chatidy.sqlite3')))
+    return scoped_database() or Path(os.path.abspath(os.getenv('CHATIDY_DB', 'data/chatidy.sqlite3')))
 
 
 def job_path(job_id):
@@ -352,7 +354,8 @@ def _launch(job_id, job, lease):
         finally:
             os.close(lease)
             job.close()
-    thread = threading.Thread(target=worker, daemon=True)
+    inherited = contextvars.copy_context()
+    thread = threading.Thread(target=lambda: inherited.run(worker), daemon=True)
     try:
         thread.start()
     except BaseException:

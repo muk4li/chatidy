@@ -4,6 +4,7 @@ import json
 from .migrations import check_version, migrate
 from .conflicts import classify_chat, _import_timestamp
 from .importer import NON_TEXT
+from .library_scope import scoped_database
 import sqlite3
 from pathlib import Path
 
@@ -13,7 +14,7 @@ DEFAULT_CATEGORIES = ["Programmieren", "Infrastruktur & DevOps", "Lernen",
                       "Persönliches", "Favoriten"]
 
 def connect(path=None):
-    path = Path(path or os.getenv("CHATIDY_DB", DEFAULT_DATABASE))
+    path = Path(path if path is not None else (scoped_database() or os.getenv("CHATIDY_DB", DEFAULT_DATABASE)))
     path.parent.mkdir(parents=True, exist_ok=True)
     db = sqlite3.connect(path, timeout=20)
     db.row_factory = sqlite3.Row
@@ -122,7 +123,7 @@ def apply_rules(db, chat_id):
     if not chat:
         return
     body = "\n".join(row[0] for row in db.execute(
-        "SELECT content FROM messages WHERE conversation_id=?", (chat_id,)))
+        "SELECT content FROM messages WHERE conversation_id=? AND content!=?", (chat_id, NON_TEXT)))
     fields = {"title": chat["title"] or "", "project": chat["project"] or "",
               "content": body}
     for rule in db.execute("SELECT * FROM rules WHERE enabled=1"):
