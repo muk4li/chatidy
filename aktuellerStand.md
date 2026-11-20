@@ -1,3 +1,12 @@
+## AUTH-006 – HTTP-Routenvertrag (Draft-PR)
+
+Testbarer Vertrag für öffentliches `/`/Login/Callback und privates `/app`
+sowie alle `/api/*`-Routen. Noch **keine** Integration in den HTTP-Handler;
+der lokale Server bleibt unauthentifiziert. Erst OIDC + Session + vollständig
+isolierte Ressourcen machen diesen Vertrag zur wirksamen Zugriffskontrolle.
+
+---
+
 # Aktueller Stand von Chatidy
 
 **Nachprüfung GitHub 2026-11-14:** Der unten als offen beschriebene Fokus-PR ist inzwischen **PR #9, gemergt**; aktueller `main`-HEAD `8fe4da20f4ca`. GitHub-Actions-Workflow „Tests“ auf diesem Commit erfolgreich. Die damalige GraphQL-Fehlermeldung bleibt als historischer Verlauf stehen. Weiterhin offen: manueller Echttest REAL-001 und die bestehenden Backlog-/Remote-Grenzen.

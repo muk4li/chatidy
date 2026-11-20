@@ -205,3 +205,10 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - Nicht im Umfang: Messenger-Exporte (z. B. Instagram-DMs) – keine KI-Chats, enthalten Daten Dritter.
 - Akzeptanz: Kernmodule bleiben unverändert; neuer Anbieter = neuer Adapter + Tests.
 - Tests: pro Adapter; Formatänderungen bekannter Anbieter als neue Fixture-Variante.
+
+## AUTH-006 – HTTP-Routenvertrag vor OIDC (noch kein Schutz)
+- Priorität: P1; Status: implementierte reine Prüflogik auf Draft-Branch.
+- [x] Allowlist für künftige öffentliche Seiten, Privatregel für `/app` und `/api/*`.
+- [x] Synthetische Negativtests inkl. URL-Encoding, GET-/POST-Unterpfade.
+- [ ] Mit verifizierter Sitzung und vollständig isoliertem Speicher in den
+  HTTP-Handler einbauen; **bis dahin kein Sicherheits-Gate**.
