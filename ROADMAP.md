@@ -209,3 +209,6 @@ Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md 
 
 - **AUTH-008 (gestapelt, Draft):** SQLite-Sitzungs- und Challenge-Tabellen
   mit Replay-Schutz. Kein Browser-Login, kein Netzwerk-/API-Schutz.
+
+- **AUTH-009 (Draft):** internes HTTP-Sitzungsgate mit Konto-Datenbanken,
+  nur ausdrücklich aktivierter Testmodus; OIDC-Login und Exposition fehlen.

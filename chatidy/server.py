@@ -1,6 +1,10 @@
 """Local Chatidy web server. Standard library only, loopback binding, no telemetry."""
 import json
 from contextlib import closing
+from http.cookies import SimpleCookie
+from .auth_state import session_user
+from .library_scope import account_library
+from .access_policy import private_route, public_route
 import os
 import urllib.error
 import urllib.request
@@ -50,15 +54,75 @@ class Handler(BaseHTTPRequestHandler):
             raise ValueError("JSON-Objekt erwartet.")
         return value
 
+    def auth_required(self):
+        return os.getenv("CHATIDY_AUTH_REQUIRED") == "1"
+
     def same_origin(self):
-        # Reject cross-site writes and DNS rebinding against the loopback service.
         host=self.headers.get("Host","")
+        origin=self.headers.get("Origin")
+        if self.auth_required():
+            public=os.getenv("CHATIDY_PUBLIC_ORIGIN","")
+            url=urlsplit(public)
+            if (url.scheme!="https" or not url.netloc or url.path not in ("","/")
+                    or url.query or url.fragment or url.username or url.password):
+                return False
+            if host!=url.netloc:
+                return False
+            return origin==public.rstrip("/") if self.command=="POST" else (not origin or origin==public.rstrip("/"))
         allowed_hosts={"127.0.0.1:"+str(os.getenv("CHATIDY_PORT","8877")),
                        "localhost:"+str(os.getenv("CHATIDY_PORT","8877"))}
-        origin=self.headers.get("Origin")
         return host in allowed_hosts and (not origin or origin in {"http://"+h for h in allowed_hosts})
 
+    def _principal(self):
+        cookie=SimpleCookie()
+        try:
+            cookie.load(self.headers.get("Cookie",""))
+            token=cookie["chatidy_session"].value
+            if len(token)>512:return None
+        except (KeyError,ValueError,UnicodeError):
+            return None
+        with closing(connect(os.getenv("CHATIDY_DB",str(DEFAULT_DATABASE)))) as registry:
+            return session_user(registry,token)
+
+    def _redirect(self,destination):
+        self.send_response(302)
+        self.send_header("Location",destination)
+        self.send_header("Cache-Control","no-store")
+        self.end_headers()
+
     def do_GET(self):
+        if not self.same_origin():
+            return self.send(403,{"error":"Ungültiger Host oder Origin."})
+        if not self.auth_required():
+            return self._local_get()
+        path=unquote(urlsplit(self.path).path)
+        if public_route(path):
+            return self._local_get()
+        if path not in STATIC and not private_route(path):
+            return self.send(404,{"error":"Nicht gefunden"})
+        user=self._principal()
+        if user is None:
+            if path=="/app" or path.startswith("/app/"):
+                return self._redirect("/login")
+            return self.send(401,{"error":"Anmeldung erforderlich."})
+        with account_library(user,os.getenv("CHATIDY_DB",str(DEFAULT_DATABASE))):
+            return self._local_get()
+
+    def do_POST(self):
+        if not self.same_origin():
+            return self.send(403,{"error":"Ungültiger Host oder Origin."})
+        if not self.auth_required():
+            return self._local_post()
+        path=unquote(urlsplit(self.path).path)
+        if not private_route(path):
+            return self.send(404,{"error":"Nicht gefunden"})
+        user=self._principal()
+        if user is None:
+            return self.send(401,{"error":"Anmeldung erforderlich."})
+        with account_library(user,os.getenv("CHATIDY_DB",str(DEFAULT_DATABASE))):
+            return self._local_post()
+
+    def _local_get(self):
         if not self.same_origin():
             return self.send(403,{"error":"Ungültiger Host oder Origin."})
         path=unquote(urlsplit(self.path).path)
@@ -105,7 +169,7 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError,TypeError,OverflowError) as exc:
             return self.send(400,{"error":str(exc)})
 
-    def do_POST(self):
+    def _local_post(self):
         if not self.same_origin():
             return self.send(403,{"error":"Ungültiger Host oder Origin."})
         path=urlsplit(self.path).path
@@ -257,6 +321,10 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     # Give existing job/storage consumers the same project-relative default.
     os.environ.setdefault("CHATIDY_DB", str(DEFAULT_DATABASE))
+    if os.getenv("CHATIDY_AUTH_REQUIRED") == "1":
+        origin=urlsplit(os.getenv("CHATIDY_PUBLIC_ORIGIN",""))
+        if origin.scheme!="https" or not origin.netloc or origin.path not in ("","/"):
+            raise ValueError("Auth-Testmodus benötigt CHATIDY_PUBLIC_ORIGIN als HTTPS-Origin.")
     host="127.0.0.1"
     port=int(os.getenv("CHATIDY_PORT","8877"))
     print(f"Chatidy läuft lokal unter http://{host}:{port}")

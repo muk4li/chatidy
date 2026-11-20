@@ -175,3 +175,12 @@ Ein vorbereiteter, noch nicht in den HTTP-Handler eingebundener Session-Speicher
 verwaltet einmalige, browsergebundene OIDC-States und widerrufbare Sitzungen.
 Nur Hashes von State-/Session-Token werden gespeichert. Noch **keine**
 Authentik-Anbindung, Cookies, Login- oder API-Zugriffssperre.
+
+### AUTH-009: HTTP-Sitzungsgate (noch nicht öffentlich nutzbar)
+
+Im ausdrücklich aktivierten Testmodus `CHATIDY_AUTH_REQUIRED=1` mit
+`CHATIDY_PUBLIC_ORIGIN=https://...` schützt der Server `/app`, App-Assets
+und alle `/api/*`-Routen mit einer aktiven serverseitigen Sitzung. Danach
+wählt er die SQLite-Bibliothek und Importjobs des Benutzers. Der lokale
+Standardmodus bleibt unverändert. **Es gibt noch keinen OIDC-Login oder
+Callback: nicht öffentlich bereitstellen!**
