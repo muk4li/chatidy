@@ -3,9 +3,11 @@ const $=id=>document.getElementById(id);
 let view='all',folder=null,folders=[],chats=[],selected=null,offset=0,loading=false,searchTimer=null,details=null;
 const PAGE=100;
 let chosen=new Set(),smartFolders=[],smart=null,loadEpoch=0,tags=[],page='library';
+let sourceFilter='',sourceCounts={};
 const store={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 let collapsed=new Set(store.get('chatidy-collapsed-folders',[]));
-function showPage(name){
+function showPage(name,skipHistory=false){
+  if(!skipHistory)pushRoute(name==='import'?'/app/import':'/app');
   page=name;$('import-page').hidden=name!=='import';$('library-page').hidden=name!=='library';document.body.classList.toggle('page-import',name==='import');
   if(name==='import')closeReader();
   renderSidebar();
@@ -33,7 +35,16 @@ function modal(title,contents,onSave,saveLabel='Speichern'){
   dialog.showModal();
 }
 function currentName(){if(smart!==null)return smartFolders.find(f=>f.id===smart)?.name||'Intelligenter Ordner';if(folder!==null)return folders.find(f=>f.id===folder)?.name||'Ordner';return ({all:'Alle Gespräche',inbox:'Posteingang',archived:'Archivierte Gespräche',unfiled:'Ohne Gruppe',topics:'Themencluster'})[view]}
-function setView(v,id=null){page='library';$('import-page').hidden=true;$('library-page').hidden=false;document.body.classList.remove('page-import');smart=null;$('search').disabled=false;$('tag-filter').disabled=false;chosen.clear();renderSelection();view=v;folder=id;offset=0;selected=null;details=null;renderSidebar();renderDetail();loadChats()}
+function setView(v,id=null,{keepTag=false,skipHistory=false}={}){
+  if(!keepTag)$('tag-filter').value='';
+  page='library';$('import-page').hidden=true;$('library-page').hidden=false;
+  document.body.classList.remove('page-import');smart=null;
+  $('search').disabled=false;$('tag-filter').disabled=false;
+  chosen.clear();renderSelection();view=v;folder=id;offset=0;selected=null;details=null;
+  if(!skipHistory)pushRoute(id!==null?'/app/folders/'+id:
+    ({inbox:'/app/inbox',archived:'/app/archive',unfiled:'/app/unfiled',topics:'/app/topics'})[v]||'/app');
+  renderSidebar();renderDetail();loadChats()
+}
 async function loadFolders(){
   folders=await api('/api/folders');$('stat-folders').textContent=folders.length;
   const target=$('bulk-folder'),current=target.value;target.replaceChildren(new Option('Zielordner wählen',''));
@@ -45,11 +56,12 @@ async function loadOrganisation(){
   for(const tag of tags)target.add(new Option(tag.name+' ('+tag.count+')',tag.name));target.value=current;
   renderSidebar();
 }
-function setSmart(id){
+function setSmart(id,skipHistory=false){
   const item=smartFolders.find(f=>f.id===id);if(!item)return;
   page='library';$('import-page').hidden=true;$('library-page').hidden=false;document.body.classList.remove('page-import');
   smart=id;folder=null;view='all';offset=0;chosen.clear();selected=null;details=null;
   $('search').value=item.query.q||'';$('search').disabled=true;$('tag-filter').value=item.query.tag||'';$('tag-filter').disabled=true;
+  if(!skipHistory)pushRoute('/app/smart/'+id);
   renderSelection();renderSidebar();renderDetail();loadChats();
 }
 function renderSelection(){
@@ -74,6 +86,7 @@ function editTags(ids,replace=false){
   },'Tags übernehmen');
 }
 const PROVIDER_LABELS={chatgpt:'ChatGPT',claude:'Claude'};
+const SOURCE_LABELS={chatgpt:'ChatGPT',codex:'Codex',claude:'Claude',claude_code:'Claude Code',extractor:'Extractor'};
 let providers={},providerFilter='';
 function providerLabel(id){return PROVIDER_LABELS[id]||String(id||'Unbekannt')}
 function renderProviders(){
@@ -82,9 +95,90 @@ function renderProviders(){
   $('provider-section').hidden=ids.length<2&&!providerFilter;
   for(const id of ids){
     const active=providerFilter===id;
-    const b=button(providerLabel(id),()=>{if(smart!==null)return;providerFilter=active?'':id;setView('all')},'tagbtn'+(active?' active':''));
+    const b=button(providerLabel(id),()=>{if(smart!==null)return;providerFilter=active?'':id;setView('all',null,{keepTag:true})},'tagbtn'+(active?' active':''));
     b.append(element('small','',Number(providers[id]).toLocaleString('de-DE')));b.title='Nach Anbieter filtern: '+providerLabel(id);nav.append(b);
   }
+}
+function renderSources(){
+  const nav=$('source-list');nav.replaceChildren();
+  for(const id of ['chatgpt','codex','claude','claude_code','extractor']){
+    const count=Number(sourceCounts[id]||0);
+    if(!count&&sourceFilter!==id)continue; // Claude Code only if explicitly identifiable.
+    const active=sourceFilter===id;
+    const b=button(SOURCE_LABELS[id],()=>{
+      sourceFilter=active?'':id;
+      setView('all',null,{keepTag:true})
+    },'tagbtn'+(active?' active':''));
+    b.append(element('small','',count.toLocaleString('de-DE')));
+    b.title='Nach Quelle filtern: '+SOURCE_LABELS[id];nav.append(b);
+  }
+  $('source-section').hidden=!nav.childElementCount;
+}
+function routeQuery(){
+  const params=new URLSearchParams();
+  if($('search').value.trim())params.set('q',$('search').value.trim());
+  if($('tag-filter').value)params.set('tag',$('tag-filter').value);
+  if(providerFilter)params.set('provider',providerFilter);
+  if(sourceFilter)params.set('source',sourceFilter);
+  if($('date-from').value)params.set('from',$('date-from').value);
+  if($('date-to').value)params.set('to',$('date-to').value);
+  if($('undated').checked)params.set('undated','1');
+  if($('date-sort').value!=='newest')params.set('sort',$('date-sort').value);
+  return params.toString()
+}
+function pushRoute(path,replace=false){
+  const query=path.startsWith('/app')&&path!=='/app/import'?routeQuery():'';
+  const target=path+(query?'?'+query:'');
+  if(location.pathname+location.search===target)return;
+  history[replace?'replaceState':'pushState']({},'',target)
+}
+function syncRouteQuery(){
+  const path=location.pathname.startsWith('/app')?location.pathname:'/app';
+  pushRoute(path,true)
+}
+function restoreFilters(){
+  const q=new URLSearchParams(location.search);
+  $('search').value=q.get('q')||'';
+  $('tag-filter').value=q.get('tag')||'';
+  providerFilter=q.get('provider')||'';
+  sourceFilter=q.get('source')||'';
+  $('date-from').value=q.get('from')||'';
+  $('date-to').value=q.get('to')||'';
+  $('undated').checked=q.get('undated')==='1';
+  $('date-sort').value=q.get('sort')==='oldest'?'oldest':'newest';
+  updateUndatedControls()
+}
+function applyRoute(){
+  restoreFilters();
+  const path=location.pathname;
+  if(path==='/app/import'){showPage('import',true);loadJobs();return}
+  if(path==='/app/inbox'){setView('inbox',null,{keepTag:true,skipHistory:true});return}
+  if(path==='/app/archive'){setView('archived',null,{keepTag:true,skipHistory:true});return}
+  if(path==='/app/unfiled'){setView('unfiled',null,{keepTag:true,skipHistory:true});return}
+  if(path==='/app/topics'){setView('topics',null,{keepTag:true,skipHistory:true});return}
+  let match=path.match(/^\/app\/folders\/(\d+)$/);
+  if(match){
+    const id=Number(match[1]);
+    if(!folders.some(f=>f.id===id)){setView('all',null,{keepTag:true,skipHistory:true});message('Ordner nicht gefunden.',true);return}
+    setView('all',id,{keepTag:true,skipHistory:true});return
+  }
+  match=path.match(/^\/app\/smart\/(\d+)$/);
+  if(match){
+    const id=Number(match[1]);
+    if(!smartFolders.some(f=>f.id===id)){setView('all',null,{keepTag:true,skipHistory:true});message('Intelligenter Ordner nicht gefunden.',true);return}
+    setSmart(id,true);return
+  }
+  if(path.startsWith('/app/chats/')){
+    const id=path.slice('/app/chats/'.length);
+    setView('all',null,{keepTag:true,skipHistory:true});
+    try{showChat(decodeURIComponent(id),true)}catch{message('Ungültiger Chat-Link.',true)}
+    return
+  }
+  if(path==='/app'||path==='/app/'){setView('all',null,{keepTag:true,skipHistory:true});return}
+  setView('all',null,{keepTag:true,skipHistory:true});message('Ansicht nicht gefunden.',true)
+}
+function updateUndatedControls(){
+  for(const id of ['date-from','date-to'])$(id).disabled=$('undated').checked
 }
 function renderSidebar(){
   const library=page==='library';
@@ -124,18 +218,20 @@ function renderSidebar(){
   if(!smartFolders.length)smartNav.append(element('p','muted','Speichere eine Suche, um sie hier abzulegen.'));
   const tagNav=$('tag-list');tagNav.replaceChildren();const activeTag=$('tag-filter').value;
   for(const tag of tags){
-    const b=button('# '+tag.name,()=>{if(smart!==null)return;$('tag-filter').value=activeTag===tag.name?'':tag.name;setView('all')},'tagbtn'+(activeTag===tag.name?' active':''));
+    const b=button('# '+tag.name,()=>{if(smart!==null)return;$('tag-filter').value=activeTag===tag.name?'':tag.name;setView('all',null,{keepTag:true})},'tagbtn'+(activeTag===tag.name?' active':''));
     b.append(element('small','',String(tag.count)));b.title='Nach Tag filtern: '+tag.name;tagNav.append(b);
   }
   if(!tags.length)tagNav.append(element('p','muted','Noch keine Tags.'));
-  renderProviders();
+  renderProviders();renderSources();
 }
 async function loadStats(){
   const stats=await api('/api/stats');const n=v=>Number(v||0).toLocaleString('de-DE');
   for(const key of ['chats','messages','folders','inbox'])$('stat-'+key).textContent=n(stats[key]);
   $('count-all').textContent=n(stats.chats);$('count-inbox').textContent=n(stats.inbox);
   $('count-archived').textContent=n(stats.archived);$('count-unfiled').textContent=n(stats.unfiled);
-  providers=stats.providers&&typeof stats.providers==='object'?stats.providers:{};renderProviders();
+  providers=stats.providers&&typeof stats.providers==='object'?stats.providers:{};
+  sourceCounts=stats.sources&&typeof stats.sources==='object'?stats.sources:{};
+  renderProviders();renderSources();
   // Topic views are computed from titles; only their number is shown here.
   try{$('count-topics').textContent=n((await api('/api/topics')).length)}catch{$('count-topics').textContent=''}
 }
@@ -150,6 +246,20 @@ async function loadChats(append=false){
     if(folder!==null)params.set('folder',folder);else params.set('mode',view);
     if($('tag-filter').value)params.set('tag',$('tag-filter').value);
     if(smart===null&&providerFilter)params.set('provider',providerFilter);
+    if(smart===null&&sourceFilter)params.set('source',sourceFilter);
+    if($('date-from').value&&!$('undated').checked){
+      const start=new Date($('date-from').value+'T00:00:00');
+      params.set('date_from',$('date-from').value);
+      params.set('date_from_offset',String(start.getTimezoneOffset()))
+    }
+    if($('date-to').value&&!$('undated').checked){
+      const end=new Date($('date-to').value+'T00:00:00');
+      end.setDate(end.getDate()+1);
+      params.set('date_to',$('date-to').value);
+      params.set('date_to_offset',String(end.getTimezoneOffset()))
+    }
+    if($('undated').checked)params.set('undated','1');
+    params.set('sort',$('date-sort').value);
     params.set('limit',PAGE);params.set('offset',append?offset:0);
     const result=await api('/api/chats?'+params);
     if(epoch!==loadEpoch)return;
@@ -204,7 +314,9 @@ function renderChats(){
     b.append(element('div','chat-title',chat.title||'Ohne Titel'),element('span','chat-date',date(chat.updated||chat.created)),element('span','chat-count',String(chat.message_count)));
     b.title=(chat.title||'Ohne Titel')+' · '+chat.message_count+' Nachrichten';
     const meta=element('div','chat-meta');
-    if(Object.keys(providers).length>1)meta.append(element('span','pill provider provider-'+String(chat.provider||'').replace(/[^a-z0-9_-]/gi,''),providerLabel(chat.provider)));
+    const subtype=(()=>{try{return JSON.parse(chat.metadata||'{}').source||''}catch{return ''}})();
+    const visibleSource=SOURCE_LABELS[subtype]||providerLabel(chat.provider);
+    if(visibleSource)meta.append(element('span','pill provider provider-'+String(chat.provider||'').replace(/[^a-z0-9_-]/gi,''),visibleSource));
     if(!chat.reviewed)meta.append(element('span','pill new','Neu'));
     if(chat.groups_count)meta.append(element('span','pill',chat.groups_count+(chat.groups_count===1?' Gruppe':' Gruppen')));
     b.append(meta);list.append(row);
@@ -282,7 +394,14 @@ function renderDetail(){
     detail.append(box);
   }
 }
-async function showChat(id){selected=id;try{details=await api('/api/chat/'+encodeURIComponent(id));renderChats();renderDetail();$('detail').scrollTop=0;document.body.classList.add('reading')}catch(e){message(e.message,true)}}
+async function showChat(id,skipHistory=false){
+  selected=id;
+  try{
+    details=await api('/api/chat/'+encodeURIComponent(id));
+    if(!skipHistory)pushRoute('/app/chats/'+encodeURIComponent(id));
+    renderChats();renderDetail();$('detail').scrollTop=0;document.body.classList.add('reading')
+  }catch(e){selected=null;message(e.message,true)}
+}
 function editGroups(cid){
   if(!details)return;
   const list=element('div');
@@ -465,6 +584,81 @@ async function importFile(file){
     importJob=result.id;localStorage.setItem('chatidy-import-job',importJob);clearTimeout(importPoll);pollImport();
   }catch(e){message('Import fehlgeschlagen: '+e.message,true)}finally{$('pick-file').disabled=false}
 }
+// F-003: A multi-selection creates separate, inspectable import jobs. Each
+// file retains its own progress, failure and explicit preview confirmation.
+function uploadWithProgress(file,progress){
+  return new Promise((resolve,reject)=>{
+    const req=new XMLHttpRequest();
+    req.open('POST','/api/import/analyze');
+    req.setRequestHeader('Content-Type','application/octet-stream');
+    req.setRequestHeader('X-Filename',file.name.replace(/[^a-zA-Z0-9_.-]/g,'_'));
+    req.upload.onprogress=e=>{if(e.lengthComputable)progress(Math.round(e.loaded/e.total*100))};
+    req.onload=()=>{
+      let data;
+      try{data=JSON.parse(req.responseText)}catch{reject(new Error('Ungültige Serverantwort.'));return}
+      if(req.status>=200&&req.status<300)resolve(data);
+      else reject(new Error(data.error||'Upload fehlgeschlagen ('+req.status+').'))
+    };
+    req.onerror=()=>reject(new Error('Verbindung beim Upload unterbrochen.'));
+    req.send(file)
+  })
+}
+function multiStatus(file){
+  const row=element('div','multi-upload-row');
+  const name=element('strong','',file.name);
+  const state=element('span','muted','Wartet auf Upload');
+  const actions=element('div','multi-upload-actions');
+  row.append(name,state,actions);$('multi-upload-status').append(row);
+  return {state,actions}
+}
+async function monitorMultiJob(id,row){
+  try{
+    const status=await api('/api/import/jobs/'+id);
+    row.state.textContent=jobLabels[status.state]||status.state;
+    if(status.error)row.state.textContent+=' · '+status.error;
+    if(status.state==='awaiting_confirmation'){
+      row.actions.replaceChildren(button('Vorschau öffnen',async()=>{
+        importJob=id;localStorage.setItem('chatidy-import-job',id);
+        showPage('import');await pollImport();
+        $('import-preview').scrollIntoView({block:'start'});
+      }));
+    }else if(status.active||status.state==='uploaded'||status.state==='committing'){
+      setTimeout(()=>monitorMultiJob(id,row),1800);
+    }
+  }catch(e){row.state.textContent='Statusfehler: '+e.message}
+}
+async function importFiles(files){
+  const list=Array.from(files||[]);
+  if(!list.length)return;
+  if(list.length===1){await importFile(list[0]);return}
+  // A previous single-file job keeps its server-side status, but must not
+  // unexpectedly redirect away from the newly selected multi-file queue.
+  clearTimeout(importPoll);
+  importJob=null;
+  localStorage.removeItem('chatidy-import-job');
+  $('import-status').hidden=true;
+  $('import-preview').hidden=true;
+  showPage('import');
+  $('multi-upload-status').hidden=false;
+  $('multi-upload-status').replaceChildren(element('strong','','Mehrfachauswahl: '+list.length+' Dateien – jede Vorschau einzeln prüfen und bestätigen'));
+  if(list.length>20){message('Bitte höchstens 20 Dateien gleichzeitig auswählen.',true);return}
+  $('pick-file').disabled=true;
+  try{
+    for(const file of list){
+      const row=multiStatus(file);
+      if(!/\.(json|zip)$/i.test(file.name)){row.state.textContent='Fehler: nur ZIP/JSON erlaubt';continue}
+      if(!file.size||file.size>200*1024*1024){row.state.textContent='Fehler: leer oder größer als 200 MB';continue}
+      try{
+        row.state.textContent='Upload läuft: 0 %';
+        const result=await uploadWithProgress(file,value=>row.state.textContent='Upload läuft: '+value+' %');
+        row.state.textContent='Hochgeladen · Server prüft …';
+        monitorMultiJob(result.id,row);
+      }catch(e){row.state.textContent='Fehler: '+e.message}
+    }
+    await loadJobs();
+    message('Dateien übermittelt. Bitte für jede Datei die Vorschau öffnen und den Import bestätigen.');
+  }finally{$('pick-file').disabled=false}
+}
 if(importJob){page='import';$('import-page').hidden=false;$('library-page').hidden=true;document.body.classList.add('page-import');pollImport()}
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
 document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{showPage(b.dataset.page);if(b.dataset.page==='import')loadJobs()});
@@ -472,7 +666,7 @@ $('close-reader').onclick=closeReader;
 $('select-loaded').onchange=()=>{chosen=$('select-loaded').checked?new Set(chats.slice(0,500).map(c=>c.id)):new Set();renderChats();renderSelection()};
 $('bulk-assign').onclick=()=>assignChats([...chosen],$('bulk-folder').value);
 $('bulk-tags').onclick=()=>editTags([...chosen]);
-$('tag-filter').onchange=()=>setView('all');
+$('tag-filter').onchange=()=>setView('all',null,{keepTag:true});
 $('save-smart').onclick=()=>{
   const name=field('Name des intelligenten Ordners');
   modal('Aktuelle Suche speichern',[name.wrapper],async()=>{
@@ -481,12 +675,14 @@ $('save-smart').onclick=()=>{
   },'Suche speichern');
 };
 $('new-folder').onclick=createFolder;$('new-rule').onclick=rulesModal;$('export').onclick=()=>exportChats();
-$('refresh').onclick=refresh;$('more').onclick=()=>loadChats(true);$('clear').onclick=()=>{$('search').value='';loadChats()};
-$('search').oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{offset=0;loadChats()},250)};
-$('pick-file').onclick=()=>$('file-input').click();$('file-input').onchange=e=>importFile(e.target.files[0]);
+$('refresh').onclick=refresh;$('more').onclick=()=>loadChats(true);$('clear').onclick=()=>{$('search').value='';offset=0;syncRouteQuery();loadChats();$('search').focus()};
+$('search').oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{offset=0;syncRouteQuery();loadChats()},250)};
+for(const id of ['date-from','date-to','date-sort','undated'])$(id).onchange=()=>{updateUndatedControls();offset=0;syncRouteQuery();loadChats()};
+$('pick-file').onclick=()=>$('file-input').click();
+$('file-input').onchange=e=>{const files=Array.from(e.target.files);e.target.value='';importFiles(files)};
 const drop=$('dropzone');for(const type of ['dragenter','dragover'])drop.addEventListener(type,e=>{e.preventDefault();drop.classList.add('drag')});
 for(const type of ['dragleave','drop'])drop.addEventListener(type,e=>{e.preventDefault();drop.classList.remove('drag')});
-drop.addEventListener('drop',e=>importFile(e.dataTransfer.files[0]));
+drop.addEventListener('drop',e=>importFiles(e.dataTransfer.files));
 // Collapsible sidebar sections (state is a per-browser convenience only).
 const closedSections=new Set(store.get('chatidy-closed-sections',[]));
 document.querySelectorAll('.navsection').forEach(section=>{
@@ -521,7 +717,11 @@ for(const [id,key] of [['resize-nav','nav'],['resize-reader','reader']]){
   };
 }
 addEventListener('resize',applySizes);applySizes();
-refresh().then(async()=>{if(!importJob&&Number((await api('/api/stats')).chats||0)===0)showPage('import')}).catch(e=>message('Startfehler: '+e.message,true));
+refresh().then(async()=>{
+  applyRoute();
+  if(location.pathname==='/app'&&!importJob&&Number((await api('/api/stats')).chats||0)===0)showPage('import');
+}).catch(e=>message('Startfehler: '+e.message,true));
+addEventListener('popstate',applyRoute);
 
 /* AUTH-013: show account controls only when the server confirms an auth session. */
 (async()=>{

@@ -10,7 +10,7 @@
 <body>
 <div class="app">
   <aside class="sidebar" aria-label="Navigation">
-    <div class="brand"><span class="brand-mark">✳</span><span>chatidy</span></div>
+    <a class="brand" href="/" aria-label="Chatidy – zur Startseite"><span class="brand-mark">✳</span><span>chatidy</span></a>
     <dl class="stats" aria-label="Kennzahlen">
       <div><dt>Chats</dt><dd id="stat-chats">0</dd></div>
       <div><dt>Nachrichten</dt><dd id="stat-messages">0</dd></div>
@@ -36,6 +36,10 @@
     <section class="navsection" data-section="providers" id="provider-section" hidden>
       <div class="navhead"><button class="sectiontoggle" aria-expanded="true" aria-controls="provider-list">Anbieter</button></div>
       <nav id="provider-list" class="tag-list" aria-label="Anbieter"></nav>
+    </section>
+    <section class="navsection" id="source-section" data-section="sources">
+      <div class="navhead"><button class="sectiontoggle" aria-expanded="true" aria-controls="source-list">Quellen &amp; Untertypen</button></div>
+      <nav id="source-list" class="tag-list" aria-label="Quellen-Untertypen"></nav>
     </section>
     <section class="navsection" data-section="tags">
       <div class="navhead"><button class="sectiontoggle" aria-expanded="true" aria-controls="tag-list">Tags</button></div>
@@ -65,10 +69,11 @@
       </details>
       <section class="import-zone" id="dropzone">
         <div class="import-icon">↥</div>
-        <div class="import-description"><strong>Datei hier ablegen</strong><span>Lokal verarbeitet · keine Synchronisierung · bis 200 MB</span></div>
-        <button id="pick-file" class="primary">Datei auswählen</button>
-        <input id="file-input" type="file" accept=".zip,.json" hidden>
+        <div class="import-description"><strong>Dateien hier ablegen</strong><span>Mehrere ZIP-/JSON-Dateien auf einmal auswählen · je Datei max. 200 MB · lokale Vorschau und Bestätigung pro Importjob</span></div>
+        <button id="pick-file" class="primary">Dateien auswählen</button>
+        <input id="file-input" type="file" accept=".zip,.json" multiple hidden>
       </section>
+      <div id="multi-upload-status" class="multi-upload-status" role="status" aria-live="polite" hidden></div>
       <div class="notice" id="import-status" role="status" hidden><span id="import-status-text"></span> <button id="resume-import" class="soft" hidden>Import fortsetzen</button></div>
       <section id="import-preview" class="import-preview" aria-label="Import-Vorschau" hidden></section>
       <details class="job-management" id="job-management">
@@ -92,7 +97,11 @@
       <div class="toolbar">
         <input id="search" type="search" placeholder="Titel, Nachrichten oder Code durchsuchen …" aria-label="Chat-Suche">
         <select id="tag-filter" aria-label="Nach Tag filtern"><option value="">Alle Tags</option></select>
-        <button id="clear" class="soft" title="Suche leeren" aria-label="Suche leeren">×</button>
+        <label class="filter-field">Von <input id="date-from" type="date" aria-label="Chats ab Datum"></label>
+        <label class="filter-field">Bis <input id="date-to" type="date" aria-label="Chats bis Datum"></label>
+        <label class="filter-check"><input id="undated" type="checkbox"> Ohne Datum</label>
+        <select id="date-sort" aria-label="Nach Datum sortieren"><option value="newest">Neueste zuerst</option><option value="oldest">Älteste zuerst</option></select>
+        <button id="clear" class="soft" title="Suchtext leeren" aria-label="Suchtext leeren">×</button>
       </div>
       <div class="bulkbar">
         <label><input id="select-loaded" type="checkbox"> Geladene auswählen (max. 500)</label>
@@ -101,7 +110,7 @@
         <button id="bulk-assign" class="soft" disabled>Zuordnen</button>
         <button id="bulk-tags" class="soft" disabled>Tags hinzufügen</button>
       </div>
-      <div class="listcols" aria-hidden="true"><span></span><span>Titel</span><span>Datum</span><span>Nachr.</span></div>
+      <div class="listcols" aria-hidden="true"><span></span><span>Titel / Quelle</span><span>Datum</span><span>Nachr.</span></div>
       <div id="chat-list" class="chat-list"><div class="empty">Importiere deinen Export, um die Bibliothek zu füllen.</div></div>
       <button class="soft loadmore" id="more" hidden>Weitere Chats laden</button>
     </section>

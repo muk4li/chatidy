@@ -72,6 +72,9 @@ class HttpGateTests(unittest.TestCase):
                      "/api/export","/app.js","/reading.js","/style.css",
                      "/api/import/jobs/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"):
             with self.subTest(path=path):self.assertEqual(self.request(path)[0],401)
+        for private_path in ("/app/import","/app/inbox","/app/archive","/app/folders/12","/app/chats/synthetic"):
+            with self.subTest(private_path=private_path):
+                self.assertEqual(self.request(private_path)[0],302)
         code,_,headers=self.request("/app")
         self.assertEqual(code,302)
         self.assertEqual(headers["Location"],"/login")
@@ -134,6 +137,8 @@ class HttpGateTests(unittest.TestCase):
             self.assertEqual(json.loads(body)[0]["title"],"Synthetic "+str(num))
             self.assertEqual(self.request("/api/import/jobs",token=token)[0],200)
             self.assertEqual(self.request("/app",token=token)[0],200)
+            self.assertEqual(self.request("/app/inbox",token=token)[0],200)
+            self.assertEqual(self.request("/app/folders/123",token=token)[0],200)
         with closing(connect(self.registry)) as db:
             self.assertIsNone(chat_detail(db,"same-chat"))
             with db:db.execute("UPDATE users SET status='disabled' WHERE id=?",(one.id,))

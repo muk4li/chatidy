@@ -7,10 +7,13 @@ Es verändert keine Unterhaltungen auf chatgpt.com und benötigt keinen ChatGPT-
 ## Startseite und lokale Anwendung
 
 `/` zeigt eine öffentliche Produkt-Landingpage und `/app` die bestehende lokale Bibliothek.
-**Noch kein Login:** Bis eine serverseitige OIDC-Anmeldung mit geschützten APIs
-und Benutzerisolation umgesetzt und getestet ist, darf Chatidy ausschließlich
-auf Loopback laufen und nicht öffentlich bereitgestellt werden. Der Link
-„Bibliothek öffnen“ auf der Landingpage ist nur für die lokale Entwicklung gedacht.
+**L2 technisch integriert, öffentliche Freigabe weiterhin gesperrt:** OIDC-Login,
+serverseitige Sitzungen, geschützte APIs, getrennte Bibliotheken und Jobdaten
+sind implementiert und synthetisch getestet (Integration #52/#53). Im normalen
+lokalen Modus bleibt Chatidy ohne Login bedienbar. Ein echter authentik-,
+HTTPS-/Proxy-, Windows-ACL- und Zwei-Konten-Test sowie Backup-/Restore-
+und Betreiberfreigabe stehen noch aus; daher ausschließlich Loopback-Betrieb.
+Der Link „Bibliothek öffnen“ auf der Landingpage ist für den lokalen Modus gedacht.
 
 ## Schnellstart
 
@@ -80,13 +83,40 @@ Konto-, Memory- und Artifact-ZIPs sind keine Gesprächsexporte.
 [Bedienung, Reimport-Regeln, Segmente, Jobs, Windows-Storage, Schema 4 bis 6](docs/import-details.md).
 Dort stehen auch Ollama-Einrichtung, Extractor-Metadaten und die lokalen APIs.
 
-## Mehrbenutzer-Vorbereitung (noch nicht nutzbar)
+## L2: getrennte Bibliotheken und optionaler Login
 
-Schema 7 legt lediglich eine leere `users`-Tabelle für spätere OIDC-Identitäten
-an. Es gibt **noch keinen Login, keine Benutzerisolation und keine
-Eigentümerzuordnung**. Die bisherige lokale Bibliothek, Importe und APIs
-bleiben unverändert. Die Anwendung darf weiterhin nicht öffentlich betrieben
-werden. Sicherung der bestehenden Datenbank vor einem Upgrade empfohlen.
+Die Authentik-OIDC-Integration (Authorization Code, PKCE, RS256, Confidential
+Client mit serverseitigem Client-Secret), serverseitige Sessions, genaue
+Issuer/Subjekt-Einschreibung, Account-Isolation sowie eine ausdrücklich
+bestätigte Offline-Bestandsmigration sind im Code vorhanden. **Sie sind nicht
+automatisch aktiv und noch nicht für den öffentlichen Betrieb freigegeben.**
+Ein neuer Login legt weder Konten an noch übernimmt er bestehende Chats.
+Details und Sicherheits-Gates: [SERVICE.md](SERVICE.md).
+
+## URLs, Quellen, Datum und Importauswahl
+
+- `/`: Landingpage ohne erfundene Demoansicht; Logo in `/app` führt dorthin.
+- `/app`: Alle Chats; `/app/inbox`, `/app/archive`, `/app/unfiled`,
+  `/app/import`, `/app/topics` sowie stabile Ordner-IDs
+  (`/app/folders/<id>`), intelligente Ordner (`/app/smart/<id>`) und
+  Direktlinks zu Chats (`/app/chats/<id>`). Browser-Zurück und Lesezeichen
+  funktionieren; in L2 sind alle Pfade nur für die jeweilige Sitzung sichtbar.
+- Quellen-Untertypen: ChatGPT, Codex, Claude und Extractor sind unabhängig
+  vom Anbieterfilter kombinierbar. Claude Code wird nur separat gezeigt,
+  wenn das Importformat eine **zuverlässige** explizite Kennzeichnung enthält;
+  gewöhnliche Claude-Chats werden nicht automatisch zu Claude Code erklärt.
+- Datumsbereich passend zur lokalen Browser-Zeitzone mit Start/Ende,
+  älteste/neueste zuerst und „Ohne Datum“
+  (insbesondere für Codex-Aufgaben ohne Zeitstempel).
+- Mehrere ZIP-/JSON-Dateien in **einer Auswahl**, pro Datei eigener
+  Uploadstatus, Importjob, Vorschau und bewusste Bestätigung. Eine
+  gemeinsame atomare Bestätigung mehrerer ZIP-Dateien ist **nicht** vorgesehen;
+  einzelne fehlerhafte Dateien blockieren nicht die übrigen Jobs. Das
+  bestehende Größenlimit von 200 MB gilt **je Datei**.
+
+Die gespeicherten Bibliotheksdaten bleiben auf dem Server pro Konto getrennt;
+Benutzer-/Session-Tokens erscheinen nicht in URLs. Weitere Bedienhinweise:
+[Importdetails](docs/import-details.md) und [UX-Abnahmeliste](docs/ux-f001-f009.md).
 
 ## Datenschutz
 
@@ -156,10 +186,10 @@ Temporäre synthetische Daten; `CHROMIUM_PATH` überschreibt `/usr/bin/chromium`
 Nachweise: [aktuellerStand.md](aktuellerStand.md), frühere Durchläufe:
 [Historie](docs/history.md). Entwicklungsregeln: [AGENTS.md](AGENTS.md).
 
-### OIDC-Kryptografie (noch nicht in der App aktiviert)
+### OIDC-Status
 
-Für den künftigen Login gibt es einen isolierten, mit synthetischen
-RSA-Schlüsseln getesteten ID-Token-/PKCE-Baustein. Die optionalen und exakt
-gepinnten Abhängigkeiten stehen unter `requirements-auth.txt`.
-Der normale lokale Start verwendet die Python-Standardbibliothek; aktuell
-existieren weder Login-Handler noch Sessions. **Nicht öffentlich deployen.**
+Kryptografie, Login-/Callback-/Logout-Handler, Session- und Datenisolation sind
+im Quellcode integriert. Ein echter Authentik-End-to-End-Test und die übrigen
+Betriebsfreigaben aus [SERVICE.md](SERVICE.md) sind noch offen. **Nicht
+öffentlich bereitstellen** und keinen echten Bestand ohne Backup und
+ausdrückliche Eigentümerfreigabe migrieren.

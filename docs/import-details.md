@@ -392,3 +392,24 @@ Sichtbar und durchsuchbar sind Nutzeranfragen, Antworttexte und PR-Titel; Reposi
 Diffs und Dateizitate bleiben in den Metadaten. Der Export enthält keine Zeitstempel, daher stehen
 Codex-Chats in der Datumssortierung am Ende. Eine nicht erkannte `codex.json` wird mit Warnung
 übersprungen. Auch eine einzeln hochgeladene `codex.json` wird erkannt.
+
+## UX-Erweiterungen F-003, F-006 bis F-009 (gemeinsamer PR)
+
+- Mehrfachauswahl von bis zu 20 ZIP-/JSON-Dateien per Dateidialog oder Drop.
+  Jede Datei hat höchstens 200 MB und ihren **eigenen** Job, Uploadstatus,
+  Fehlerhinweis und Vorschau. Erst die Einzelbestätigung übernimmt Chats.
+  Dies ist bewusst **kein** atomarer Export über mehrere ZIP-Dateien;
+  die Bestätigung erfolgt je Job. Bereits importierte Chats bleiben bei
+  einem Fehler einer anderen Datei erhalten.
+- Codex-Aufgaben sind durch `metadata.source="codex"` gekennzeichnet,
+  gehören zugleich zu `provider="chatgpt"` und lassen sich getrennt
+  sowie kombiniert filtern; das fehlende Codex-Datum ist kein Quellennachweis.
+- Der Quellenfilter zeigt ChatGPT, Codex, Claude und ggf. Extractor separat.
+  Claude Code erscheint nur mit einer explizit zuverlässig nachweisbaren
+  Quelle `claude_code`, nicht aufgrund von Vermutungen aus Titel oder Datum.
+- Datum: optionaler Bereich in der lokalen Browser-Zeitzone (`JJJJ-MM-TT`, einschließlich
+  Endtag), Sortierung und `Ohne Datum`. „Ohne Datum“ ist von Datumsbereichen
+  zu trennen.
+- Direkte `/app/...`-URLs unterstützen Aktualisieren, Lesezeichen und
+  Browser-Zurück/-Vorwärts. Im Mehrbenutzermodus entscheidet ausschließlich
+  die serverseitig verifizierte Sitzung über die Datenbank.
