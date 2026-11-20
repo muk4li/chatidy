@@ -49,12 +49,12 @@ def tags(db):
 
 
 def validated_query(value):
-    if not isinstance(value, dict) or set(value) - {'q', 'tag', 'mode', 'project'}:
+    if not isinstance(value, dict) or set(value) - {'q', 'tag', 'mode', 'project', 'provider'}:
         raise ValueError('Ungültige intelligente Ordnerabfrage.')
     result = {'mode': value.get('mode', 'all')}
     if result['mode'] not in ('all', 'inbox', 'archived', 'unfiled'):
         raise ValueError('Ungültiger Ansichtsfilter.')
-    for key, maximum in (('q', 500), ('tag', 60), ('project', 200)):
+    for key, maximum in (('q', 500), ('tag', 60), ('project', 200), ('provider', 40)):
         if key in value:
             if not isinstance(value[key], str):
                 raise ValueError('Ungültiges Suchfeld.')

@@ -16,6 +16,10 @@
   Tests lokal: 113 entdeckt, 103 bestanden, 10 native Windows-Tests übersprungen;
   Chromium-Browsertest 3/3 erfolgreich. Nur synthetische Daten. Keine Änderungen
   an Import-, Job-Storage-, Migrations- oder Schemacode.
+- **PROV-002b (2026-11-20):** Anbieter-Badge, Anbieter in der Kopfzeile, Filter „Anbieter“ in der
+  Navigation (ab zwei Anbietern sichtbar), intelligente Ordner mit Anbieterfilter; Claude-Werkzeug-
+  und Denkblöcke als einklappbare Kurzzeile (nur Namen/Zahlen, keine Inhalte/URLs). Tests: 135
+  (10 Windows-Skips), Node-Logiktest, Browser-Smoke lokal bestanden. Offen: Prüfung mit echtem Export.
 - **PROV-002a (2026-11-20):** Claude-Adapter: `conversations-000.zip`/`conversations.json` importierbar,
   IDs `claude:<uuid>`, Zweigauswahl über Elternverweise (neuestes Ende), Text aus Textblöcken und
   Anhangstext, Tool-/Thinking-Rohdaten in Metadaten; Manifest und andere Kategorie-ZIPs mit Hinweis

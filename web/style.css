@@ -220,3 +220,6 @@ dialog::backdrop{background:#03060ad0}
 .thinking>summary{color:var(--muted)}
 .thinking-title{font-weight:600;margin-top:6px;color:var(--muted)}
 .thinking-text{white-space:pre-wrap;color:var(--muted)}
+.activity.inline{margin:.5rem 0 0;border-left-color:var(--line-strong)}
+.pill.provider{background:transparent;border:1px solid var(--line-strong);color:var(--muted)}
+.pill.provider-claude{color:#e0b08a;border-color:#6b4a33}

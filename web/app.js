@@ -73,6 +73,19 @@ function editTags(ids,replace=false){
     await loadOrganisation();
   },'Tags übernehmen');
 }
+const PROVIDER_LABELS={chatgpt:'ChatGPT',claude:'Claude'};
+let providers={},providerFilter='';
+function providerLabel(id){return PROVIDER_LABELS[id]||String(id||'Unbekannt')}
+function renderProviders(){
+  const nav=$('provider-list');nav.replaceChildren();
+  const ids=Object.keys(providers);
+  $('provider-section').hidden=ids.length<2&&!providerFilter;
+  for(const id of ids){
+    const active=providerFilter===id;
+    const b=button(providerLabel(id),()=>{if(smart!==null)return;providerFilter=active?'':id;setView('all')},'tagbtn'+(active?' active':''));
+    b.append(element('small','',Number(providers[id]).toLocaleString('de-DE')));b.title='Nach Anbieter filtern: '+providerLabel(id);nav.append(b);
+  }
+}
 function renderSidebar(){
   const library=page==='library';
   document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',library&&smart===null&&folder===null&&view===b.dataset.view));
@@ -115,12 +128,14 @@ function renderSidebar(){
     b.append(element('small','',String(tag.count)));b.title='Nach Tag filtern: '+tag.name;tagNav.append(b);
   }
   if(!tags.length)tagNav.append(element('p','muted','Noch keine Tags.'));
+  renderProviders();
 }
 async function loadStats(){
   const stats=await api('/api/stats');const n=v=>Number(v||0).toLocaleString('de-DE');
   for(const key of ['chats','messages','folders','inbox'])$('stat-'+key).textContent=n(stats[key]);
   $('count-all').textContent=n(stats.chats);$('count-inbox').textContent=n(stats.inbox);
   $('count-archived').textContent=n(stats.archived);$('count-unfiled').textContent=n(stats.unfiled);
+  providers=stats.providers&&typeof stats.providers==='object'?stats.providers:{};renderProviders();
   // Topic views are computed from titles; only their number is shown here.
   try{$('count-topics').textContent=n((await api('/api/topics')).length)}catch{$('count-topics').textContent=''}
 }
@@ -134,6 +149,7 @@ async function loadChats(append=false){
     const params=new URLSearchParams();if(smart!==null)params.set('smart',smart);if($('search').value.trim())params.set('q',$('search').value.trim());
     if(folder!==null)params.set('folder',folder);else params.set('mode',view);
     if($('tag-filter').value)params.set('tag',$('tag-filter').value);
+    if(smart===null&&providerFilter)params.set('provider',providerFilter);
     params.set('limit',PAGE);params.set('offset',append?offset:0);
     const result=await api('/api/chats?'+params);
     if(epoch!==loadEpoch)return;
@@ -188,6 +204,7 @@ function renderChats(){
     b.append(element('div','chat-title',chat.title||'Ohne Titel'),element('span','chat-date',date(chat.updated||chat.created)),element('span','chat-count',String(chat.message_count)));
     b.title=(chat.title||'Ohne Titel')+' · '+chat.message_count+' Nachrichten';
     const meta=element('div','chat-meta');
+    if(Object.keys(providers).length>1)meta.append(element('span','pill provider provider-'+String(chat.provider||'').replace(/[^a-z0-9_-]/gi,''),providerLabel(chat.provider)));
     if(!chat.reviewed)meta.append(element('span','pill new','Neu'));
     if(chat.groups_count)meta.append(element('span','pill',chat.groups_count+(chat.groups_count===1?' Gruppe':' Gruppen')));
     b.append(meta);list.append(row);
@@ -215,11 +232,19 @@ function thinkingBlock(item){
   raw.append(element('pre','metadata-json',JSON.stringify(item.messages.map(m=>m.metadata),null,2)));box.append(raw);
   return box;
 }
+function activityDetails(activity,cls='activity'){
+  const box=element('details',cls);box.append(element('summary','',activity.label));
+  for(const name of activity.tools)box.append(element('div','thinking-text','🔧 '+name));
+  if(activity.results)box.append(element('div','thinking-text','↳ '+activity.results+(activity.results===1?' Ergebnis':' Ergebnisse')+(activity.errors?', davon '+activity.errors+' mit Fehler':'')));
+  for(const text of activity.thinking){box.append(element('div','thinking-title','Denkprozess'),element('div','thinking-text',text))}
+  if(activity.other.length)box.append(element('div','thinking-text','Weitere Blöcke: '+[...new Set(activity.other)].join(', ')));
+  return box;
+}
 function section(title,open=true){const d=element('details','section');d.open=open;d.append(element('summary','',title));const body=element('div','sectionbody');d.append(body);return [d,body]}
 function renderDetail(){
   const detail=$('detail');detail.replaceChildren();
   if(!details){const blank=element('div','empty detail-empty');blank.append(element('div','empty-icon','✳'),element('strong','','Kein Chat geöffnet'),element('p','','Wähle in der Liste einen Chat, um Verlauf, Gruppen und Tags zu sehen.'));detail.append(blank);return}
-  const c=details.chat;detail.append(element('h2','',c.title),element('div','muted',(c.project?'Projekt: '+c.project+' · ':'')+details.messages.length+' Nachrichten · '+date(c.updated||c.created)+(c.reviewed?' · geprüft':' · noch nicht geprüft')));
+  const c=details.chat;detail.append(element('h2','',c.title),element('div','muted',providerLabel(c.provider)+' · '+(c.project?'Projekt: '+c.project+' · ':'')+details.messages.length+' Nachrichten · '+date(c.updated||c.created)+(c.reviewed?' · geprüft':' · noch nicht geprüft')));
   const actions=element('div','detail-actions');
   actions.append(button(c.reviewed?'↺ Erneut prüfen':'✓ Geprüft',async()=>{
     try{await post('/api/review',{conversation_id:c.id,reviewed:!c.reviewed});await refresh();await showChat(c.id)}catch(e){message(e.message,true)}
@@ -239,10 +264,17 @@ function renderDetail(){
   detail.append(element('div','msglabel','Verlauf · '+details.messages.length+' Nachrichten'));
   for(const item of readingItems(details.messages)){
     if(item.kind==='thinking'){detail.append(thinkingBlock(item));continue}
+    if(item.kind==='activity'){
+      const block=activityDetails(item.activity,'thinking activity');
+      const raw=element('details');raw.append(element('summary','','Metadaten'));
+      raw.append(element('pre','metadata-json',JSON.stringify(item.message.metadata,null,2)));block.append(raw);
+      detail.append(block);continue;
+    }
     const m=item.message;
     const box=element('div','bubble '+(m.role==='user'?'user':'assistant'));
     box.append(element('div','role',m.role==='user'?'DU':m.role==='assistant'?'ASSISTENT':String(m.role||'Unbekannt').toUpperCase()));
     appendContent(box,m.content);
+    if(item.activity)box.append(activityDetails(item.activity,'thinking activity inline'));
     if(m.metadata&&Object.keys(m.metadata).length){
       const extra=element('details');extra.append(element('summary','','Quellen, Anhänge und Metadaten'));
       extra.append(element('pre','metadata-json',JSON.stringify(m.metadata,null,2)));box.append(extra);
@@ -443,7 +475,7 @@ $('tag-filter').onchange=()=>setView('all');
 $('save-smart').onclick=()=>{
   const name=field('Name des intelligenten Ordners');
   modal('Aktuelle Suche speichern',[name.wrapper],async()=>{
-    const query=smart!==null?smartFolders.find(f=>f.id===smart).query:{q:$('search').value,tag:$('tag-filter').value,mode:['all','inbox','archived','unfiled'].includes(view)?view:'all'};
+    const query=smart!==null?smartFolders.find(f=>f.id===smart).query:{q:$('search').value,tag:$('tag-filter').value,provider:providerFilter,mode:['all','inbox','archived','unfiled'].includes(view)?view:'all'};
     await post('/api/smart-folders',{name:name.input.value,query});await loadOrganisation();
   },'Suche speichern');
 };

@@ -40,3 +40,30 @@ items=readingItems([msg('h','assistant',P,thoughts([{summary:'<img src=x onerror
 assert.equal(items[0].steps[0].title,'<img src=x onerror=alert(1)>');
 
 console.log('reading_view: ok');
+
+// Claude activity blocks (PROV-002b)
+{
+  const {claudeActivity}=require(path.join(__dirname,'..','web','reading.js'));
+  const claude=(id,content,blocks)=>({id,role:'assistant',content,metadata:{source:'claude',content:blocks}});
+  const blocks=[{type:'thinking',thinking:'',thinking_hidden:true},{type:'tool_use',name:'web_search',input:{query:'secret'}},
+    {type:'tool_result',content:[{type:'text',text:'https://example.invalid'}],is_error:false},
+    {type:'tool_use',name:'web_search'},{type:'tool_result',is_error:true},{type:'tool_use',name:''},
+    {type:'thinking',thinking:'Synthetic thought'},{type:'injected_prompt_block'},{type:'text',text:'Visible'}];
+  const activity=claudeActivity(claude('a','Visible',blocks));
+  assert.deepEqual(activity.tools,['web_search','web_search','Werkzeug']);
+  assert.equal(activity.results,2);assert.equal(activity.errors,1);
+  assert.deepEqual(activity.thinking,['Synthetic thought']);assert.deepEqual(activity.other,['injected_prompt_block']);
+  assert.equal(activity.label,'🔧 3 Werkzeugaufrufe (web_search, Werkzeug) · ⚠ 1 Fehler · 💭 Denkprozess · ▫ injected_prompt_block');
+  assert(!JSON.stringify(activity).includes('secret')&&!JSON.stringify(activity).includes('example.invalid'),'no tool inputs/outputs or URLs');
+  // Text + tools → message with attached activity; tool-only placeholder → activity item.
+  const items=readingItems([claude('a','Visible',blocks),claude('b',P,[{type:'tool_use',name:'bash'}]),
+    claude('c','Only text',[{type:'text',text:'Only text'},{type:'thinking',thinking:''}]),
+    {id:'g',role:'assistant',content:'x',metadata:{source:'chatgpt',content:[{type:'tool_use'}]}}]);
+  assert.deepEqual(items.map(x=>x.kind),['message','activity','message','message']);
+  assert(items[0].activity);assert.equal(items[1].activity.label,'🔧 1 Werkzeugaufruf (bash)');
+  assert.equal(items[2].activity,null,'empty hidden thinking alone adds nothing');
+  assert.equal(items[3].activity,null,'only Claude metadata is interpreted');
+  // Placeholder without recognizable blocks stays a normal message (nothing hidden).
+  assert.equal(readingItems([claude('d',P,[])])[0].kind,'message');
+  console.log('reading_view claude: ok');
+}
