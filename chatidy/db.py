@@ -3,6 +3,7 @@ import os
 import json
 from .migrations import check_version, migrate
 from .conflicts import classify_chat, _import_timestamp
+from .importer import NON_TEXT
 import sqlite3
 from pathlib import Path
 
@@ -190,11 +191,12 @@ def upsert(db, chats):
     return count
 
 def list_chats(db, q="", folder=None, mode="all", limit=250, offset=0, tag=None, project=None, provider=None):
-    sql="""SELECT c.*, (SELECT COUNT(*) FROM messages m WHERE m.conversation_id=c.id)
+    # message_count: readable messages only (thinking/tool-only nodes are shown as compact blocks).
+    sql="""SELECT c.*, (SELECT COUNT(*) FROM messages m WHERE m.conversation_id=c.id AND m.content!=?)
              AS message_count,
              (SELECT COUNT(*) FROM memberships g WHERE g.conversation_id=c.id) AS groups_count
              FROM conversations c WHERE 1=1"""
-    args=[]
+    args=[NON_TEXT]
     if q.strip():
         sql+=" AND EXISTS(SELECT 1 FROM search_index s WHERE s.conversation_id=c.id AND search_index MATCH ?)"
         # Quote user text as a literal phrase, escaping FTS query syntax.
@@ -268,7 +270,7 @@ def create_rule(db,field,needle,folder_id):
 
 def stats(db):
     return {"chats":db.execute("SELECT COUNT(*) FROM conversations").fetchone()[0],
-            "messages":db.execute("SELECT COUNT(*) FROM messages").fetchone()[0],
+            "messages":db.execute("SELECT COUNT(*) FROM messages WHERE content!=?", (NON_TEXT,)).fetchone()[0],
             "folders":db.execute("SELECT COUNT(*) FROM folders").fetchone()[0],
             "inbox":db.execute("SELECT COUNT(*) FROM conversations WHERE reviewed=0").fetchone()[0],
             "archived":db.execute("SELECT COUNT(*) FROM conversations WHERE archived=1").fetchone()[0],

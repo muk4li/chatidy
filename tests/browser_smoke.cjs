@@ -150,6 +150,7 @@ const {spawn,spawnSync}=require('node:child_process');
     assert.equal(await block.count(),1,'thoughts and recap form one block');
     assert.match(await block.locator('summary').first().textContent(),/Nachgedacht für 3s · 1 Schritt/);
     assert.equal(await page.locator('#detail .bubble').count(),2,'only real messages are bubbles');
+    assert.equal(await page.locator('#detail .msglabel').textContent(),'Verlauf · 2 Nachrichten','thinking nodes are not counted');
     assert(!(await page.locator('#detail').textContent()).includes('[Nicht-textueller Inhalt]'));
     assert(!(await page.locator('#detail .thinking-title').isVisible()),'thinking is collapsed by default');
     await block.locator('summary').first().click();

@@ -16,6 +16,8 @@
   Tests lokal: 113 entdeckt, 103 bestanden, 10 native Windows-Tests übersprungen;
   Chromium-Browsertest 3/3 erfolgreich. Nur synthetische Daten. Keine Änderungen
   an Import-, Job-Storage-, Migrations- oder Schemacode.
+- **Nachrichtenzahlen (2026-11-20):** Liste, Kopfzeile, Verlauf und Statistik zählen nur lesbare
+  Nachrichten (ohne Denk-/Werkzeugknoten). Nur Abfrage/Anzeige, keine Schemaänderung.
 - **PROV-002b (2026-11-20):** Anbieter-Badge, Anbieter in der Kopfzeile, Filter „Anbieter“ in der
   Navigation (ab zwei Anbietern sichtbar), intelligente Ordner mit Anbieterfilter; Claude-Werkzeug-
   und Denkblöcke als einklappbare Kurzzeile (nur Namen/Zahlen, keine Inhalte/URLs). Tests: 135
