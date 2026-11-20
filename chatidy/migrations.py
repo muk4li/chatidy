@@ -44,7 +44,7 @@ MIGRATIONS = {
             email TEXT NOT NULL DEFAULT '',
             role TEXT NOT NULL DEFAULT 'member' CHECK(role IN ('owner','member')),
             status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','disabled')),
-            created_at REAL NOT NULL DEFAULT (unixepoch()),
+            created_at REAL NOT NULL DEFAULT (CAST(strftime('%s','now') AS REAL)),
             last_login_at REAL,
             UNIQUE(oidc_issuer,oidc_sub)
         )""",
