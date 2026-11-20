@@ -49,6 +49,24 @@ MIGRATIONS = {
             UNIQUE(oidc_issuer,oidc_sub)
         )""",
     ),
+    8: (
+        # AUTH-008: pending OIDC logins and app sessions are server-side only.
+        # Never store raw session IDs or browser-binding tokens.
+        """CREATE TABLE oidc_pending(
+            state_hash TEXT PRIMARY KEY,
+            browser_hash TEXT NOT NULL,
+            nonce TEXT NOT NULL,
+            code_verifier TEXT NOT NULL,
+            expires_at REAL NOT NULL
+        )""",
+        """CREATE TABLE auth_sessions(
+            token_hash TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            created_at REAL NOT NULL,
+            expires_at REAL NOT NULL
+        )""",
+        "CREATE INDEX auth_sessions_user ON auth_sessions(user_id)",
+    ),
 }
 LATEST = max(MIGRATIONS)
 

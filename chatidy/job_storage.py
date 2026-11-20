@@ -9,6 +9,7 @@ import re
 import stat
 from contextlib import contextmanager
 from pathlib import Path
+from .library_scope import scoped_database
 try:
     import fcntl
 except ImportError:  # Fail closed instead of providing an unsafe deletion fallback.
@@ -27,7 +28,7 @@ def validate_id(value):
 
 
 def root_path():
-    configured = os.getenv('CHATIDY_DB', 'data/chatidy.sqlite3')
+    configured = str(scoped_database() or os.getenv('CHATIDY_DB', 'data/chatidy.sqlite3'))
     if os.name == 'nt':
         drive, tail = os.path.splitdrive(configured)
         if drive and (len(drive) != 2 or not tail.startswith(('\\', '/'))):
