@@ -16,6 +16,9 @@
   Tests lokal: 113 entdeckt, 103 bestanden, 10 native Windows-Tests übersprungen;
   Chromium-Browsertest 3/3 erfolgreich. Nur synthetische Daten. Keine Änderungen
   an Import-, Job-Storage-, Migrations- oder Schemacode.
+- **META-001 (2026-11-20):** Segmente werden gegen ein erkanntes Wurzel-`export_manifest.json`
+  abgeglichen; fehlende/zusätzliche Segmente brechen ab. Unbekannte Manifeste nur Warnung.
+  Tests: 145 (10 Windows-Skips). Offen: Gegenprobe mit echtem ChatGPT-Export (sollte „vollständig“ zeigen).
 - **SEARCH-001 (2026-11-20):** Platzhalter nicht mehr in der Volltextsuche; Schema 6 baut den Suchindex
   einmalig neu auf (nur abgeleiteter Index). Tests: 139 (10 Windows-Skips).
 - **Nachrichtenzahlen (2026-11-20):** Liste, Kopfzeile, Verlauf und Statistik zählen nur lesbare

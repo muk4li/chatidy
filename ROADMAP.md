@@ -26,9 +26,11 @@ Die folgenden offenen Themen sind Backlog, keine automatisch folgenden Aufträge
   Einzelobjekte benötigen RAM; keine unbegrenzte Skalierbarkeit).
 - **Teilweise implementiert:** Zusatzressourcen/Manifeste werden inventarisiert;
   ihre noch ungeprüften Schemas werden nicht als unterstützt behauptet.
-- **Offen:** validierte Manifest-Gesamtzahlen, komplexe Mehrversions-/Zweigrekonstruktion
-  und überlappende Gesprächs-Snapshots. Fehlende letzte Segmente sind ohne
-  vertrauenswürdige Gesamtzahl nicht nachweisbar. Details: TASKS.md.
+- **Implementiert und getestet (synthetisch):** Abgleich der Konversationsdateien mit dem
+  Wurzel-`export_manifest.json`, sofern dessen Schema erkannt wird (META-001); fehlende
+  Endsegmente werden dann erkannt. Unbekannte Manifeste bleiben nur inventarisiert.
+- **Offen:** komplexe Mehrversions-/Zweigrekonstruktion und überlappende
+  Gesprächs-Snapshots. Details: TASKS.md.
 
 ## Phase 2 – Organisation und UX
 
