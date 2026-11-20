@@ -1,3 +1,11 @@
+## AUTH-013 – Kontostatus und Abmelden (Draft)
+
+Angemeldete Benutzer sehen ihren Anzeigenamen und können die Sitzung
+serverseitig widerrufen. Ohne Auth sind Kontosteuerungen ausgeblendet.
+Live-IdP- und Browser-Review offen.
+
+---
+
 ## AUTH-012 – Explizite Bestandskopie (Draft)
 
 Offline-Admin-Befehl für überprüftes Eigentümerkonto; Backup und Kopie von

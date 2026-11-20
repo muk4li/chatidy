@@ -96,8 +96,13 @@ class BrowserOIDCTests(unittest.TestCase):
         self.assertIn("SameSite=Lax",cookie)
         token=cookie.split(";",1)[0]
         self.assertEqual(self.get("/api/stats",token)[0],200)
+        import json
+        session_code,session_body,_=self.get("/api/session",token)
+        self.assertEqual(session_code,200)
+        self.assertEqual(json.loads(session_body)["role"],"member")
         self.assertEqual(self.get("/logout",token,method="POST")[0],302)
         self.assertEqual(self.get("/api/stats",token)[0],401)
+        self.assertEqual(self.get("/api/session",token)[0],401)
 
     def test_cross_origin_logout_denied(self):
         self.assertEqual(self.get("/logout",method="POST",origin="https://evil.invalid")[0],403)

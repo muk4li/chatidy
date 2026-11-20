@@ -221,3 +221,6 @@ Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md 
 
 - **AUTH-012 (Draft):** administrativ bestätigte Offline-Migration in eine
   neue Kontobibliothek mit Offline-Backup; keine automatische Übernahme.
+
+- **AUTH-013 (Draft):** sichtbarer Login-Status/Logout im Auth-Modus;
+  unveränderte lokale Bedienung ohne Login.

@@ -269,3 +269,10 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - [x] Copy von Chat/Organisation und FTS-Rebuild, ohne OIDC-Sessiondaten.
 - [x] Synthetische Regression für Daten-/Tag-Erhalt, idempotente Verweigerung.
 - [ ] Manuelle reale Bibliotheks-/Backup-Restore-Prüfung und Jobmigration offen.
+
+## AUTH-013 – Abmelden und Kontostatus in der App (Draft)
+- [x] Authentifizierter `/api/session`-Status, ohne OIDC-Kennung/Token.
+- [x] UI-Abmelden per POST und Redirect zur öffentlichen Startseite.
+- [x] Kontoaktionen im lokalen Standardmodus ausgeblendet.
+- [x] Synthetische HTTP-Tests für Kontoanzeige und Widerruf.
+- [ ] Browser- und authentik-Liveprüfung vor Remote-Freigabe.

@@ -198,3 +198,9 @@ ein zusätzliches Offline-Backup wird angelegt. Nur Gespräche und Organisation
 werden in eine neue private Kontodatenbank übertragen, keine OIDC-Sessions oder
 Benutzerkennungen. Vor Nutzung alle Daten und Importjobs prüfen. Ein vorhandenes
 Ziel oder Backup wird nicht überschrieben.
+
+### Kontostatus und Abmelden (AUTH-013)
+
+Im Auth-Modus zeigt `/app` den Kontostatus nur nach erfolgreicher
+serverseitiger `/api/session`-Prüfung und bietet „Abmelden“ an. Ohne Login
+bleibt der Bereich ausgeblendet; die lokale Bibliothek funktioniert unverändert.

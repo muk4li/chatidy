@@ -212,7 +212,14 @@ class Handler(BaseHTTPRequestHandler):
             if path.startswith("/api/import/jobs/"):
                 return self.send(200, jobs.public_status(path.removeprefix("/api/import/jobs/")))
             with closing(connect()) as db, db:
-                if path=="/api/tags":
+                if path=="/api/session":
+                if not self.auth_required():
+                    return self.send(404,{"error":"Nicht gefunden"})
+                user=self._principal()
+                if user is None:
+                    return self.send(401,{"error":"Anmeldung erforderlich."})
+                return self.send(200,{"display_name":user.display_name,"role":user.role})
+            if path=="/api/tags":
                     return self.send(200, organisation.tags(db))
                 if path=="/api/smart-folders":
                     return self.send(200, organisation.smart_folders(db))
