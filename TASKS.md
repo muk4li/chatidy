@@ -262,3 +262,10 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
   explizit freigeschaltete User, HTTP-Logout und synthetische Negativtests.
 - [ ] Live-Provider-/Proxy-Sicherheitsprüfung, Benutzer-/Job-Isolation und
   Bestandsmigration samt Backup/Restore vor öffentlicher Freigabe.
+
+## AUTH-012 – Explizite Offline-Bestandsmigration (Draft)
+- [x] Nur aktives Owner-Konto und doppelte ausdrückliche Bestätigung.
+- [x] Offline-Backup vor einer Datenänderung; keine Überschreibung des Ziels.
+- [x] Copy von Chat/Organisation und FTS-Rebuild, ohne OIDC-Sessiondaten.
+- [x] Synthetische Regression für Daten-/Tag-Erhalt, idempotente Verweigerung.
+- [ ] Manuelle reale Bibliotheks-/Backup-Restore-Prüfung und Jobmigration offen.

@@ -218,3 +218,6 @@ Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md 
 
 - **AUTH-011 (Draft):** OIDC-Login/Callback/Logout im gesonderten Auth-Testmodus;
   keine Freigabe für Produktion oder automatische Altdatenübernahme.
+
+- **AUTH-012 (Draft):** administrativ bestätigte Offline-Migration in eine
+  neue Kontobibliothek mit Offline-Backup; keine automatische Übernahme.

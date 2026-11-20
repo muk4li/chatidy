@@ -1,3 +1,11 @@
+## AUTH-012 – Explizite Bestandskopie (Draft)
+
+Offline-Admin-Befehl für überprüftes Eigentümerkonto; Backup und Kopie von
+Chats/Organisation ohne Login-/Sitzungsinformationen. Kein Automatismus beim
+Anmelden, alte Daten bleiben erhalten. Reale Migration/Restore ungeprüft.
+
+---
+
 ## AUTH-011 – Browser-Login und OIDC-Callback (Draft)
 
 Einmaliger browsergebundener State mit PKCE und verifiziertem ID-Token,

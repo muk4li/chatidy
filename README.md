@@ -188,3 +188,13 @@ für explizit angelegte aktive Konten eine Session ein. Das Cookie ist
 Secure/HttpOnly/SameSite=Lax. `/logout` widerruft die Sitzung per POST.
 **Nicht öffentlich betreiben**, bevor authentik-Liveprüfung, Proxy-/CSRF-
 Security-Review, Backups und Bestandsdatenmigration abgeschlossen sind.
+
+### AUTH-012 – Bestandsbibliothek ausdrücklich kopieren
+
+**Nicht automatisch beim Login.** Nur bei gestopptem Server und nach vorherigem
+Backup/Review: `python -m chatidy.migrate_owner --db PFAD --owner-id ID
+--server-stopped --confirm`. Die alte Datenbank bleibt als Quelle erhalten,
+ein zusätzliches Offline-Backup wird angelegt. Nur Gespräche und Organisation
+werden in eine neue private Kontodatenbank übertragen, keine OIDC-Sessions oder
+Benutzerkennungen. Vor Nutzung alle Daten und Importjobs prüfen. Ein vorhandenes
+Ziel oder Backup wird nicht überschrieben.
