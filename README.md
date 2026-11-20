@@ -156,8 +156,10 @@ Temporäre synthetische Daten; `CHROMIUM_PATH` überschreibt `/usr/bin/chromium`
 Nachweise: [aktuellerStand.md](aktuellerStand.md), frühere Durchläufe:
 [Historie](docs/history.md). Entwicklungsregeln: [AGENTS.md](AGENTS.md).
 
-### Geplanter privater Zugriff (noch kein Login)
+### OIDC-Kryptografie (noch nicht in der App aktiviert)
 
-Ein reiner, noch nicht aktivierter Routenvertrag (`chatidy/access_policy.py`)
-definiert für die spätere Authentifizierung `/app` und sämtliche `/api/*`
-als geschützt. Das ersetzt **keinen** realen Zugriffsschutz. Weiterhin nur lokal.
+Für den künftigen Login gibt es einen isolierten, mit synthetischen
+RSA-Schlüsseln getesteten ID-Token-/PKCE-Baustein. Die optionalen und exakt
+gepinnten Abhängigkeiten stehen unter `requirements-auth.txt`.
+Der normale lokale Start verwendet die Python-Standardbibliothek; aktuell
+existieren weder Login-Handler noch Sessions. **Nicht öffentlich deployen.**

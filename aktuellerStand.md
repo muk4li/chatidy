@@ -1,9 +1,10 @@
-## AUTH-006 – HTTP-Routenvertrag (Draft-PR)
+## AUTH-007 – OIDC-Tokenprüfung und PKCE (Draft-PR)
 
-Testbarer Vertrag für öffentliches `/`/Login/Callback und privates `/app`
-sowie alle `/api/*`-Routen. Noch **keine** Integration in den HTTP-Handler;
-der lokale Server bleibt unauthentifiziert. Erst OIDC + Session + vollständig
-isolierte Ressourcen machen diesen Vertrag zur wirksamen Zugriffskontrolle.
+Optionaler Prüfbaustein für eine künftige authentik-Anmeldung: RS256,
+vertrauenswürdige JWKS, Issuer/Audience/Expiry/Nonce und PKCE-S256;
+synthetische RSA-Tests. Exakt gepinnte Auth-Abhängigkeiten und separate
+CI-Installation. Keine HTTP-Session, Authentik-Verbindung oder
+Benutzer-Bibliothek-Verknüpfung. Localhost-only bleibt Pflicht.
 
 ---
 

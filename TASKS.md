@@ -206,9 +206,11 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - Akzeptanz: Kernmodule bleiben unverändert; neuer Anbieter = neuer Adapter + Tests.
 - Tests: pro Adapter; Formatänderungen bekannter Anbieter als neue Fixture-Variante.
 
-## AUTH-006 – HTTP-Routenvertrag vor OIDC (noch kein Schutz)
-- Priorität: P1; Status: implementierte reine Prüflogik auf Draft-Branch.
-- [x] Allowlist für künftige öffentliche Seiten, Privatregel für `/app` und `/api/*`.
-- [x] Synthetische Negativtests inkl. URL-Encoding, GET-/POST-Unterpfade.
-- [ ] Mit verifizierter Sitzung und vollständig isoliertem Speicher in den
-  HTTP-Handler einbauen; **bis dahin kein Sicherheits-Gate**.
+## AUTH-007 – OIDC-PKCE und verifizierbarer ID-Token (Baustein)
+- Priorität: P1; Status: Draft-PR, keine HTTP-Anbindung.
+- [x] PKCE-S256, State, Nonce und feste HTTPS-Issuer/Endpunkte.
+- [x] Signaturprüfung über feste vertrauenswürdige JWKS und gepinnte Bibliotheken;
+  Issuer, Audience, Exp, Iat, Nonce, Subjekt und Multi-Audience-AZP.
+- [x] Synthetische RSA-Positiv-/Negativtests in Windows-/Linux-CI.
+- [ ] Einmaliger serverseitiger State-Speicher, Code-Exchange, Session/Logout,
+  protected API und Authentik-Live-Test bleiben separate Sicherheits-Gates.
