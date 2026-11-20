@@ -382,3 +382,13 @@ Nachrichten ohne lesbaren Text (Denkprozesse, reine Werkzeugaufrufe) werden mit 
 wird nicht mehr in die Volltextsuche aufgenommen und nicht mitgezählt. Schema 6 baut dafür den
 Suchindex einmalig aus den gespeicherten Nachrichten neu auf; Gespräche, Nachrichten und
 Organisation bleiben unverändert, bei einem Fehler wird zurückgerollt.
+
+## Codex-Aufgaben (`codex.json`)
+
+Liegt `codex.json` im selben Ordner wie die Konversationsdateien und ist jeder Eintrag eine
+erkennbare Codex-Aufgabe (`id` + `turns[]` mit `role`), werden die Aufgaben als eigene Chats
+importiert (`codex:<id>`, Anbieter `chatgpt`, Quelle `codex`). Die Vorschau nennt die Anzahl.
+Sichtbar und durchsuchbar sind Nutzeranfragen, Antworttexte und PR-Titel; Repository-Ausschnitte,
+Diffs und Dateizitate bleiben in den Metadaten. Der Export enthält keine Zeitstempel, daher stehen
+Codex-Chats in der Datumssortierung am Ende. Eine nicht erkannte `codex.json` wird mit Warnung
+übersprungen. Auch eine einzeln hochgeladene `codex.json` wird erkannt.

@@ -244,7 +244,7 @@ function section(title,open=true){const d=element('details','section');d.open=op
 function renderDetail(){
   const detail=$('detail');detail.replaceChildren();
   if(!details){const blank=element('div','empty detail-empty');blank.append(element('div','empty-icon','✳'),element('strong','','Kein Chat geöffnet'),element('p','','Wähle in der Liste einen Chat, um Verlauf, Gruppen und Tags zu sehen.'));detail.append(blank);return}
-  const c=details.chat;detail.append(element('h2','',c.title),element('div','muted',providerLabel(c.provider)+' · '+(c.project?'Projekt: '+c.project+' · ':'')+visibleMessageCount(details.messages)+' Nachrichten · '+date(c.updated||c.created)+(c.reviewed?' · geprüft':' · noch nicht geprüft')));
+  const c=details.chat;detail.append(element('h2','',c.title),element('div','muted',providerLabel(c.provider)+(c.metadata&&c.metadata.source==='codex'?' · Codex':'')+' · '+(c.project?'Projekt: '+c.project+' · ':'')+visibleMessageCount(details.messages)+' Nachrichten · '+date(c.updated||c.created)+(c.reviewed?' · geprüft':' · noch nicht geprüft')));
   const actions=element('div','detail-actions');
   actions.append(button(c.reviewed?'↺ Erneut prüfen':'✓ Geprüft',async()=>{
     try{await post('/api/review',{conversation_id:c.id,reviewed:!c.reviewed});await refresh();await showChat(c.id)}catch(e){message(e.message,true)}
@@ -396,6 +396,7 @@ function renderImportPreview(job){
   for(const [kind,count] of Object.entries(layout.counts||{}))resources.append(element('li','',String(count)+' '+(labels[kind]||kind)));
   const roles=layout.metadata_roles||{};
   if(layout.manifests||roles.codex||layout.sensitive_metadata_files)root.append(element('p','muted',(layout.manifests||0)+' Manifeste · '+(roles.codex||0)+' Codex-Dateien · '+(layout.sensitive_metadata_files||0)+' sensible Konto-/Werbe-/Einstellungsdateien: nur inventarisiert.'));
+  if(layout.codex_conversations)root.append(element('p','muted',layout.codex_conversations+' Codex-Aufgaben aus codex.json werden als eigene Chats importiert (gekennzeichnet „Codex“).'));
   root.append(resources,element('p','muted','Grob geschätzter zusätzlicher Speicher: '+jobSize(plan.estimated_additional_bytes)+'. '+plan.estimate_note));
   const kinds={new:'Neu',identical:'Bereits identisch vorhanden – bleibt unverändert',newer:'Neuere vollständige Version',complete:'Vollständige Ergänzung',older:'Älter oder ohne erforderlichen Änderungszeitpunkt',branch:'Abweichender/unvollständiger Gesprächszweig',identity:'Unklare Nachrichten-/Versionsidentität'};
   const decisions={};

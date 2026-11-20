@@ -57,6 +57,8 @@ setzen; Chatidy verschiebt oder sucht diese Dateien nicht automatisch.
 - Claude-Export: `conversations-000.zip` (bzw. `conversations.json`) importieren; die übrigen ZIPs
   des Claude-Exports enthalten keine Gespräche und werden mit Hinweis abgelehnt. Anbieter als Badge
   und Filter („Anbieter“ in der Navigation); Claude-Werkzeugaufrufe und Denkblöcke als Kurzzeile.
+- ChatGPT-Codex-Aufgaben aus `codex.json` werden mit dem Export-ZIP als eigene Chats importiert
+  (Kopfzeile „ChatGPT · Codex“).
 - Optionale, ausdrücklich ausgelöste Ollama-Vorschläge: Titel und höchstens
   6000 Zeichen gehen an `127.0.0.1:11434`, keine autonome Zuordnung.
 - Neue Datenbanken starten mit acht ChatGPT-Kategorien. Vorhandene Ordner,
