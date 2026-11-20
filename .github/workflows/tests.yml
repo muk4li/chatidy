@@ -17,6 +17,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: python -m pip install -r requirements-auth.txt
       - run: node --check web/app.js
+      - run: node --check tests/browser_smoke.cjs
       - run: python tests/run_ci.py
 
   local-stdlib:
@@ -33,4 +34,5 @@ jobs:
           python-version: '3.11'
       # Deliberately do not install requirements-auth.txt here.
       - run: node --check web/app.js
+      - run: node --check tests/browser_smoke.cjs
       - run: python tests/run_ci.py

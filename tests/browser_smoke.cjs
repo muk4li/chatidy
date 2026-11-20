@@ -197,7 +197,7 @@ const {spawn,spawnSync}=require('node:child_process');
     await page.evaluate(()=>showChat('codex:synthetic-task'));
     await page.locator('#detail .bubble').nth(1).waitFor();
     assert.match(await page.locator('#detail .muted').first().textContent(),/^ChatGPT · Codex · /);
-    assert.match(await page.locator('#detail .bubble').nth(1).textContent(),/\\[Pull Request\\] Synthetic PR/);
+    assert.match(await page.locator('#detail .bubble').nth(1).textContent(),/\[Pull Request\] Synthetic PR/);
     console.log('Browser checkpoint: source, date and deep link');
     await page.evaluate(()=>refresh());
     await page.locator('#source-list button').filter({hasText:'Codex'}).click();
