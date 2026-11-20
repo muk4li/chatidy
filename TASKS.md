@@ -207,14 +207,16 @@ der reale Authentik-/Zwei-Konten-Test und die Betriebsfreigabe bleiben offen.
 - Akzeptanz: Kernmodule bleiben unverändert; neuer Anbieter = neuer Adapter + Tests.
 - Tests: pro Adapter; Formatänderungen bekannter Anbieter als neue Fixture-Variante.
 
-## AUTH-007 – OIDC-PKCE und verifizierbarer ID-Token (Baustein)
-- Priorität: P1; Status: Draft-PR, keine HTTP-Anbindung.
-- [x] PKCE-S256, State, Nonce und feste HTTPS-Issuer/Endpunkte.
-- [x] Signaturprüfung über feste vertrauenswürdige JWKS und gepinnte Bibliotheken;
-  Issuer, Audience, Exp, Iat, Nonce, Subjekt und Multi-Audience-AZP.
-- [x] Synthetische RSA-Positiv-/Negativtests in Windows-/Linux-CI.
-- [ ] Einmaliger serverseitiger State-Speicher, Code-Exchange, Session/Logout,
-  protected API und Authentik-Live-Test bleiben separate Sicherheits-Gates.
+## AUTH-007 bis AUTH-023 – OIDC, Sessions und Isolation
+- Priorität: P1; **Code integriert auf main via #52/#53**, synthetische
+  Windows-/Linux-Tests erfolgreich.
+- [x] PKCE-S256, State, Nonce, feste HTTPS-Issuer/Endpunkte und RS256/JWKS.
+- [x] Code-Exchange, vertraulicher Client, serverseitiger State-Speicher,
+  Sessions, Logout, geschützte APIs und isolierte SQLite-/Jobbibliotheken.
+- [x] Kontrollierte Offline-Eigentümermigration und synthetische Negativtests.
+- [ ] Echter Authentik-End-to-End-Lauf, Zwei-Konten-Abnahme, HTTPS-Proxy,
+  native Dateirechte, Backup/Restore und Betriebsfreigabe.
+- [ ] Centrality-Folgeabgleich erst **nach** Chatidy-PR; nicht hier erledigt.
 
 ## UX-F-001 bis UX-F-009 – gemeinsamer Abschluss-PR
 - Status: **in Arbeit auf einem gemeinsamen Branch**; erst nach CI und
