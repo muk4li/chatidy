@@ -205,3 +205,13 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - Nicht im Umfang: Messenger-Exporte (z. B. Instagram-DMs) – keine KI-Chats, enthalten Daten Dritter.
 - Akzeptanz: Kernmodule bleiben unverändert; neuer Anbieter = neuer Adapter + Tests.
 - Tests: pro Adapter; Formatänderungen bekannter Anbieter als neue Fixture-Variante.
+
+## LAND-001 – Produkt-Landingpage und lokale App-Route
+- Priorität: P1; Status: Implementiert auf Feature-Branch, PR/CI und Review noch offen.
+- `/` stellt eine statische, responsive Produktseite bereit; `/app` behält die Bibliothek.
+- Keine Authentifizierung oder öffentliche Bereitstellung. Alle `/api/*`-Routen sind
+  weiterhin nur durch Loopback/Origin-Schutz begrenzt und **nicht internetfähig**.
+- Tests: statische Route/Assets, Browser-Smoke auf `/app`, vollständige Testsuite/CI.
+- Architektur: Centrality ADR-007/ADR-008. Nach RepoPilot-Pilot folgen separat
+  OIDC, serverseitige Zugriffskontrolle für alle APIs, nutzerbezogene Datenisolation,
+  ausdrückliche Bestandsmigration und Freigabe-/Restore-Gates.
