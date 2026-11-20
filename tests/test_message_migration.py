@@ -8,6 +8,7 @@ from chatidy import migrations
 from chatidy.db import connect, upsert, assign, create_folder, chat_detail, list_chats
 from chatidy.organisation import apply_tags
 from test_import_integrity import chat
+from legacy_schema import legacy_upsert
 
 
 class MessageMigrationTests(unittest.TestCase):
@@ -16,7 +17,7 @@ class MessageMigrationTests(unittest.TestCase):
             db = connect(path)
             first = chat('old', 'original-message')
             first['messages'].append({'id':'original-answer','role':'assistant','content':'Synthetic old answer'})
-            upsert(db, [first])
+            legacy_upsert(db, [first])
             folder = create_folder(db, 'Synthetic folder')
             assign(db, 'old', [folder])
             apply_tags(db, ['old'], ['synthetic'])
@@ -30,7 +31,8 @@ class MessageMigrationTests(unittest.TestCase):
             before = self.baseline(path)
             db = connect(path)
             try:
-                self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0], 4)
+                self.assertEqual(db.execute('PRAGMA user_version').fetchone()[0], migrations.LATEST)
+                before['chat']['provider'] = 'chatgpt'  # schema 5 marks existing chats as ChatGPT
                 self.assertEqual(chat_detail(db, 'old'), before)
                 key = {row['name']:row['pk'] for row in db.execute('PRAGMA table_info(messages)')}
                 self.assertEqual((key['conversation_id'], key['id']), (1,2))
@@ -60,5 +62,6 @@ class MessageMigrationTests(unittest.TestCase):
             finally:
                 db.close()
             db = connect(path)
+            before['chat']['provider'] = 'chatgpt'
             self.assertEqual(chat_detail(db, 'old'), before)
             db.close()
