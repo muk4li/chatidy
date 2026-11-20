@@ -1,3 +1,12 @@
+## AUTH-003 – OIDC-Identitätszuordnung (gestapelter Draft-PR)
+
+Schreibfreier `enrolled_user`-Lookup für bestehende aktive Benutzer über
+exakte OIDC-Issuer-/Subjektkombination. Keine Registrierung, kein HTTP-Login,
+keine Tokenprüfung, keine Freigabe von Chatdaten. Abhängig von Schema 7
+(AUTH-002). CI/Tests siehe PR, echter Login noch nicht möglich.
+
+---
+
 ## AUTH-002 – Schema 7 (Draft-PR)
 
 Additive Tabelle `users` für späteren authentik-OIDC-Bezug (`iss`+`sub`),
