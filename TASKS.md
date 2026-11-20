@@ -282,3 +282,11 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
   Export, Review sowie anonyme API-Requests mit synthetischen Konten.
 - [x] Fremder Gesprächs-Review erhält 404 und verändert keine Daten.
 - [ ] Native Provider-/Proxy-/Backuptests und Migration bleiben Release-Gates.
+
+## AUTH-015 – Fail-closed-Startup und Freigabe-Gates (Draft)
+- [x] Start ablehnen bei öffentlicher Origin ohne Auth, falschen Auth-Flags
+  und unvollständiger OIDC-Konfiguration; kein HTTP-Listener geöffnet.
+- [x] Synthetische Start-/Ablehnungstests; Legacy-Loopback unverändert.
+- [x] SERVICE.md mit Auth-/API-/Backup-/Restore-/Freigabekriterien.
+- [ ] Centrality/RepoPilot-Review, reale authentik-/Proxy-/Backup-Tests und
+  ausdrückliche Eigentümer-Freigabe vor Internetbetrieb.

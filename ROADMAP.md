@@ -227,3 +227,6 @@ Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md 
 
 - **AUTH-014 (Draft):** negative Mehrbenutzer-HTTP-Tests und explizites
   404 bei fehlendem/fremdem Chat-Review.
+
+- **AUTH-015 (Draft):** Startverweigerung bei ungeschützter öffentlicher
+  Konfiguration und dokumentierter Service-/Deployment-Freigabeplan.

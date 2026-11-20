@@ -1,0 +1,41 @@
+# Chatidy – Service-Vertrag (Entwicklung / nicht freigegeben)
+
+Stand: 2026-11-20. Architekturgrundlage: Centrality ADR-001, ADR-007,
+ADR-008 und CE-103. Private Vertragsunterlagen werden nicht übernommen.
+
+| Bereich | Aktuell / vorgesehen |
+| --- | --- |
+| Anwendung | Python Standardbibliothek + SQLite/FTS5, optionale exakt gepinnte OIDC-Abhängigkeiten |
+| Lokaler HTTP-Listener | 127.0.0.1:8877 (änderbarer Port), niemals globaler Bind |
+| Öffentliche Routen | `/` Landing, `/landing.css`, `/login`, `/auth/callback` |
+| Geschützte Routen | `/app`, App-Assets und **alle** `/api/*` |
+| Identity | authentik OIDC (Authorization Code + PKCE, RS256 ID-Token); nur explizit angelegte aktive Konten |
+| Sessions | gehashte Token in zentraler SQLite-Registry; revokabel, HttpOnly/Secure/SameSite |
+| Persistenz | lokale Registry mit eingeschriebenen Konten; separate private SQLite-Bibliotheken und Importjobs pro Konto |
+| Bestand | explizit bestätigte Offline-Kopie mit Backup; keine erste-Login-Übernahme |
+| Externe Verbindungen | kein Chatinhalts-Cloud-Transfer; OIDC-Token/JWKS nur zur fest konfigurierten Identity-Instanz; Ollama lokal optional |
+| Freigabe | **NEIN** – Entwurf und Draft-PRs; kein öffentlicher Betrieb genehmigt |
+
+## Zwingende Gates vor öffentlichem Betrieb
+
+1. RepoPilot-Pilot und Centrality-Architektur für die tatsächliche Session-/
+   Identity-Integration akzeptiert; alle Chatidy-Stacked-PRs geprüft und
+   Konflikte behoben. Keine Drafts als bereits gemergt behaupten.
+2. Authentik eingerichtet, HTTPS-Discovery/Issuer, Client, Callback und
+   feste Token-/JWKS-Endpunkte gegen tatsächlichen Provider validiert.
+3. HTTPS-Reverse-Proxy und Headervertrauen (Host, Origin, Forwarding,
+   X-Forwarded-*) mit negativen Tests. Keine Zugriffe ohne Sitzung, auch
+   auf Importjobs, Upload, Suche, Export und Schreiboperationen.
+4. Separate Kontobibliotheken und Importjobs nativ unter Windows und
+   Linux auf ACL, Symlink-/Junction-Schutz, Rechte, Wiederaufnahme,
+   parallele Anfragen und Lösch-/Sperrstatus prüfen.
+5. Backup **und Restore** aller Registry-, Konto-, Upload-/Job-Dateien
+   vollständig testen. Bestandsmigration nur bei gestopptem Server,
+   nach Backup und expliziter Eigentümerzuordnung.
+6. TLS, Logout, Sessionablauf/-widerruf, CSRF/Origin, Code-State-Replay,
+   Rollen-Sperre, unbekanntes Konto und Zwei-Konten-Tests nachweisen.
+7. Deployment-/Rollback-/Monitoring-Runbook und Freigabe durch Eigentümer.
+   Vor erstem eingeladenen Benutzer zusätzlich Datenschutz/Impressum und
+   Sperren/Löschen des Kontos klären.
+
+**Bis dahin: local-first nur Loopback, keine öffentliche Netzfreigabe.**

@@ -210,3 +210,11 @@ bleibt der Bereich ausgeblendet; die lokale Bibliothek funktioniert unverändert
 Synthetische Mehrbenutzerprüfungen decken Chats, Suchergebnisse, Ordner,
 Exports und Schreibzugriffe ab. Ein fremder Gesprächs-Identifier liefert
 beim Review 404 statt eines stillen Erfolgs; Daten bleiben kontogetrennt.
+
+### Öffentliche Betriebsfreigabe (AUTH-015)
+
+Bei konfigurierter `CHATIDY_PUBLIC_ORIGIN` verweigert der Server den Start,
+wenn Auth nicht exakt aktiviert und vollständig konfiguriert ist.
+Der verbindliche Prüf- und Servicevertrag steht in `SERVICE.md`.
+Das ist **kein Ersatz** für Live-authentik-, Proxy-, Backup-/Restore-
+und Freigabetests; öffentliche Veröffentlichung ist weiterhin blockiert.

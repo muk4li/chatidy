@@ -1,3 +1,11 @@
+## AUTH-015 – Öffentliche Betriebsfreigabe (Draft)
+
+Server-Start verweigert offensichtlich unsichere Konfiguration und fehlende
+OIDC-Voraussetzungen. `SERVICE.md` dokumentiert die verbliebenen echten
+Integrationstests und Freigabe-Gates. Kein öffentlicher Betrieb erfolgt.
+
+---
+
 ## AUTH-014 – Negative Zwei-Konten-HTTP-Tests (Draft)
 
 Synthetische Prüfung von Detail-/Listen-/Such-/Export-/Mutationspfaden,

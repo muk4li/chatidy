@@ -406,10 +406,23 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     # Give existing job/storage consumers the same project-relative default.
     os.environ.setdefault("CHATIDY_DB", str(DEFAULT_DATABASE))
-    if os.getenv("CHATIDY_AUTH_REQUIRED") == "1":
-        origin=urlsplit(os.getenv("CHATIDY_PUBLIC_ORIGIN",""))
+    mode=os.getenv("CHATIDY_AUTH_REQUIRED","0")
+    public_origin=os.getenv("CHATIDY_PUBLIC_ORIGIN","")
+    if mode not in ("0","1"):
+        raise ValueError("CHATIDY_AUTH_REQUIRED darf nur 0 oder 1 sein.")
+    if mode=="0" and public_origin:
+        raise ValueError("Öffentliche Origin ohne Anmeldung ist nicht zulässig.")
+    if mode=="1":
+        # Fail closed before starting a listener if auth is incomplete.
+        from .oidc_exchange import configured_settings
+        from .oidc import OIDCError
+        try:
+            configured_settings(os.environ)
+        except OIDCError as exc:
+            raise ValueError("Authentifizierung ist nicht vollständig konfiguriert.") from exc
+        origin=urlsplit(public_origin)
         if origin.scheme!="https" or not origin.netloc or origin.path not in ("","/"):
-            raise ValueError("Auth-Testmodus benötigt CHATIDY_PUBLIC_ORIGIN als HTTPS-Origin.")
+            raise ValueError("Auth-Modus benötigt eine gültige HTTPS-Origin.")
     host="127.0.0.1"
     port=int(os.getenv("CHATIDY_PORT","8877"))
     print(f"Chatidy läuft lokal unter http://{host}:{port}")
