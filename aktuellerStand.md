@@ -1,3 +1,13 @@
+## AUTH-002 – Schema 7 (Draft-PR)
+
+Additive Tabelle `users` für späteren authentik-OIDC-Bezug (`iss`+`sub`),
+Rolle/Status und Anzeigenamen. Keine automatische Benutzeranlage oder
+Eigentümerzuordnung. Sämtliche bisherigen Daten/API-Pfade bleiben im lokalen
+Einzelnutzermodus unverändert; **nicht** für öffentlichen Betrieb geeignet.
+Synthetische Migrations-/Rollbacktests ergänzt; tatsächlicher CI-Status siehe PR.
+
+---
+
 # Aktueller Stand von Chatidy
 
 **Nachprüfung GitHub 2026-11-14:** Der unten als offen beschriebene Fokus-PR ist inzwischen **PR #9, gemergt**; aktueller `main`-HEAD `8fe4da20f4ca`. GitHub-Actions-Workflow „Tests“ auf diesem Commit erfolgreich. Die damalige GraphQL-Fehlermeldung bleibt als historischer Verlauf stehen. Weiterhin offen: manueller Echttest REAL-001 und die bestehenden Backlog-/Remote-Grenzen.

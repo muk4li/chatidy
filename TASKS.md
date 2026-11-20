@@ -205,3 +205,12 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - Nicht im Umfang: Messenger-Exporte (z. B. Instagram-DMs) – keine KI-Chats, enthalten Daten Dritter.
 - Akzeptanz: Kernmodule bleiben unverändert; neuer Anbieter = neuer Adapter + Tests.
 - Tests: pro Adapter; Formatänderungen bekannter Anbieter als neue Fixture-Variante.
+
+## AUTH-002 – Additive Benutzeridentitätsbasis (Schema 7)
+- Priorität: P1; Status: Implementierung auf Draft-Branch, CI/Review ausstehend.
+- [x] `users`-Schema mit internem Schlüssel, eindeutiger OIDC-Issuer/Subjekt-
+  Kombination, Anzeigeattributen, Rolle und Sperrstatus.
+- [x] Keine Kontenanlage, automatische Eigentümerzuordnung, API-/Login-Änderung.
+- [x] Synthetische Migration-, Reopen-, Eindeutigkeits- und Rollbacktests.
+- [ ] Nach RepoPilot-Modellfreigabe Besitzmodell, Datenzugriffe und Jobs isolieren.
+- Akzeptanz: alte Daten bleiben unverändert, keinerlei Remote-Freigabe.

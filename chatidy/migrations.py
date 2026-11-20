@@ -33,6 +33,22 @@ MIGRATIONS = {
         "AND m.content!='[Nicht-textueller Inhalt]' ORDER BY m.position, m.rowid)), '') "
         "FROM conversations c",
     ),
+    7: (
+        # L2b foundation: OIDC identities are not matched by email or first login.
+        # No user/owner is created and NO legacy data is assigned during migration.
+        """CREATE TABLE users(
+            id INTEGER PRIMARY KEY,
+            oidc_issuer TEXT NOT NULL CHECK(length(trim(oidc_issuer)) > 0),
+            oidc_sub TEXT NOT NULL CHECK(length(trim(oidc_sub)) > 0),
+            display_name TEXT NOT NULL DEFAULT '',
+            email TEXT NOT NULL DEFAULT '',
+            role TEXT NOT NULL DEFAULT 'member' CHECK(role IN ('owner','member')),
+            status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','disabled')),
+            created_at REAL NOT NULL DEFAULT (unixepoch()),
+            last_login_at REAL,
+            UNIQUE(oidc_issuer,oidc_sub)
+        )""",
+    ),
 }
 LATEST = max(MIGRATIONS)
 
