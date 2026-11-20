@@ -122,7 +122,7 @@ def apply_rules(db, chat_id):
     if not chat:
         return
     body = "\n".join(row[0] for row in db.execute(
-        "SELECT content FROM messages WHERE conversation_id=?", (chat_id,)))
+        "SELECT content FROM messages WHERE conversation_id=? AND content!=?", (chat_id, NON_TEXT)))
     fields = {"title": chat["title"] or "", "project": chat["project"] or "",
               "content": body}
     for rule in db.execute("SELECT * FROM rules WHERE enabled=1"):
