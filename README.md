@@ -169,10 +169,9 @@ in Schema 7 ein, **keine Chats**. Kein Anmelde- oder Registrierungssystem;
 öffentliche Bereitstellung weiterhin verboten. Private Kennungen nicht in
 Tickets, Logs oder GitHub ablegen.
 
-### Getrennte Bibliotheken (interne Vorbereitung)
+### Serverbasierte Sitzungen (noch kein Login)
 
-Ein serverseitig gebundener Konto-Kontext wählt eigene SQLite-Dateien unter
-`accounts/<interne-id>/chatidy.sqlite3` und getrennte Importjob-Wurzeln.
-Noch keine HTTP-/Login-Anbindung: ohne Kontext bleibt die lokale Bestandsbibliothek
-an ihrem ursprünglichen Pfad. Das ist kein Zugriffsschutz für einen öffentlichen
-Server. Eine Migration vorhandener Daten findet ausdrücklich nicht statt.
+Ein vorbereiteter, noch nicht in den HTTP-Handler eingebundener Session-Speicher
+verwaltet einmalige, browsergebundene OIDC-States und widerrufbare Sitzungen.
+Nur Hashes von State-/Session-Token werden gespeichert. Noch **keine**
+Authentik-Anbindung, Cookies, Login- oder API-Zugriffssperre.

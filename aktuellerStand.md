@@ -1,10 +1,9 @@
-## AUTH-005 – Konto-Speicherkontext (Draft-PR)
+## AUTH-008 – OIDC-State und Sessions (Draft-PR)
 
-Eigene SQLite-Bibliotheken und Importjobs je vertrauenswürdiger interner ID,
-per Thread-Kontext statt globaler Umgebungsvariable; Hintergrundarbeiter
-übernehmen den Kontext. Lokal und ungebunden unverändert. Keine HTTP-
-Integration, Tokenprüfung, Berechtigungsvergabe oder Bestandsmigration.
-CI/Architektur- und native Windows-Tests vor Betrieb auswerten.
+Schema 8 speichert browsergebundene kurzlebige Login-Challenges und
+widerrufbare Sitzungen mit SHA-256-Tokenhashes. Helper sind noch nicht
+in HTTP oder authentik eingebunden, keine Konto-/Chat-Zuordnung. CI und
+Sicherheitstests zum isolierten Baustein; Loopback-only weiterhin Pflicht.
 
 ---
 

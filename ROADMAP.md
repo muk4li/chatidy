@@ -207,6 +207,5 @@ Aktuellen konkreten Test-/CI-Nachweis und Einschränkungen in aktuellerStand.md 
   lokale Kontoeinschreibung. Kein Browser-/Login-/Import-Zugriff und keine
   automatische Bestandsübernahme.
 
-- **AUTH-005 (Draft):** interner Kontext für getrennte Kontobibliotheken und
-  Importjobs, ohne bereits HTTP oder Authentik anzubinden. Speicher-Modell
-  ist noch im Review, keine öffentliche Freigabe.
+- **AUTH-008 (gestapelt, Draft):** SQLite-Sitzungs- und Challenge-Tabellen
+  mit Replay-Schutz. Kein Browser-Login, kein Netzwerk-/API-Schutz.
