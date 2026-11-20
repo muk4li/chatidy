@@ -181,6 +181,15 @@ const {spawn,spawnSync}=require('node:child_process');
     assert.deepEqual(remote,[],'Claude view must not load remote assets');
     await claudeButton.click();
     await page.waitForFunction(()=>document.querySelectorAll('.chat-row').length>1);
+    console.log('Browser checkpoint: codex');
+    const codex=[{id:'synthetic-task',title:'Synthetic Codex task',archived:false,turns:[
+      {id:'u1',role:'user',input_items:[{type:'message',role:'user',content:[{content_type:'text',text:'Synthetic codex request'}]}]},
+      {id:'a1',role:'assistant',output_items:[{type:'message',role:'assistant',content:[{content_type:'text',text:'Synthetic codex summary'}]},{type:'pr',pr_title:'Synthetic PR'}]}]}];
+    response=await fetch(base+'/api/import',{method:'POST',headers:{'X-Filename':'codex.json'},body:JSON.stringify(codex)});assert(response.ok);
+    await page.evaluate(()=>showChat('codex:synthetic-task'));
+    await page.locator('#detail .bubble').nth(1).waitFor();
+    assert.match(await page.locator('#detail .muted').first().textContent(),/^ChatGPT · Codex · /);
+    assert.match(await page.locator('#detail .bubble').nth(1).textContent(),/\[Pull Request\] Synthetic PR/);
     await page.setViewportSize({width:390,height:844});
     assert(await page.evaluate(()=>{const buttons=[...document.querySelectorAll('#views button')];return buttons.slice(1).every((b,i)=>b.getBoundingClientRect().left>=buttons[i].getBoundingClientRect().right)}),'Mobile navigation buttons must not overlap');
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Mobile layout must fit viewport without horizontal overflow');

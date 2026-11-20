@@ -187,10 +187,14 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
 - Tests: neue Importe, Migration 5→6 mit Altindex, fehlgeschlagene Migration, Konstante = SQL-Marker.
 - Grenze: Regeln mit Feld „Inhalt“ prüfen weiterhin den gespeicherten Text inkl. Platzhalter.
 
-## PROV-004 – Codex-Aufgaben aus `codex.json` (Backlog)
-- Priorität: P3; Status: Offen – nur festgehalten.
+## PROV-004 – Codex-Aufgaben aus `codex.json`
+- Priorität: P3; Status: Implementiert (Auftrag 2026-11-20); Prüfung mit echtem Export durch Nutzer offen.
 - Komponenten: eigener Adapter im Sinne von E1 (Anbieter `chatgpt`, Quelle `codex`). Abhängigkeiten: PROV-001.
-- [ ] `turns[]` als Gesprächsverlauf; PR-Titel/Diff-Kennzahlen als Metadaten; Dateiausschnitte nicht in die Suche.
+- [x] `turns[]` als Gesprächsverlauf (Listenreihenfolge, keine Zeitstempel im Export); Text aus
+  Nachrichtenteilen plus „[Pull Request] Titel“; Repo-Snapshots, Diffs, Zitate nur in Metadaten, nicht in der Suche.
+- [x] `codex.json` im selben Ordner wie die Konversationsdateien wird mitimportiert, wenn jeder Eintrag
+  erkannt wird; sonst Warnung und kein Import. IDs `codex:<id>`; Kopfzeile „ChatGPT · Codex“.
+- Grenze: ohne Zeitstempel stehen Codex-Chats in der Datumssortierung am Ende.
 - Akzeptanz: keine Vermischung mit normalen Chats ohne sichtbare Kennzeichnung.
 - Tests: synthetische Codex-Fixtures, Reimport.
 

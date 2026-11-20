@@ -209,6 +209,54 @@ def parse_claude_chat(raw):
             "project": "", "archived": False, "metadata": metadata, "messages": messages}
 
 
+def codex_text(items, kinds):
+    parts = []
+    for item in items if isinstance(items, list) else []:
+        if not isinstance(item, dict) or item.get("type") not in kinds:
+            continue
+        if item.get("type") == "pr" and isinstance(item.get("pr_title"), str) and item["pr_title"].strip():
+            parts.append("[Pull Request] " + item["pr_title"])
+            continue
+        for block in item.get("content") if isinstance(item.get("content"), list) else []:
+            if isinstance(block, dict) and block.get("content_type") == "text" \
+                    and isinstance(block.get("text"), str) and block["text"].strip():
+                parts.append(block["text"])
+    return "\n\n".join(parts)
+
+
+def parse_codex_chat(raw):
+    """Adapt one ChatGPT Codex task from codex.json (PROV-004). Turns keep list order;
+    the export has no timestamps. Repository snapshots and diffs stay in metadata."""
+    if not raw.get("id") or not isinstance(raw.get("turns"), list):
+        return None
+    cid = "codex:" + str(raw["id"])
+    messages, seen = [], set()
+    for index, turn in enumerate(raw["turns"]):
+        mid = str(turn.get("id") or f"{cid}:turn:{index}")
+        if mid in seen:
+            raise ValueError("Doppelte Turn-ID innerhalb einer Codex-Aufgabe. Import abgebrochen.")
+        seen.add(mid)
+        role = str(turn.get("role") or "unknown")
+        if role == "user":
+            body = codex_text(turn.get("input_items"), {"message"})
+        else:
+            body = codex_text(turn.get("output_items"), {"message", "pr"})
+        messages.append({"id": mid, "role": role, "content": body or NON_TEXT, "timestamp": None,
+                         "metadata": {"source": "codex", **turn}})
+    return {"id": cid, "provider": "chatgpt", "title": str(raw.get("title") or "Ohne Titel"),
+            "created": None, "updated": None, "project": "", "archived": bool(raw.get("archived", False)),
+            "metadata": {"source": "codex", "original_id": str(raw["id"]),
+                         **{k: v for k, v in raw.items() if k != "turns"}},
+            "messages": messages}
+
+
+def is_codex(raw):
+    """ChatGPT Codex task (codex.json): `id` plus `turns[]` whose entries carry `role`."""
+    turns = raw.get("turns")
+    return ("id" in raw and isinstance(turns, list)
+            and all(isinstance(turn, dict) and "role" in turn for turn in turns))
+
+
 def is_claude(raw):
     """Official Claude export: `uuid` plus `chat_messages[]` whose entries carry `sender`."""
     return "uuid" in raw and claude_messages_key(raw) is not None
@@ -231,6 +279,7 @@ ADAPTERS = (
     ("chatgpt", is_chatgpt, parse_chat),
     ("extractor", is_extractor, parse_extractor_chat),
     ("claude", is_claude, parse_claude_chat),
+    ("codex", is_codex, parse_codex_chat),
 )
 
 
@@ -302,8 +351,7 @@ def archive_layout(archive):
                     root = next(values)
                     roots = root.get('conversations') if isinstance(root, dict) and 'conversations' in root else [root]
                     recognized = isinstance(roots, list) and bool(roots) and all(
-                        isinstance(raw, dict) and raw.get('id') and detect_format(raw) is not None
-                        for raw in roots)
+                        isinstance(raw, dict) and detect_format(raw) is not None for raw in roots)
                 finally:
                     values.close()
                 if recognized:
@@ -316,8 +364,42 @@ def archive_layout(archive):
         check_compression(item)
     inventory.update(segment_count=len(selected),
                      segments=[PurePosixPath(x.filename.replace('\\','/')).name[:160] for x in selected[:20]],
-                     selected_json_bytes=sum(x.file_size for x in selected))
+                     codex_conversations=0)
+    codex = codex_entry(archive, selected, inventory)
+    if codex is not None:
+        selected.append(codex)
+    inventory['selected_json_bytes'] = sum(x.file_size for x in selected)
     return selected, inventory
+
+
+def codex_entry(archive, selected, inventory):
+    """PROV-004: codex.json next to the conversation files is imported when every entry is a
+    recognizable Codex task. Otherwise it stays inventory-only, with a visible warning."""
+    root = PurePosixPath(selected[0].filename.replace('\\', '/')).parent
+    items = [x for x in archive.infolist() if not x.is_dir()
+             and PurePosixPath(x.filename.replace('\\', '/')).name.casefold() == 'codex.json'
+             and PurePosixPath(x.filename.replace('\\', '/')).parent == root]
+    if len(items) != 1:
+        return None
+    item = items[0]
+    check_compression(item)
+    decoder = json.JSONDecoder(object_pairs_hook=unique_object, parse_constant=invalid_constant)
+    count, recognized = 0, True
+    try:
+        with archive.open(item) as source:
+            # json_values streams top-level array elements one by one.
+            for value in json_values(source, [MAX_UNCOMPRESSED], decoder):
+                if not isinstance(value, dict) or detect_format(value) != 'codex':
+                    recognized = False
+                    break
+                count += 1
+    except (ValueError, UnicodeError, RecursionError):
+        recognized = False
+    if recognized:
+        inventory['codex_conversations'] = count
+        return item if count else None
+    inventory['warnings'].append('codex.json nicht als Codex-Aufgaben erkannt; wird nicht importiert.')
+    return None
 
 
 CLAUDE_CATEGORY_FILES = (

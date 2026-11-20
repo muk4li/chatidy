@@ -16,6 +16,11 @@
   Tests lokal: 113 entdeckt, 103 bestanden, 10 native Windows-Tests übersprungen;
   Chromium-Browsertest 3/3 erfolgreich. Nur synthetische Daten. Keine Änderungen
   an Import-, Job-Storage-, Migrations- oder Schemacode.
+- **PROV-004 (2026-11-20):** Codex-Aufgaben aus `codex.json` werden mit dem ChatGPT-ZIP als eigene
+  Chats importiert (`codex:<id>`); nicht erkannte Datei nur Warnung. Dabei behoben: Strukturerkennung in
+  ZIPs ohne offizielle Namen verlangte `id` und übersah so Claude-Gespräche (`uuid`). Tests: 151
+  (10 Windows-Skips), Browser-Smoke lokal bestanden. Hinweis: Der nächste Import des vollständigen
+  ChatGPT-ZIPs bringt die Codex-Aufgaben als neue Chats mit.
 - **META-001 (2026-11-20):** Segmente werden gegen ein erkanntes Wurzel-`export_manifest.json`
   abgeglichen; fehlende/zusätzliche Segmente brechen ab. Unbekannte Manifeste nur Warnung.
   Tests: 145 (10 Windows-Skips). Offen: Gegenprobe mit echtem ChatGPT-Export (sollte „vollständig“ zeigen).
