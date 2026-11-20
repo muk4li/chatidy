@@ -1,6 +1,6 @@
 # Chatidy ✳
 
-Chatidy organisiert lokale ChatGPT-Exporte: Python-Standardbibliothek,
+Chatidy organisiert lokale ChatGPT- und Claude-Exporte: Python-Standardbibliothek,
 SQLite/FTS5 und eine Weboberfläche unter **http://127.0.0.1:8877**.
 Es verändert keine Unterhaltungen auf chatgpt.com und benötigt keinen ChatGPT-Login.
 
@@ -54,6 +54,8 @@ setzen; Chatidy verschiebt oder sucht diese Dateien nicht automatisch.
   auf Touch-Geräten über die Auswahlleiste. Keine unsichtbare Gesamtauswahl.
 - Rollen, Projekt-/Nachrichtenmetadaten und Code als Text; JSON-Export bis 500 Chats.
 - ChatGPT-Denkprozesse (`thoughts`/`reasoning_recap`) als eingeklappter Block in der Leseansicht.
+- Claude-Export: `conversations-000.zip` (bzw. `conversations.json`) importieren; die übrigen ZIPs
+  des Claude-Exports enthalten keine Gespräche und werden mit Hinweis abgelehnt.
 - Optionale, ausdrücklich ausgelöste Ollama-Vorschläge: Titel und höchstens
   6000 Zeichen gehen an `127.0.0.1:11434`, keine autonome Zuordnung.
 - Neue Datenbanken starten mit acht ChatGPT-Kategorien. Vorhandene Ordner,

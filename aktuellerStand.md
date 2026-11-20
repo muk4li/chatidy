@@ -16,6 +16,11 @@
   Tests lokal: 113 entdeckt, 103 bestanden, 10 native Windows-Tests übersprungen;
   Chromium-Browsertest 3/3 erfolgreich. Nur synthetische Daten. Keine Änderungen
   an Import-, Job-Storage-, Migrations- oder Schemacode.
+- **PROV-002a (2026-11-20):** Claude-Adapter: `conversations-000.zip`/`conversations.json` importierbar,
+  IDs `claude:<uuid>`, Zweigauswahl über Elternverweise (neuestes Ende), Text aus Textblöcken und
+  Anhangstext, Tool-/Thinking-Rohdaten in Metadaten; Manifest und andere Kategorie-ZIPs mit Hinweis
+  abgelehnt. Tests: 134 (10 Windows-Skips) inkl. HTTP-Jobablauf, nur synthetische Fixtures nach realem Schlüsselbefund.
+  Offen: 002b (UI), Import des echten Exports durch den Nutzer.
 - **PROV-001 (2026-11-20):** Format-Adapter mit ausdrücklicher Erkennung (Mehrdeutigkeit = Abbruch;
   Claude-ähnliche `messages`-Varianten werden nicht mehr als Extractor gelesen), Schema 5 mit
   `conversations.provider` (Bestand `chatgpt`), API-Filter und Anbieterzählung. Dabei behoben:

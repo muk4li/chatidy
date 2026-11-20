@@ -23,6 +23,8 @@ EXTRACTOR = {"id": "e1", "title": "Synthetic extractor",
 # Claude-like variant with `messages` + `id` but `sender` instead of `role` (ROADMAP risk E2).
 CLAUDE_LIKE = {"id": "c1", "uuid": "c1", "name": "Synthetic claude-like",
                "messages": [{"uuid": "x", "sender": "human", "text": "Synthetic"}]}
+# `messages` with neither `role` nor `sender`: no adapter may claim it.
+UNKNOWN = {"id": "u1", "messages": [{"author": "someone", "body": "Synthetic"}]}
 
 
 def as_zip(name, payload):
@@ -37,7 +39,8 @@ class DetectionTests(unittest.TestCase):
         self.assertEqual(detect_format(CHATGPT), "chatgpt")
         self.assertEqual(detect_format(EXTRACTOR), "extractor")
         self.assertEqual(detect_format({"id": "e", "messages": []}), "extractor")
-        self.assertIsNone(detect_format(CLAUDE_LIKE))
+        self.assertEqual(detect_format(CLAUDE_LIKE), "claude")
+        self.assertIsNone(detect_format(UNKNOWN))
         self.assertIsNone(detect_format(["not", "a", "dict"]))
 
     def test_ambiguous_object_aborts(self):
@@ -45,11 +48,16 @@ class DetectionTests(unittest.TestCase):
             detect_format({**CHATGPT, "messages": [{"role": "user", "content": "x"}]})
 
     def test_claude_like_messages_variant_is_never_read_as_extractor(self):
-        # Mandatory regression test (TASKS PROV-001): single JSON and ZIP structure fallback.
+        # Mandatory regression test (TASKS PROV-001/002): single JSON and ZIP structure fallback.
+        for parsed in (parse_export(json.dumps([CLAUDE_LIKE]).encode(), "conversations.json"),
+                       parse_export(as_zip("data/synthetic.json", [CLAUDE_LIKE]), "export.zip")):
+            self.assertEqual(parsed[0]["provider"], "claude")
+            self.assertEqual(parsed[0]["messages"][0]["role"], "user")
+            self.assertEqual(parsed[0]["messages"][0]["metadata"]["source"], "claude")
         with self.assertRaisesRegex(ValueError, "unbekannte Konversation"):
-            parse_export(json.dumps([CLAUDE_LIKE]).encode(), "conversations.json")
+            parse_export(json.dumps([UNKNOWN]).encode(), "conversations.json")
         with self.assertRaisesRegex(ValueError, "Keine erkennbaren Konversationsdateien"):
-            parse_export(as_zip("data/synthetic.json", [CLAUDE_LIKE]), "export.zip")
+            parse_export(as_zip("data/synthetic.json", [UNKNOWN]), "export.zip")
         mixed = [EXTRACTOR, {"id": "e2", "messages": [{"role": "user"}, {"sender": "human"}]}]
         with self.assertRaisesRegex(ValueError, "unbekannte Konversation"):
             parse_export(json.dumps(mixed).encode(), "conversations.json")

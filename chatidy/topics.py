@@ -1,4 +1,4 @@
-"""Local deterministic topic exploration from ChatGPT titles and message text.
+"""Local deterministic topic exploration from chat titles and message text.
 
 Topic views do not permanently assign categories. They show explicit token matches.
 """
@@ -16,7 +16,7 @@ STOP={"this","that","with","have","from","there","what","which","where","when",
       "deine","deinen","deiner","meine","meinen","meiner","nicht","mehr","sehr",
       "werden","wurde","wurden","kannst","können","möchte","machen","haben",
       "eine","sich","über","unter","nach","beim","fürs","durch","wieder","bitte",
-      "hallo","danke","chatgpt","assistant","user","https","http","www","com"}
+      "hallo","danke","chatgpt","claude","assistant","user","human","https","http","www","com"}
 
 def topics(db,limit=60):
     index=defaultdict(set)

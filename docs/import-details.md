@@ -351,3 +351,20 @@ offizieller ChatGPT-Export über `mapping`, chatgpt-conversation-extractor über
 `messages[]` mit `role`. Passt kein Adapter, bricht der Import mit „unbekannte Konversation“ ab;
 passen mehrere, mit „Mehrdeutiges Exportformat“. Früher wurde alles ohne `mapping` als Extractor
 gelesen. `/api/chats?provider=…` filtert, `/api/stats` liefert zusätzlich `providers` (additiv).
+
+## Claude-Export importieren
+
+claude.ai liefert ein Manifest und je Kategorie ein ZIP. **Nur `conversations-NNN.zip`** enthält
+Gespräche; dieses ZIP (oder die darin liegende `conversations.json`) wie gewohnt importieren.
+Manifest, Konto-/Login-Daten, Memory, Artifacts und Routinen werden nicht als Chats gelesen und
+mit einem Hinweis auf die Kategorie abgelehnt. Bei großen Konten mehrere `conversations-*.zip`
+nacheinander importieren (bislang nicht mit echtem Mehrteil-Export geprüft).
+
+- IDs: `claude:<uuid>`; Original-UUID in den Gesprächsmetadaten (`original_id`).
+- Text für Leseansicht und Suche: `text`-Blöcke (Fallback Feld `text`) und Anhangstext
+  (`extracted_content`). Thinking-, Tool- und Zitatdaten bleiben vollständig in den Metadaten.
+  Nachrichten nur mit Tool-Blöcken erscheinen als „[Nicht-textueller Inhalt]“.
+- Zweige: Elternverweise (`parent_message_uuid`) bilden einen Baum; angezeigt wird der Zweig mit
+  dem neuesten Ende. Nachrichten anderer Zweige bleiben unter `inactive_branch_messages` in den
+  Gesprächsmetadaten. Zyklen, doppelte IDs oder mehrere gleich neue Enden brechen ab.
+- Binärdateien (Bilder, Uploads) sind im Claude-Export nicht enthalten, nur ihre Namen.

@@ -144,16 +144,17 @@ und neue Plattformfälle nur mit ausdrücklichem Nutzerauftrag; bestehende Bugs 
   wird nicht als Extractor gelesen – weder als Einzel-JSON noch über die ZIP-Strukturerkennung.
 
 ## PROV-002 – Claude-Export importieren
-- Priorität: P2; Status: Offen – geplant, kein Umsetzungsauftrag. Abhängigkeiten: PROV-001.
+- Priorität: P2; Status: Teilweise implementiert – 002a (Import) umgesetzt, 002b (UI) offen. Abhängigkeiten: PROV-001.
 - Komponenten: Claude-Adapter, Archivinventar, Themencluster-Stoppwörter.
 - [x] Vorab: Strukturbefund aus echtem Export (nur Schlüssel/Typen), siehe ROADMAP Phase 6.
-- [ ] Zweige über `parent_message_uuid`, aktueller Zweig = spätestes Blatt, übrige Zweige in Metadaten (E10).
-- [ ] Lese-/Suchtext nur aus `text`-Blöcken und `extracted_content`; Tool-/Thinking-Blöcke als Kurzzeile (E11).
-- [ ] Keine URL aus Importdaten laden (E12); Nicht-Gesprächs-ZIPs mit klarer Meldung ablehnen (E13).
-- [ ] Anbieter-Badge pro Chat und Anbieterfilter in der Navigation (aus PROV-001 übernommen).
-- [ ] `chat_messages` → normalisiertes Modell; `human`→`user`; Text aus Textblöcken, Fallback `text` (E5).
-- [ ] IDs `claude:<uuid>` (E4); Rohdaten inkl. Thinking/Tools/`extracted_content` in `metadata`.
-- [ ] `projects.json`, `memories.json`, `users.json` als Metadaten inventarisieren, sensible markieren (E9).
+- [x] 002a: Zweige über `parent_message_uuid`, aktueller Zweig = spätestes Blatt, übrige in Metadaten (E10).
+- [x] 002a: Lese-/Suchtext nur aus `text`-Blöcken und `extracted_content` (E11, Importteil).
+- [ ] 002b: Tool-/Thinking-Blöcke als einklappbare Kurzzeile in der Leseansicht (E11, Anzeige); keine URL laden (E12).
+- [ ] 002b: Anbieter-Badge pro Chat und Anbieterfilter in der Navigation (aus PROV-001 übernommen).
+- [ ] Nutzer: echten `conversations-000.zip` lokal importieren und Stichproben prüfen.
+- [x] 002a: `chat_messages` → normalisiertes Modell; `human`→`user`; Text aus Textblöcken, Fallback `text` (E5).
+- [x] 002a: IDs `claude:<uuid>` (E4); Rohdaten inkl. Thinking/Tools/`extracted_content` in `metadata`.
+- [x] 002a: Nicht-Gesprächs-ZIPs/Manifest mit Kategoriehinweis abgelehnt, nicht persistiert (E9/E13).
 - Akzeptanz: kein stiller Inhaltsverlust; gemischte ChatGPT-/Claude-Bibliothek; idempotenter Reimport.
 - Tests: synthetische Claude-Fixtures (nur `text`, nur `content[]`, unbekannte Blocktypen, Anhänge,
   Variante mit `messages` statt `chat_messages` – auch mit zusätzlichem `id`: wird als Claude erkannt
