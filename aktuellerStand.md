@@ -17,7 +17,12 @@
   Jobisolation, bestätigter Bereinigung und Neustartpersistenz. 228 Tests mit Auth:
   218 bestanden, zehn Windows-Skips; ohne Auth-Pakete: 195 bestanden, 33 Skips
   (OIDC/TLS/Windows). Image lokal linux/amd64 gebaut (~139 MB).
-  PR-/CI-Lieferstatus wird nach Push anhand der Laufbelege festgehalten.
+  [CI 44949005054](https://github.com/muk4li/chatidy/actions/runs/44949005054)
+  für Implementierungscommit `f662245`: erfolgreich, alle neun Jobs
+  (Linux/Windows × 3.10/3.11/3.13, zwei Stdlib-Jobs und Container-Smoke).
+  Branch gepusht; PR-Erstellung konkret mit GitHub-GraphQL `Forbidden` gescheitert.
+  [PR anlegen](https://github.com/muk4li/chatidy/pull/new/feature/authentik-container-readiness).
+  Kein PR-Erfolg/kein Merge behauptet, main unverändert.
 - **Offen:** echte authentik-/Caddy-/Zwei-Konten-Abnahme, Zielrechte/Last,
   vollständiger Backup/Restore, bestätigte Bestandsmigration und Betreiberfreigabe.
   Keine Liveänderungen, produktiven Daten oder Änderungen an anderen Repos.
