@@ -12,7 +12,8 @@ serverseitige Sitzungen, geschützte APIs, getrennte Bibliotheken und Jobdaten
 sind implementiert und synthetisch getestet (Integration #52/#53). Im normalen
 lokalen Modus bleibt Chatidy ohne Login bedienbar. Ein echter authentik-,
 HTTPS-/Proxy-, Windows-ACL- und Zwei-Konten-Test sowie Backup-/Restore-
-und Betreiberfreigabe stehen noch aus; daher ausschließlich Loopback-Betrieb.
+und Betreiberfreigabe stehen noch aus; daher lokal Loopback oder isolierter
+Container-Integrationstest, keine öffentliche Freigabe.
 Der Link „Bibliothek öffnen“ auf der Landingpage ist für den lokalen Modus gedacht.
 
 ## Schnellstart
@@ -92,6 +93,19 @@ bestätigte Offline-Bestandsmigration sind im Code vorhanden. **Sie sind nicht
 automatisch aktiv und noch nicht für den öffentlichen Betrieb freigegeben.**
 Ein neuer Login legt weder Konten an noch übernimmt er bestehende Chats.
 Details und Sicherheits-Gates: [SERVICE.md](SERVICE.md).
+
+## Vorbereitung des Container-/authentik-Tests
+
+Ein digestgepinntes Nicht-Root-Image und `compose.yaml` bereiten den privaten
+Integrationstest vor: keine Host-Ports, getrennte Proxy-/Egress-Netze,
+persistentes Datenvolume, lokaler Healthcheck und explizite Proxy-Vertrauensliste.
+OIDC bleibt über Standard-Endpunkte konfigurierbar; Client-Secret alternativ
+als gemountete Datei, optionaler RP-Logout. Keine echten Zugangsdaten nötig für
+`python tests/container_smoke.py` nach dem Image-Build.
+
+[Ist-Analyse, Konfiguration, Testbefehle und Betreiber-/E2E-Checkliste](docs/authentik-container-test.md).
+Keine Änderungen an authentik, DNS, Caddy oder VPS und keine Bestandsmigration
+sind Bestandteil dieser Vorbereitung. [SERVICE.md](SERVICE.md) hält die Gates fest.
 
 ## URLs, Quellen, Datum und Importauswahl
 

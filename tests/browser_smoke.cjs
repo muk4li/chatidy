@@ -225,6 +225,21 @@ const {spawn,spawnSync}=require('node:child_process');
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Mobile layout must fit viewport without horizontal overflow');
     await page.screenshot({path:path.join(directory,'mobile.png'),fullPage:true});
     assert(await page.locator('#bulk-tags').isVisible());
+    // Synthetic server response: logout must navigate the browser, not fetch an IdP redirect.
+    await page.setViewportSize({width:1280,height:900});
+    await page.route('**/api/session',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({display_name:'Synthetic account',role:'member'})}));
+    let logoutRequested=false;
+    await page.route('**/logout',route=>{
+      assert.equal(route.request().method(),'POST');
+      assert.equal(route.request().headers().accept,'application/json');
+      logoutRequested=true;
+      return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({redirect:'/?synthetic-logout=1'})});
+    });
+    await page.goto(base+'/app');
+    await page.locator('#account-panel').waitFor({state:'visible'});
+    await page.locator('#logout-button').click();
+    await page.waitForURL(base+'/?synthetic-logout=1');
+    assert(logoutRequested,'Explicit logout must request local session revocation');
     assert.deepEqual(errors,[],'Browser must not raise JavaScript errors');
     console.log('PASS: preview before writes, segmented ZIP after single-file import, full reimport, class-scoped older skip, native job/organisation baseline and mobile layout');
     console.log('Synthetic screenshot: '+path.join(directory,'mobile.png'));

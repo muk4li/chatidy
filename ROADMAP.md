@@ -1,16 +1,19 @@
 # Chatidy – Produkt-Roadmap
 
-Stand: 2026-11-20 – L2-Code integriert über #52 und #53; ein gemeinsamer
-UX-Branch bereitet F-001 bis F-009 vor. Legende: **Implementiert und getestet**,
-**Teilweise implementiert**, **Offen**, **Blockiert**. Der frühere
-Nutzbarkeitsdurchlauf bleibt als Historie unten erhalten. Öffentliche L2-
-Freigabe und echte Authentik-Tests sind weiterhin offen.
+Stand: 2026-11-21 – L2- und UX-Code auf main `d84dc45`. Aktueller Auftrag:
+kontrollierten authentik-/Container-Test vorbereiten (DEPLOY-001).
+Explizite Proxygrenze, Image/Compose, Secret-Datei, RP-Logout und Liveness
+sind implementiert und lokal synthetisch getestet. Konkrete Belege:
+[aktuellerStand.md](aktuellerStand.md).
 
-Aktueller Fokus: Nutzbarkeit und Verständlichkeit. Passende Startkategorien und
-kompakte Dokumentation sind umgesetzt (FOCUS-001). Nächster Nachweis ist der
-lokale manuelle Echttest durch den Nutzer (REAL-001); dieser bleibt offen.
-Weitere Import-/Storage-Härtung und neue Plattformfälle nur auf ausdrücklichen Auftrag.
-Die folgenden offenen Themen sind Backlog, keine automatisch folgenden Aufträge.
+**Offen:** echter Provider-/Caddy-/Zwei-Konten-Lauf, Zielrechte, vollständiger
+Backup/Restore und Betreiberfreigabe. [Runbook und Checkliste](docs/authentik-container-test.md).
+Keine öffentliche Bereitstellung und keine Änderungen an Centrality/myCloud-Lab.
+Keine automatische Bestandsmigration. Weitere Produktphasen bleiben Backlog;
+Import-/Storage-Härtung nur auf ausdrücklichen Auftrag oder zur Bugbehebung.
+
+Legende: **Implementiert und getestet**, **Teilweise implementiert**, **Offen**,
+**Blockiert**. Geplantes und echte Betriebsnachweise getrennt halten.
 
 ## Phase 1 – Exportkompatibilität und Datenintegrität
 

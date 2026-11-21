@@ -241,3 +241,17 @@ der reale Authentik-/Zwei-Konten-Test und die Betriebsfreigabe bleiben offen.
   ausdrücklich nicht Teil dieses PR und nicht erledigt.
 
 [Einzelheiten und Akzeptanz](docs/ux-f001-f009.md).
+
+## DEPLOY-001 – OIDC-/Container-Integration vorbereiten
+- Priorität: P1; Status: implementiert und lokal synthetisch getestet; echte Betreiberabnahme offen.
+- Ausgangspunkt: main `d84dc45`; Abhängigkeit: integrierte AUTH-007 bis AUTH-023.
+- [x] Expliziter Container-Listener nur mit Auth/HTTPS-Origin/Proxy-Vertrauensliste.
+- [x] Header-/Peer-Negativtests, lokaler TLS-Proxy mit aktiver Zertifikatsprüfung.
+- [x] Secret-Dateialternative, Standard-RP-Logout-Endpunkt, generische Startfehler.
+- [x] Digestgepinntes Nicht-Root-Image, Compose ohne Host-Ports, Named Volume,
+  Liveness und echter synthetischer Containerlauf (Zwei-Konten-/Jobisolation, Restart).
+- [x] Vorhandene Migrations-/Reimport-/Storage-Schutzregeln erhalten, kein neues Schema.
+- [x] Runbook, SERVICE-Vertrag, E2E-/Betreibercheckliste und CI-Containerjob.
+- [ ] Echter authentik-Login/Provider-Logout, Caddy-Vertrag, Ziel-ACLs, Last und Backup/Restore.
+- [ ] Betreiberfreigabe und spätere Centrality-Nachpflege, nicht in diesem Auftrag.
+- Tests/Nachweise: aktuellerStand.md; Details: docs/authentik-container-test.md.

@@ -107,6 +107,39 @@ class SignedCallbackTests(unittest.TestCase):
                 self.assertIsNone(headers.get("Set-Cookie"))
                 self.assertEqual(self.req("/api/stats")[0],401)
 
+    def test_full_exchange_and_jwks_fixture_reaches_http_session(self):
+        # Exercise the real exchange/JWKS/verification chain, replacing only HTTPS I/O.
+        import io
+        state, nonce, binding = self.start()
+        raw_token = self.token(nonce)
+        requests = []
+        class Response:
+            status = 200
+            def __init__(self, value): self.body = io.BytesIO(json.dumps(value).encode())
+            def read(self, size): return self.body.read(size)
+            def __enter__(self): return self
+            def __exit__(self, *args): self.body.close()
+        class Provider:
+            def open(self, request, timeout):
+                requests.append(request)
+                if request.full_url.endswith('/token'):
+                    body = urllib.parse.parse_qs(request.data.decode())
+                    assert body['code'] == ['synthetic-code']
+                    assert len(body['code_verifier'][0]) >= 43
+                    assert request.get_header('Authorization').startswith('Basic ')
+                    return Response({'id_token': raw_token})
+                assert request.full_url.endswith('/jwks')
+                return Response({'keys': [self_test.jwk]})
+        self_test = self
+        with patch('chatidy.oidc_exchange.urllib.request.build_opener', return_value=Provider()):
+            status, _, headers = self.req('/auth/callback?' + urllib.parse.urlencode({
+                'state': state, 'code': 'synthetic-code'}), binding)
+        self.assertEqual(status, 302)
+        session = [c for c in headers.get_all('Set-Cookie') if c.startswith('__Host-chatidy_session=')][0].split(';', 1)[0]
+        self.assertEqual(self.req('/api/session', session)[0], 200)
+        self.assertEqual([r.full_url for r in requests], [
+            'https://idp.example.invalid/token', 'https://idp.example.invalid/jwks'])
+
     def test_wrong_rsa_signature_rejected(self):
         from cryptography.hazmat.primitives.asymmetric import rsa
         different_key=rsa.generate_private_key(public_exponent=65537,key_size=2048)

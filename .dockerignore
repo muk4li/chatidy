@@ -1,0 +1,9 @@
+**
+!Dockerfile
+!requirements-auth.txt
+!chatidy/
+!chatidy/*.py
+!web/
+!web/*.html
+!web/*.css
+!web/*.js

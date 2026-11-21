@@ -1,0 +1,47 @@
+# Controlled integration-test template; no public release and no host ports.
+name: chatidy
+services:
+  chatidy:
+    build: .
+    image: chatidy:auth-integration-v1
+    user: "10001:10001"
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 128
+    mem_limit: 512m
+    cpus: 1.0
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m,mode=1777
+    environment:
+      CHATIDY_AUTH_REQUIRED: "1"
+      CHATIDY_HOST: "0.0.0.0"
+      CHATIDY_PORT: "8877"
+      CHATIDY_DB: /data/registry.sqlite3
+      CHATIDY_PUBLIC_ORIGIN: ${CHATIDY_PUBLIC_ORIGIN:?Set HTTPS public origin}
+      CHATIDY_TRUSTED_PROXIES: ${CHATIDY_TRUSTED_PROXIES:?Set immediate proxy IP or dedicated CIDR}
+      CHATIDY_OIDC_ISSUER: ${CHATIDY_OIDC_ISSUER:?Set exact issuer}
+      CHATIDY_OIDC_AUTHORIZE: ${CHATIDY_OIDC_AUTHORIZE:?Set authorization endpoint}
+      CHATIDY_OIDC_TOKEN: ${CHATIDY_OIDC_TOKEN:?Set token endpoint}
+      CHATIDY_OIDC_JWKS: ${CHATIDY_OIDC_JWKS:?Set JWKS endpoint}
+      CHATIDY_OIDC_CLIENT_ID: ${CHATIDY_OIDC_CLIENT_ID:?Set client ID}
+      CHATIDY_OIDC_CLIENT_SECRET_FILE: /run/secrets/oidc_client_secret
+      CHATIDY_OIDC_END_SESSION: ${CHATIDY_OIDC_END_SESSION:?Set RP logout endpoint}
+    secrets: [oidc_client_secret]
+    volumes:
+      - chatidy_data:/data
+    networks: [proxy, egress]
+    stop_grace_period: 30s
+secrets:
+  oidc_client_secret:
+    file: ${CHATIDY_OIDC_CLIENT_SECRET_FILE:?Set private host secret file outside checkout}
+volumes:
+  chatidy_data:
+    name: ${CHATIDY_DATA_VOLUME:-chatidy_data}
+networks:
+  proxy:
+    external: true
+    name: ${CHATIDY_PROXY_NETWORK:-dnet_rproxy_chatidy}
+  egress:
+    name: ${CHATIDY_EGRESS_NETWORK:-dnet_chatidy_egress}

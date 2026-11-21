@@ -39,3 +39,11 @@ jobs:
       - run: node tests/test_sidebar_init.cjs
       - run: node --check tests/browser_smoke.cjs
       - run: python tests/run_ci.py
+
+  container-smoke:
+    name: Container build and synthetic Compose smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t chatidy:auth-integration-v1 .
+      - run: python tests/container_smoke.py

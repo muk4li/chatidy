@@ -39,6 +39,8 @@ class OIDCSettings:
     # Server-only credential; never expose it through repr, redirects or logs.
     client_secret: str = field(default="", repr=False)
 
+    end_session_endpoint: str = ""
+
     def validate(self):
         issuer = _https_url(self.issuer)
         if not self.client_id or not self.client_id.strip():
@@ -47,6 +49,10 @@ class OIDCSettings:
             endpoint = _https_url(getattr(self, name))
             if endpoint.hostname != issuer.hostname or endpoint.port != issuer.port:
                 raise OIDCError("OIDC-Endpunkt außerhalb des konfigurierten Identity-Providers.")
+        if self.end_session_endpoint:
+            endpoint = _https_url(self.end_session_endpoint)
+            if endpoint.netloc != issuer.netloc:
+                raise OIDCError("OIDC-Logout außerhalb des konfigurierten Identity-Providers.")
         _https_url(self.redirect_uri)
         return self
 
