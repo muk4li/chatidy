@@ -763,8 +763,9 @@ addEventListener('popstate',applyRoute);
 })();
 $('logout-button').addEventListener('click',async()=>{
   try{
-    const response=await fetch('/logout',{method:'POST',credentials:'same-origin'});
+    const response=await fetch('/logout',{method:'POST',credentials:'same-origin',headers:{Accept:'application/json'}});
     if(!response.ok)throw new Error('Abmeldung fehlgeschlagen.');
-    location.assign('/');
+    const result=await response.json();
+    location.assign(result.redirect);
   }catch(e){message(e.message,true)}
 });

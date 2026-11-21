@@ -1,4 +1,4 @@
-"""Local Chatidy web server. Standard library only, loopback binding, no telemetry."""
+"""Chatidy HTTP server: local loopback or explicitly configured authenticated proxy."""
 import json
 from contextlib import closing
 from http.cookies import SimpleCookie
@@ -7,6 +7,8 @@ from .users import enrolled_user
 from .library_scope import account_library
 from .access_policy import private_route, public_route
 import os
+import ipaddress
+from .runtime_config import listener, proxy_request_allowed
 import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -29,7 +31,7 @@ STATIC={"/":("web/landing.html","text/html; charset=utf-8"),
 MODEL=os.getenv("CHATIDY_OLLAMA_MODEL","llama3.2")
 
 class Handler(BaseHTTPRequestHandler):
-    def send(self,status,body,kind="application/json; charset=utf-8"):
+    def send(self,status,body,kind="application/json; charset=utf-8",cookies=()):
         if not isinstance(body,bytes):
             body=json.dumps(body,ensure_ascii=False).encode("utf-8")
         self.send_response(status)
@@ -39,6 +41,7 @@ class Handler(BaseHTTPRequestHandler):
             "X-Frame-Options":"DENY","Referrer-Policy":"no-referrer",
             "Content-Security-Policy":"default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
         }.items():self.send_header(key,value)
+        for cookie in cookies:self.send_header("Set-Cookie",cookie)
         self.end_headers()
         self.wfile.write(body)
 
@@ -59,6 +62,10 @@ class Handler(BaseHTTPRequestHandler):
         return os.getenv("CHATIDY_AUTH_REQUIRED") == "1"
 
     def same_origin(self):
+        if (len(self.headers.get_all("Host", [])) != 1
+                or len(self.headers.get_all("Origin", [])) > 1
+                or not proxy_request_allowed(self.headers, self.client_address[0], os.environ)):
+            return False
         host=self.headers.get("Host","")
         origin=self.headers.get("Origin")
         if self.auth_required():
@@ -151,9 +158,24 @@ class Handler(BaseHTTPRequestHandler):
         if token:
             with closing(connect(os.getenv("CHATIDY_DB",str(DEFAULT_DATABASE)))) as db:
                 revoke_session(db,token)
-        return self._auth_redirect("/",[
-            self._auth_cookie("__Host-chatidy_session","",0),
-            self._auth_cookie("__Host-chatidy_oidc","",0)])
+        target = "/"
+        try:
+            from .oidc_exchange import configured_settings
+            from urllib.parse import urlencode
+            settings = configured_settings(os.environ)
+            if settings.end_session_endpoint:
+                target = settings.end_session_endpoint + ("&" if "?" in settings.end_session_endpoint else "?") + urlencode({
+                    "client_id": settings.client_id,
+                    "post_logout_redirect_uri": os.environ["CHATIDY_PUBLIC_ORIGIN"].rstrip("/") + "/"})
+        except (ImportError, ValueError):
+            # Local revocation is unconditional, even during an IdP/config outage.
+            pass
+        cookies = [self._auth_cookie("__Host-chatidy_session","",0),
+                   self._auth_cookie("__Host-chatidy_oidc","",0)]
+        if self.headers.get("Accept") == "application/json":
+            # Fetch cannot follow a provider redirect as a top-level navigation.
+            return self.send(200, {"redirect": target}, cookies=cookies)
+        return self._auth_redirect(target, cookies)
 
     def _redirect(self,destination):
         self.send_response(302)
@@ -162,6 +184,15 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
+        if self.path == "/healthz":
+            # Container-local liveness only: no DB, identity, OIDC or proxy request.
+            hosts = {f"127.0.0.1:{self.server.server_address[1]}",
+                     f"localhost:{self.server.server_address[1]}"}
+            if (ipaddress.ip_address(self.client_address[0]).is_loopback
+                    and self.headers.get_all("Host", []) in [[host] for host in hosts]
+                    and not any(name.lower() == "forwarded" or name.lower().startswith("x-forwarded-") for name in self.headers)):
+                return self.send(200, {"status": "ok"})
+            return self.send(403, {"error": "Healthcheck nur lokal."})
         if not self.same_origin():
             return self.send(403,{"error":"Ungültiger Host oder Origin."})
         if not self.auth_required():
@@ -414,32 +445,24 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     # Give existing job/storage consumers the same project-relative default.
     os.environ.setdefault("CHATIDY_DB", str(DEFAULT_DATABASE))
-    mode=os.getenv("CHATIDY_AUTH_REQUIRED","0")
-    public_origin=os.getenv("CHATIDY_PUBLIC_ORIGIN","")
-    if mode not in ("0","1"):
-        raise ValueError("CHATIDY_AUTH_REQUIRED darf nur 0 oder 1 sein.")
-    if mode=="0" and public_origin:
-        raise ValueError("Öffentliche Origin ohne Anmeldung ist nicht zulässig.")
-    if mode=="1":
-        # Validate required variables *before* importing optional auth packages.
-        required=("CHATIDY_OIDC_ISSUER","CHATIDY_OIDC_AUTHORIZE",
-                  "CHATIDY_OIDC_TOKEN","CHATIDY_OIDC_JWKS",
-                  "CHATIDY_OIDC_CLIENT_ID","CHATIDY_OIDC_CLIENT_SECRET",
-                  "CHATIDY_PUBLIC_ORIGIN")
-        if any(not os.getenv(name) for name in required):
-            raise ValueError("Authentifizierung ist nicht vollständig konfiguriert.")
+    host, port = listener(os.environ)
+    if os.getenv("CHATIDY_AUTH_REQUIRED", "0") == "1":
         try:
             from .oidc_exchange import configured_settings
             configured_settings(os.environ)
-        except (ImportError,ValueError) as exc:
-            raise ValueError("Authentifizierung ist nicht verfügbar oder ungültig konfiguriert.") from exc
-        origin=urlsplit(public_origin)
-        if origin.scheme!="https" or not origin.netloc or origin.path not in ("","/"):
-            raise ValueError("Auth-Modus benötigt eine gültige HTTPS-Origin.")
-    host="127.0.0.1"
-    port=int(os.getenv("CHATIDY_PORT","8877"))
-    print(f"Chatidy läuft lokal unter http://{host}:{port}")
-    ThreadingHTTPServer((host,port),Handler).serve_forever()
+        except (ImportError, ValueError):
+            raise ValueError("Authentifizierung ist nicht verfügbar oder ungültig konfiguriert.") from None
+        # Fail before accepting requests if the registry cannot be opened/migrated.
+        with closing(connect(os.environ["CHATIDY_DB"])):
+            pass
+    http = ThreadingHTTPServer((host, port), Handler)
+    print(f"Chatidy bereit: http://{host}:{port} (Auth: {os.getenv('CHATIDY_AUTH_REQUIRED', '0')})", flush=True)
+    try:
+        http.serve_forever()
+    except KeyboardInterrupt:
+        print("Chatidy beendet.", flush=True)
+    finally:
+        http.server_close()
 
 if __name__=="__main__":
     main()

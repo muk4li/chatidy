@@ -4,6 +4,8 @@ HTTPS endpoints come from trusted application configuration, never from requests
 or JWT headers. HTTP redirects are rejected; no access or refresh token stored.
 """
 import json
+from pathlib import Path
+from .runtime_config import https_origin
 import base64
 import urllib.error
 import urllib.parse
@@ -59,17 +61,30 @@ def exchange_code(settings, code, code_verifier, *, trusted_jwks, opener=None):
 
 
 def configured_settings(environment):
-    """Validate operator-defined endpoints and exact redirect URI."""
+    """Validate explicit standard OIDC endpoints; no provider-specific paths."""
     names = ("CHATIDY_OIDC_ISSUER", "CHATIDY_OIDC_AUTHORIZE",
-             "CHATIDY_OIDC_TOKEN", "CHATIDY_OIDC_JWKS",
-             "CHATIDY_OIDC_CLIENT_ID", "CHATIDY_PUBLIC_ORIGIN",
-             "CHATIDY_OIDC_CLIENT_SECRET")
+             "CHATIDY_OIDC_TOKEN", "CHATIDY_OIDC_JWKS", "CHATIDY_OIDC_CLIENT_ID")
     if any(not environment.get(name) for name in names):
         raise OIDCError("OIDC-Konfiguration unvollständig.")
-    origin = environment["CHATIDY_PUBLIC_ORIGIN"].rstrip("/")
-    values = [environment[key] for key in names[:5]]
-    return OIDCSettings(*values, origin + "/auth/callback",
-                        client_secret=environment["CHATIDY_OIDC_CLIENT_SECRET"]).validate()
+    origin = https_origin(environment.get("CHATIDY_PUBLIC_ORIGIN", ""))
+    secret = environment.get("CHATIDY_OIDC_CLIENT_SECRET", "")
+    secret_file = environment.get("CHATIDY_OIDC_CLIENT_SECRET_FILE", "")
+    if secret and secret_file:
+        raise OIDCError("Client-Secret entweder direkt oder als Datei konfigurieren.")
+    if secret_file:
+        try:
+            with Path(secret_file).open("rb") as source:
+                raw = source.read(8193)
+            if len(raw) > 8192:
+                raise ValueError
+            secret = raw.decode("utf-8").rstrip("\r\n")
+        except (OSError, ValueError, UnicodeError):
+            raise OIDCError("OIDC-Client-Secret-Datei nicht lesbar oder ungültig.") from None
+    if not secret or not secret.strip():
+        raise OIDCError("OIDC-Client-Secret fehlt.")
+    return OIDCSettings(*(environment[key] for key in names), origin + "/auth/callback",
+                        client_secret=secret,
+                        end_session_endpoint=environment.get("CHATIDY_OIDC_END_SESSION", "")).validate()
 
 
 def load_trusted_jwks(settings, *, opener=None):
