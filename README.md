@@ -9,7 +9,7 @@ Es verändert keine Unterhaltungen auf chatgpt.com und benötigt keinen ChatGPT-
 `/` zeigt eine öffentliche Produkt-Landingpage und `/app` die bestehende lokale Bibliothek.
 **L2 technisch integriert, öffentliche Freigabe weiterhin gesperrt:** OIDC-Login,
 serverseitige Sitzungen, geschützte APIs, getrennte Bibliotheken und Jobdaten
-sind implementiert und synthetisch getestet (Integration #52/#53). Im normalen
+sind auf `main` implementiert und synthetisch getestet (Integration #52/#53, Container-Vorbereitung [PR #57](https://github.com/muk4li/chatidy/pull/57); [neun grüne CI-Jobs](https://github.com/muk4li/chatidy/actions/runs/44958269781)). Im normalen
 lokalen Modus bleibt Chatidy ohne Login bedienbar. Ein echter authentik-,
 HTTPS-/Proxy-, Windows-ACL- und Zwei-Konten-Test sowie Backup-/Restore-
 und Betreiberfreigabe stehen noch aus; daher lokal Loopback oder isolierter
