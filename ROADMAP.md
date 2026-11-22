@@ -1,16 +1,8 @@
 # Chatidy – Produkt-Roadmap
 
-Stand: 2026-11-21 – L2- und UX-Code auf main `d84dc45`. Aktueller Auftrag:
-kontrollierten authentik-/Container-Test vorbereiten (DEPLOY-001).
-Explizite Proxygrenze, Image/Compose, Secret-Datei, RP-Logout und Liveness
-sind implementiert und lokal synthetisch getestet. Konkrete Belege:
-[aktuellerStand.md](aktuellerStand.md).
+Stand: 2026-11-22 · L2, UX-F-001–F-009 und DEPLOY-001 auf `main` ([`6b42f842`](https://github.com/muk4li/chatidy/commit/6b42f8428fc94671fb6986220ff36c860873115c), PR #57). [Merge-CI mit neun erfolgreichen Jobs](https://github.com/muk4li/chatidy/actions/runs/44958269781): Python-Matrix und Container-Smoke, ausschließlich synthetische Daten. Proxygrenze, Container-Image/Compose, Secret-Datei, RP-Logout und Liveness sind Code; **kein Live-Deploy**.
 
-**Offen:** echter Provider-/Caddy-/Zwei-Konten-Lauf, Zielrechte, vollständiger
-Backup/Restore und Betreiberfreigabe. [Runbook und Checkliste](docs/authentik-container-test.md).
-Keine öffentliche Bereitstellung und keine Änderungen an Centrality/myCloud-Lab.
-Keine automatische Bestandsmigration. Weitere Produktphasen bleiben Backlog;
-Import-/Storage-Härtung nur auf ausdrücklichen Auftrag oder zur Bugbehebung.
+**Offen:** echte authentik-/Caddy-/Zwei-Konten-/Logout-Abnahme, Zielrechte und Last, Backup/Restore und bestätigte Bestandsmigration; Eigentümerfreigabe ausstehend. [Runbook und Checkliste](docs/authentik-container-test.md). Kein automatischer Import bestehender Daten oder JIT-Enrollment. Feedback nach Centrality ADR-011 ist eine separate, vom sicheren feetbackhurts-Ingest abhängige Backlog-Aufgabe, keine UI-Implementierung.
 
 Legende: **Implementiert und getestet**, **Teilweise implementiert**, **Offen**,
 **Blockiert**. Geplantes und echte Betriebsnachweise getrennt halten.
