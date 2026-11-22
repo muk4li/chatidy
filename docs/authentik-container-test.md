@@ -1,12 +1,12 @@
 # Kontrollierter OIDC-/Container-Test
 
-Stand: 2026-11-21. Vorbereitung, **keine öffentliche Betriebsfreigabe**.
+Stand: 2026-11-22. Vorbereitungsstand einschließlich [PR #57](https://github.com/muk4li/chatidy/pull/57) auf `main` (`6b42f842`), [neun grüne CI-Jobs](https://github.com/muk4li/chatidy/actions/runs/44958269781); **keine öffentliche Betriebsfreigabe**.
 Dieses App-Runbook verändert weder authentik noch DNS, Caddy oder einen VPS.
 Verantwortlich für den späteren Integrationstest ist der Betreiber.
 
 ## Bestandsaufnahme und tatsächliche Lücken
 
-Ausgangsstand: Chatidy main `d84dc45baeb64dcfdb7ba9005b50f7eb7a8c3a32`.
+Historischer Ausgangsstand der Implementierung: Chatidy main `d84dc45baeb64dcfdb7ba9005b50f7eb7a8c3a32` (vor Merge #57).
 Architektur gelesen auf Centrality main `eb7e5faf34f3aaf66109cdbafab2e49418e8e0f9`;
 keine privaten Architekturunterlagen werden hier übernommen.
 
