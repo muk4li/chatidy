@@ -1,8 +1,6 @@
 # Operatives Backlog
 
-Aktueller Fokus (2026-11-20): **F-001 bis F-009 gemeinsam in einem neuen
-UX-Integrations-PR gegen main**. Die L2-Codebasis aus #52/#53 ist auf main;
-der reale Authentik-/Zwei-Konten-Test und die Betriebsfreigabe bleiben offen.
+Aktueller Stand (2026-11-22): L2 (#52/#53), UX-F-001–F-009 (#54–#56) und DEPLOY-001 (#57) auf `main`; [neun erfolgreiche CI-Jobs](https://github.com/muk4li/chatidy/actions/runs/44958269781). Reale authentik-/Caddy-/Zwei-Konten-Tests, Backup/Restore und Betriebsfreigabe bleiben offen.
 
 ## REAL-001 – Manueller Echttest durch Nutzer
 - Priorität: P0; Status: Offen – nur lokal durch den Nutzer ausführbar.
@@ -216,11 +214,10 @@ der reale Authentik-/Zwei-Konten-Test und die Betriebsfreigabe bleiben offen.
 - [x] Kontrollierte Offline-Eigentümermigration und synthetische Negativtests.
 - [ ] Echter Authentik-End-to-End-Lauf, Zwei-Konten-Abnahme, HTTPS-Proxy,
   native Dateirechte, Backup/Restore und Betriebsfreigabe.
-- [ ] Centrality-Folgeabgleich erst **nach** Chatidy-PR; nicht hier erledigt.
+- [ ] Centrality-Folgeabgleich zu L2/DEPLOY-001: eigener repoübergreifender Dokumentations-PR, erst nach Merge als synchronisiert kennzeichnen.
 
-## UX-F-001 bis UX-F-009 – gemeinsamer Abschluss-PR
-- Status: **in Arbeit auf einem gemeinsamen Branch**; erst nach CI und
-  manueller UX-Abnahme als abgeschlossen deklarieren.
+## UX-F-001 bis UX-F-009 – integrierte UX, reale Abnahme offen
+- Status: **auf main implementiert und CI-geprüft**; manuelle UX-Abnahme weiter offen.
 - [x] F-001: Logo der App führt nach `/`.
 - [x] F-002: Illustrierte Fake-Demo von Landingpage entfernen.
 - [x] F-003: Mehrere ZIP/JSON-Dateien in einer Auswahl; pro Datei Uploadstatus,
@@ -237,8 +234,7 @@ der reale Authentik-/Zwei-Konten-Test und die Betriebsfreigabe bleiben offen.
   direktes Öffnen, kombiniert gesetzte Filter, Import-Fehlerpfade.
 - [ ] Echte Authentik-/Zwei-Konten-/Windows-ACL-/Proxy-Sicherheitsfreigabe
   bleibt **außerhalb** dieses UX-PR.
-- [ ] **Centrality synchronisieren (SPÄTER):** erst nach Chatidy-Merge;
-  ausdrücklich nicht Teil dieses PR und nicht erledigt.
+- [ ] Centrality-Abgleich: erfolgt nur durch separaten Dokumentations-PR; vor dessen Merge nicht als erledigt kennzeichnen.
 
 [Einzelheiten und Akzeptanz](docs/ux-f001-f009.md).
 
@@ -253,5 +249,10 @@ der reale Authentik-/Zwei-Konten-Test und die Betriebsfreigabe bleiben offen.
 - [x] Vorhandene Migrations-/Reimport-/Storage-Schutzregeln erhalten, kein neues Schema.
 - [x] Runbook, SERVICE-Vertrag, E2E-/Betreibercheckliste und CI-Containerjob.
 - [ ] Echter authentik-Login/Provider-Logout, Caddy-Vertrag, Ziel-ACLs, Last und Backup/Restore.
-- [ ] Betreiberfreigabe und spätere Centrality-Nachpflege, nicht in diesem Auftrag.
+- [ ] Betreiberfreigabe; Centrality-Nachpflege in separatem Dokumentations-PR.
 - Tests/Nachweise: aktuellerStand.md; Details: docs/authentik-container-test.md.
+
+## CHAT-FB-001 – Einheitliches UI-Feedback (Backlog, nur Kenntnisnahme)
+- Status: geplant, **keine Implementierung**. Grundlage: [Centrality ADR-011](https://github.com/muk4li/centrality/blob/main/docs/decisions/ADR-011-ECOSYSTEM-FEEDBACK.md), [feetbackhurts-UI-Standard](https://github.com/muk4li/feetbackhurts/blob/main/docs/UI-STANDARD.md), `appId=chatidy`.
+- Dezenter Link „Feedback geben“ unten links, Formular für Fehler/Ideen (Titel/Beschreibung, optional Reproduktion), keine automatische Übertragung von Chats, Exporten, URLs mit Token oder anderen privaten Inhalten.
+- **Blockiert bis** ein öffentlicher feetbackhurts-Ingest nach Security-, Datenschutz- und Restore-Gates freigegeben ist. Danach nur eigener PR samt lokalem End-to-End-Test. Keine GitHub-Credentials in der App.
